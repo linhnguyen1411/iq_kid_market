@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: iqkids_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=iqkids_user
+      - POSTGRES_PASSWORD=iqkids_password
+      - POSTGRES_DB=iqkids_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iqkids_user -d iqkids_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: iqkids_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://iqkids_user:iqkids_password@db:5432/iqkids_db
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iqkids_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Proxy /api/* trong Vite trỏ sang service "backend" trong mạng Docker nội bộ
+      - VITE_API_PROXY_TARGET=http://backend:8000
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:

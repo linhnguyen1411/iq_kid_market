@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Plus+Jakarta+Sans:wght@300..800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  --color-kids-yellow: #f97316;
+  --color-kids-pink: #ec4899;
+  --color-kids-blue: #4f46e5;
+  --color-kids-green: #10b981;
+  --color-kids-purple: #8b5cf6;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #F7F9FC;
+  color: #2D3436;
+  overflow-x: hidden;
+}
+
+/* Custom kid button styling */
+.kids-btn-shadow-yellow {
+  box-shadow: 0 3px 0 0 #c2410c;
+}
+.kids-btn-shadow-blue {
+  box-shadow: 0 3px 0 0 #3730a3;
+}
+.kids-btn-shadow-pink {
+  box-shadow: 0 3px 0 0 #be185d;
+}
+.kids-btn-shadow-green {
+  box-shadow: 0 3px 0 0 #047857;
+}
+.kids-btn-shadow-purple {
+  box-shadow: 0 3px 0 0 #6d28d9;
+}
+.kids-btn-shadow-gray {
+  box-shadow: 0 3px 0 0 #374151;
+}
+
+/* Card bouncy style */
+.kids-card-bouncy {
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.kids-card-bouncy:hover {
+  transform: translateY(-4px);
+}
+

@@ -1,0 +1,6 @@
+{
+  "name": "IQ Kids Market",
+  "description": "Nền tảng Marketplace Game Giáo Dục thông minh đầu tiên tại Việt Nam dành cho học sinh lớp 1-9.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
