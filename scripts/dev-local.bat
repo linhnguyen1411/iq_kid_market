@@ -17,19 +17,23 @@ if %errorlevel% equ 0 (
     docker compose up -d db >nul 2>nul
 )
 
-:: 2. Khoi dong Backend (FastAPI)
-echo [2/3] Dang khoi dong Backend FastAPI (Port 8000)...
-if not exist "backend\venv" (
-    echo Chua tim thay venv, dang tao moi truong Python moi...
-    python -m venv backend\venv
-    call backend\venv\Scripts\activate.bat
-    pip install -r backend\requirements.txt
+:: 2. Kiem tra moi truong Backend Python
+echo [2/3] Dang chuan bi Backend FastAPI (Port 8000)...
+if not exist "%ROOT_DIR%\backend\venv\Scripts\python.exe" (
+    echo Dang tao moi truong Python venv...
+    python -m venv "%ROOT_DIR%\backend\venv"
+    "%ROOT_DIR%\backend\venv\Scripts\pip.exe" install -r "%ROOT_DIR%\backend\requirements.txt"
 )
 
-start "IQ Kids - Backend API (Port 8000)" cmd /k "cd /d %ROOT_DIR%\backend && call venv\Scripts\activate.bat && uvicorn app.main:app --reload --port 8000"
+:: Khoi dong Backend
+start "IQ Kids - Backend API (Port 8000)" cmd /k "cd /d %ROOT_DIR%\backend && %ROOT_DIR%\backend\venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000"
 
 :: 3. Khoi dong Frontend (Vite)
 echo [3/3] Dang khoi dong Frontend Vite (Port 5173)...
+if not exist "%ROOT_DIR%\node_modules" (
+    echo Dang cai dat thu vien Frontend npm...
+    call npm install
+)
 start "IQ Kids - Frontend Vite (Port 5173)" cmd /k "cd /d %ROOT_DIR% && npm run dev"
 
 echo.

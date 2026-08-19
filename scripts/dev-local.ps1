@@ -20,18 +20,21 @@ try {
 
 # 2. Chuẩn bị môi trường Backend Python
 Write-Host "`n[2/3] Đang chuẩn bị Backend FastAPI..." -ForegroundColor Green
-$venvPath = Join-Path $ProjectRoot "backend\venv"
-if (-not (Test-Path $venvPath)) {
+$venvPython = Join-Path $ProjectRoot "backend\venv\Scripts\python.exe"
+if (-not (Test-Path $venvPython)) {
     Write-Host "Đang tạo môi trường ảo Python venv..." -ForegroundColor Yellow
-    python -m venv $venvPath
-    & "$venvPath\Scripts\pip.exe" install -r "$ProjectRoot\backend\requirements.txt"
+    python -m venv "$ProjectRoot\backend\venv"
+    & "$ProjectRoot\backend\venv\Scripts\pip.exe" install -r "$ProjectRoot\backend\requirements.txt"
 }
 
 # Khởi động Backend trong cửa sổ PowerShell mới
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$ProjectRoot\backend'; & '$venvPath\Scripts\Activate.ps1'; uvicorn app.main:app --reload --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$ProjectRoot\backend'; & '$venvPython' -m uvicorn app.main:app --reload --port 8000"
 
 # 3. Khởi động Frontend trong cửa sổ mới
 Write-Host "`n[3/3] Đang khởi động Frontend Vite..." -ForegroundColor Green
+if (-not (Test-Path "$ProjectRoot\node_modules")) {
+    npm install
+}
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$ProjectRoot'; npm run dev"
 
 Write-Host "`n===================================================" -ForegroundColor Cyan
