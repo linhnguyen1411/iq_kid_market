@@ -1,13 +1,18 @@
-﻿# IQ Kid Market - Interactive Local Deploy Script (PowerShell)
+# IQ Kid Market - Interactive Local Deploy Script (PowerShell)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Tu dong chuyen ve thu muc goc cua project
+$ProjectRoot = Split-Path -Parent $PSScriptRoot
+Set-Location $ProjectRoot
+
 Write-Host "=======================================================================" -ForegroundColor Cyan
-Write-Host "          IQ KID MARKET - SCRIPT DEPLOY LOCAL TU DONG (PS)" -ForegroundColor Yellow
+Write-Host "          IQ KID MARKET - BO CONG CU DEPLOY & QUAN LY LOCAL (PS)" -ForegroundColor Yellow
 Write-Host "=======================================================================" -ForegroundColor Cyan
+Write-Host "Thu muc du an: $ProjectRoot" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Vui long chon che do deploy local:" -ForegroundColor White
-Write-Host " [1] Che do 1: Docker Compose Full Stack (Khuyen dung)" -ForegroundColor Green
+Write-Host "Vui long chon thao tac:" -ForegroundColor White
+Write-Host " [1] Che do 1: Docker Compose Full Stack (Khuyen dung - 3 Containers)" -ForegroundColor Green
 Write-Host "     - Chay Frontend (3000), FastAPI Backend (8000), PostgreSQL (5432)" -ForegroundColor Gray
 Write-Host " [2] Che do 2: Frontend Dev Server (Node.js + Vite)" -ForegroundColor Green
 Write-Host "     - Chay nhanh UI tai http://localhost:5173 (can backend port 8000)" -ForegroundColor Gray

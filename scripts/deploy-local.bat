@@ -2,13 +2,15 @@
 title IQ Kid Market - Local Deployment Script
 chcp 65001 > NUL
 
+:: Tu dong chuyen ve thu muc goc cua project
+cd /d "%~dp0\.."
+
 echo =======================================================================
 echo          🚀 IQ KID MARKET - BỘ CÔNG CỤ DEPLOY LOCAL TỰ ĐỘNG
 echo =======================================================================
 echo.
-echo [1] Chế độ 1: Chạy Docker Compose (Khuyên dùng - Full Stack)
-echo     - Chạy 3 Containers: Frontend (3000), FastAPI Backend (8000), Postgres (5432).
-echo     - Tự động tạo bảng & seed dữ liệu 100 màn chơi, 3 user demo.
+echo [1] Chế độ 1: Chạy Docker Compose (Khuyên dùng - Full Stack 3 Containers)
+echo     - Chạy Frontend (3000), FastAPI Backend (8000), Postgres (5432).
 echo.
 echo [2] Chế độ 2: Chạy Frontend Dev Server (Node.js + Vite)
 echo     - Dành cho phát triển giao diện (cần backend chạy sẵn ở port 8000).

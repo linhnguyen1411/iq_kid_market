@@ -75,11 +75,18 @@ iq_kid_market/
 │   ├── requirements.txt               # Dependencies backend
 │   ├── .env.example                   # Biến môi trường mẫu cho backend
 │   ├── Dockerfile                     # Dockerfile build backend container
-│   └── README.md                      # Tài liệu chi tiết phần backend
+├── docs/                              # Tài liệu kiến trúc & quy chuẩn dự án
+│   ├── DEPLOY_LOCAL_GUIDE.md          # Hướng dẫn deploy local & tổng quan kiến trúc
+│   └── GAME_ENGINE_RULES.md           # Rule bắt buộc khi thêm/sửa game engine
+├── scripts/                           # Bộ script deploy tự động (Windows, Linux, macOS)
+│   ├── deploy-local.bat
+│   ├── deploy-local.ps1
+│   └── deploy-local.sh
+├── data/                              # Dữ liệu phụ trợ & backup
+│   └── db.json
 ├── Dockerfile                         # Dockerfile build frontend container (Vite preview)
 ├── docker-compose.yml                 # Khởi chạy 3 services: db (Postgres) + backend + frontend
 ├── vite.config.ts                     # Cấu hình Vite & Proxy /api/* -> http://localhost:8000
-├── GAME_ENGINE_RULES.md               # Quy chuẩn bắt buộc khi thêm/sửa game engine
 └── package.json
 ```
 
@@ -246,8 +253,11 @@ Hệ thống tự động khởi tạo 3 tài khoản mẫu với đầy đủ s
 | Tệp tin | Vị trí | Mô tả |
 | :--- | :--- | :--- |
 | [`README.md`](file:///D:/encee/workspace/web/iq_kid_market/README.md) | `./` | Tài liệu chính thức của dự án |
-| [`DEPLOY_LOCAL_GUIDE.md`](file:///D:/encee/workspace/web/iq_kid_market/DEPLOY_LOCAL_GUIDE.md) | `./` | Hướng dẫn chi tiết triển khai Local & Kiến trúc |
-| [`GAME_ENGINE_RULES.md`](file:///D:/encee/workspace/web/iq_kid_market/GAME_ENGINE_RULES.md) | `./` | Quy tắc xây dựng & mở rộng Game Engine |
+| [`docs/DEPLOY_LOCAL_GUIDE.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/DEPLOY_LOCAL_GUIDE.md) | `docs/` | Hướng dẫn chi tiết triển khai Local & Kiến trúc |
+| [`docs/GAME_ENGINE_RULES.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/GAME_ENGINE_RULES.md) | `docs/` | Quy tắc xây dựng & mở rộng Game Engine |
+| [`scripts/deploy-local.bat`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.bat) | `scripts/` | Script chạy tự động trên Windows |
+| [`scripts/deploy-local.ps1`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.ps1) | `scripts/` | Script PowerShell tương tác |
+| [`scripts/deploy-local.sh`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.sh) | `scripts/` | Shell script cho Linux/macOS |
 | [`docker-compose.yml`](file:///D:/encee/workspace/web/iq_kid_market/docker-compose.yml) | `./` | Cấu hình Docker Compose (3 services: db, backend, frontend) |
 | [`Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/Dockerfile) | `./` | Dockerfile cho Frontend |
 | [`backend/Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/backend/Dockerfile) | `backend/` | Dockerfile cho Backend FastAPI |

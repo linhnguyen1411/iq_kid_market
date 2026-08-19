@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 
+# Tu dong chuyen ve thu muc goc cua project
+cd "$(dirname "$0")/.." || exit 1
+
 echo "======================================================================="
 echo "          🚀 IQ KID MARKET - SCRIPT DEPLOY LOCAL TỰ ĐỘNG (BASH)"
 echo "======================================================================="
 echo ""
-echo "Chọn chế độ deploy:"
+echo "Chọn thao tác:"
 echo "[1] Chế độ Docker Compose Full Stack (Khuyên dùng)"
 echo "[2] Chế độ Frontend Dev Server (Node.js + Vite)"
 echo "[3] Dừng Docker Containers"

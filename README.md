@@ -13,7 +13,7 @@ iq_kid_market/
 ├── src/                      # Frontend: React 19 + TypeScript + Vite + Tailwind v4
 │   ├── App.tsx                # Toàn bộ UI/flow chính (không cần sửa khi đổi backend)
 │   ├── components/
-│   │   └── game-engines/       # Mỗi loại game = 1 engine riêng (xem GAME_ENGINE_RULES.md)
+│   │   └── game-engines/       # Mỗi loại game = 1 engine riêng (xem docs/GAME_ENGINE_RULES.md)
 │   ├── data/
 │   └── types.ts
 ├── backend/                  # Backend: FastAPI + SQLAlchemy + PostgreSQL
@@ -30,12 +30,19 @@ iq_kid_market/
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── Dockerfile
+├── docs/                     # Tài liệu kiến trúc & quy chuẩn dự án
+│   ├── DEPLOY_LOCAL_GUIDE.md  # Hướng dẫn deploy local & tổng quan kiến trúc
+│   └── GAME_ENGINE_RULES.md   # Rule bắt buộc khi thêm/sửa game engine
+├── scripts/                  # Bộ script deploy tự động (Windows, Linux, macOS)
+│   ├── deploy-local.bat
+│   ├── deploy-local.ps1
+│   └── deploy-local.sh
+├── data/                     # Dữ liệu phụ trợ & backup
+│   └── db.json
 ├── Dockerfile                 # Build frontend (Vite build + preview)
 ├── docker-compose.yml         # db + backend + frontend
 ├── vite.config.ts             # Proxy /api/* -> backend (localhost:8000 mặc định)
-├── GAME_ENGINE_RULES.md       # Rule bắt buộc khi thêm/sửa game engine
 └── package.json
-
 ```
 
 - Frontend gọi `fetch('/api/...')` như cũ; Vite dev server và Vite preview (trong Docker) đều proxy `/api/*` sang backend FastAPI, nên **không cần sửa** `App.tsx` dù chạy local hay Docker.
