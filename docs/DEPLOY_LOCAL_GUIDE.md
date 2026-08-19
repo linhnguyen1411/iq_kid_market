@@ -220,6 +220,47 @@ npm run dev
 
 ---
 
+### 2.3. 🔄 Quy Trình Cập Nhật Code Mới & Mẹo Chạy Local (Workflow & Pro Tips)
+
+Khi bạn hoặc đồng nghiệp có code mới (hoặc sau khi chạy `git pull`), hãy áp dụng quy trình sau:
+
+#### 🚀 Cách 1: Nhanh nhất với Docker Compose (Khuyên dùng)
+Mỗi khi có code mới, thay đổi model hoặc cập nhật thư viện:
+```powershell
+docker compose up --build
+```
+> [!TIP]
+> **Mẹo Reset CSDL Sạch Sẽ (Clean Reset)**:
+> Nếu có thay đổi lớn về bảng CSDL hoặc bạn muốn nạp lại toàn bộ dữ liệu mẫu ban đầu:
+> ```powershell
+> docker compose down -v
+> docker compose up --build
+> ```
+> *(Cờ `-v` sẽ xóa volume `postgres_data` cũ và tự động khởi tạo lại DB mới cùng dữ liệu seed).*
+
+---
+
+#### 💻 Cách 2: Dành cho lúc đang trực tiếp Lập trình (Dev Mode Hot-Reload)
+Để code mà không cần khởi động lại server thủ công:
+
+- **🟢 Terminal 1 (Backend FastAPI)**:
+  ```powershell
+  cd backend
+  .\venv\Scripts\Activate.ps1
+  pip install -r requirements.txt      # Chạy khi có thư viện mới
+  uvicorn app.main:app --reload --port 8000
+  ```
+  *(Cờ `--reload` giúp server tự khởi động lại trong 0.5s ngay khi bạn vừa lưu file `.py`).*
+
+- **🔵 Terminal 2 (Frontend React + Vite)**:
+  ```powershell
+  npm install                         # Chạy khi có package mới
+  npm run dev
+  ```
+  *(Vite sử dụng HMR - Hot Module Replacement: Mọi chỉnh sửa giao diện `.tsx` hoặc `.css` sẽ phản chiếu tức thì lên trình duyệt trong 0.1s mà không cần bấm F5).*
+
+---
+
 ## 👥 3. TÀI KHOẢN MẪU ĐỂ TEST HỆ THỐNG (DEMO SEED DATA)
 
 Hệ thống tự động khởi tạo các tài khoản mẫu với mật khẩu mặc định là **`123456`**, đầy đủ số dư ví, quyền hạn và dữ liệu kiểm thử:

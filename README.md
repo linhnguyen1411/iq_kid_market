@@ -188,14 +188,20 @@ Sau khi lên xong:
 
 Lần chạy đầu tiên, `backend` tự đợi `db` healthy (`depends_on: condition: service_healthy`), tự tạo bảng và tự seed dữ liệu nếu bảng `users` rỗng.
 
-Các lệnh hữu ích khác:
+Các lệnh hữu ích & Workflow khi có update code:
 
 ```bash
-docker compose up --build -d      # chạy nền
-docker compose logs -f backend    # xem log riêng 1 service
-docker compose down               # dừng, giữ lại volume postgres_data
-docker compose down -v            # dừng và XOÁ LUÔN dữ liệu Postgres (reset sạch)
+# 1. Kéo code mới và chạy lại qua Docker (Khuyên dùng)
+git pull origin feature/feature-review
+docker compose up --build
 
+# 2. Mẹo Reset CSDL sạch sẽ từ đầu (khi đổi Schema hoặc muốn seed lại)
+docker compose down -v
+docker compose up --build
+
+# 3. Chế độ Dev lập trình trực tiếp (Hot-Reload không cần restart)
+# - Backend: cd backend && uvicorn app.main:app --reload --port 8000
+# - Frontend: npm run dev (Vite HMR cập nhật tức thì 0.1s)
 ```
 
 ---
