@@ -206,8 +206,7 @@ docker compose down -v            # dừng và XOÁ LUÔN dữ liệu Postgres (
 
 - **Frontend không phụ thuộc backend cụ thể.** `App.tsx` chỉ gọi `fetch('/api/...')` — mọi thay đổi backend (ngôn ngữ, framework, hạ tầng) không được kéo theo sửa route path hay response shape đã thống nhất.
 - **Không giữ hạ tầng "ma".** Không khai báo service/dependency trong `docker-compose.yml` hay `requirements.txt` nếu không có code nào thực sự dùng tới (bài học từ việc dọn Redis/MinIO cũ — xem `backend/README.md`).
-- **MVP dùng** `create_all()`**, không dùng Alembic** — chấp nhận được cho dev/demo. Trước khi lên production hoặc khi cần schema có version, bắt buộc chuyển sang Alembic (`alembic init`, generate revision từ `app/models.py`) trước khi merge thay đổi schema.
-- **Auth hiện tại chỉ là placeholder** (`userId` truyền tay qua query/body, không có JWT/session thật). Không được coi đây là chuẩn bảo mật — phải thêm auth thật trước khi lên production.
+- **Hệ thống Xác thực (Auth System)**: Đã tích hợp chuẩn **JWT + Bcrypt** (`/api/auth/register`, `/api/auth/login`, `/api/auth/me`). Các tài khoản seed mẫu có mật khẩu mặc định là **`123456`** (`kid_binh`, `giao_vien_lan`, `phu_huynh_dung`). Hệ thống hỗ trợ đăng ký người dùng mới, chọn Avatar 3D, chọn khối lớp và vai trò.
 - **Biến môi trường không hardcode.** Luôn đọc qua `os.getenv` (backend) / `.env` (frontend nếu có), không commit secret thật vào `.env` — chỉ commit `.env.example`.
 
 ### 4.2. Backend (FastAPI)

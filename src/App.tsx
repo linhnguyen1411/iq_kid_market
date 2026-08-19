@@ -1,20 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Brain, BookOpen, Sparkles, TrendingUp, Coins, LogOut, User, 
   Search, Filter, Lock, Settings, Compass, Trophy, Gamepad2, 
   CreditCard, ArrowRight, ChevronRight, PlusCircle, CheckCircle2, 
-  UserCheck, BarChart2, DollarSign, Award, Eye, Code, ThumbsUp, RefreshCw 
+  UserCheck, BarChart2, DollarSign, Award, Eye, Code, ThumbsUp, RefreshCw,
+  LogIn, UserPlus, KeyRound, ChevronDown, ShieldCheck, GraduationCap, Heart
 } from "lucide-react";
 import QuestionRenderer from "./components/QuestionRenderer";
 import ScratchSimulator from "./components/ScratchSimulator";
 import TechArchBoard from "./components/TechArchBoard";
+import { AuthModal, AuthSuccessPayload } from "./components/AuthModal";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function App() {
-  // Session / User Role States
-  const [currentUserId, setCurrentUserId] = useState<string>("u1"); // u1: Student, u2: Teacher/Creator, u3: Parent
+  // Session / Auth States
+  const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem("iqkids_auth_token"));
+  const [currentUserId, setCurrentUserId] = useState<string>(() => localStorage.getItem("iqkids_current_user_id") || "u1");
   const [session, setSession] = useState<any>(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
 
   // Navigations & Tabs
   const [activeTab, setActiveTab] = useState<"landing" | "marketplace" | "leaderboard" | "profile" | "wallet" | "scratch" | "admin" | "tech_arch">("landing");
@@ -117,22 +124,83 @@ export default function App() {
   const [editProfileGrade, setEditProfileGrade] = useState("");
   const [profileSuccessMsg, setProfileSuccessMsg] = useState("");
 
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Load Session Information
-  const loadSession = async () => {
+  const loadSession = async (overrideUserId?: string, overrideToken?: string) => {
     try {
-      const r = await fetch(`/api/session?userId=${currentUserId}`);
-      const data = await r.json();
-      setSession(data);
-      if (data.user) {
-        setEditProfileName(data.user.name);
-        setEditProfileAvatar(data.user.avatar);
-        setEditProfileGrade(String(data.user.grade || 1));
+      const activeUid = overrideUserId || currentUserId;
+      const activeTok = overrideToken !== undefined ? overrideToken : authToken;
+
+      const headers: Record<string, string> = {};
+      if (activeTok) {
+        headers["Authorization"] = `Bearer ${activeTok}`;
+      }
+
+      // Gọi endpoint /api/auth/me nếu có token, hoặc /api/session?userId=...
+      const url = activeTok ? `/api/auth/me?userId=${activeUid}` : `/api/session?userId=${activeUid}`;
+      const r = await fetch(url, { headers });
+      if (r.ok) {
+        const data = await r.json();
+        setSession(data);
+        if (data.user) {
+          setCurrentUserId(data.user.id);
+          localStorage.setItem("iqkids_current_user_id", data.user.id);
+          setEditProfileName(data.user.name);
+          setEditProfileAvatar(data.user.avatar);
+          setEditProfileGrade(String(data.user.grade || 1));
+        }
       }
     } catch (e) {
-      console.error("Error loading mock session", e);
+      console.error("Error loading session", e);
     } finally {
       setLoadingSession(false);
     }
+  };
+
+  // Callback khi Đăng nhập / Đăng ký thành công từ AuthModal
+  const handleAuthSuccess = (data: AuthSuccessPayload) => {
+    if (data.access_token) {
+      localStorage.setItem("iqkids_auth_token", data.access_token);
+      setAuthToken(data.access_token);
+    }
+    if (data.user) {
+      setCurrentUserId(data.user.id);
+      localStorage.setItem("iqkids_current_user_id", data.user.id);
+      setSession(data);
+      setEditProfileName(data.user.name);
+      setEditProfileAvatar(data.user.avatar);
+      setEditProfileGrade(String(data.user.grade || 1));
+
+      // Điều hướng thông minh theo role
+      if (data.user.role === "teacher" || data.user.role === "creator") {
+        setActiveTab("admin");
+      } else if (data.user.role === "parent") {
+        setActiveTab("marketplace");
+      } else {
+        setActiveTab("landing");
+      }
+    }
+  };
+
+  // Đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem("iqkids_auth_token");
+    localStorage.removeItem("iqkids_current_user_id");
+    setAuthToken(null);
+    setCurrentUserId("u1");
+    setIsProfileDropdownOpen(false);
+    loadSession("u1", "");
+    setActiveTab("landing");
   };
 
   // Load Creator Games
@@ -681,141 +749,234 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans select-none antialiased">
       
+      {/* 0. AUTH MODAL COMPONENT */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+        initialMode={authModalMode}
+      />
+
       {/* 1. TOP GEOMETRIC BALANCE NAVIGATION */}
-      <nav id="navbar" className="bg-white border-b-2 border-slate-100 sticky top-0 z-50 px-5 py-3 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
+      <nav id="navbar" className="bg-white border-b-2 border-slate-100 sticky top-0 z-50 px-4 sm:px-6 py-2.5 shadow-xs backdrop-blur-md bg-white/95">
+        <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-3">
           
           {/* Logo brand */}
           <div 
             id="brand_home"
             onClick={() => { setActiveTab("landing"); setSelectedGameDetail(null); }}
-            className="flex items-center gap-3 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group"
           >
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md transition-transform group-hover:scale-105">
+            <div className="w-9 h-9 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow-md transition-transform group-hover:scale-105">
               IQ
             </div>
             <div>
-              <span className="font-display text-lg md:text-xl font-black text-indigo-900 tracking-tight leading-none uppercase">IQ KIDS</span>
-              <span className="font-display text-xxs block tracking-widest text-indigo-650 font-extrabold uppercase leading-none mt-0.5">MARKETPLACE</span>
+              <span className="font-display text-base md:text-lg font-black text-indigo-950 tracking-tight leading-none uppercase">IQ KIDS</span>
+              <span className="font-display text-[9px] block tracking-widest text-purple-600 font-extrabold uppercase leading-none mt-0.5">EDTECH MARKET</span>
             </div>
           </div>
 
           {/* Quick role switch & Techboard trigger (CTO feature) */}
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               id="goto_tech_arch"
               onClick={() => setActiveTab("tech_arch")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 transition-all ${
+              className={`px-2.5 py-1.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1 transition-all ${
                 activeTab === "tech_arch" 
                 ? "bg-slate-900 text-kids-yellow" 
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               }`}
             >
-              <Code className="w-3.5 h-3.5" /> Kiến trúc (ERD/API)
+              <Code className="w-3.5 h-3.5" /> Kiến trúc
             </button>
 
             {/* Role quick selector label */}
-            <div className="flex items-center gap-1.5 bg-slate-100 rounded-xl px-2 py-1 border border-slate-205">
-              <span className="text-xxs font-bold text-slate-500 uppercase px-1">Đổi vai:</span>
+            <div className="hidden sm:flex items-center gap-1 bg-slate-100 rounded-xl px-2 py-1 border border-slate-200">
+              <span className="text-[10px] font-bold text-slate-500 uppercase px-1">Đổi vai:</span>
               <select
                 id="role_switch_select"
                 value={currentUserId}
                 onChange={(e) => {
-                  setCurrentUserId(e.target.value);
-                  setActiveTab("landing");
+                  const uid = e.target.value;
+                  setCurrentUserId(uid);
+                  localStorage.setItem("iqkids_current_user_id", uid);
+                  loadSession(uid, "");
                   setSelectedGameDetail(null);
                 }}
                 className="bg-transparent text-xs font-bold font-sans text-slate-700 outline-none cursor-pointer pr-1"
               >
-                <option value="u1">Học sinh Lớp 2 (Bé Bình)</option>
-                <option value="u2">Creator / Teacher (Cô Lan)</option>
-                <option value="u3">Phụ huynh học sinh (Bố Dũng)</option>
+                <option value="u1">🐯 Bé Bình (Học sinh Lớp 2)</option>
+                <option value="u2">👩‍🏫 Cô Lan (Creator / Teacher)</option>
+                <option value="u3">👨‍💼 Bố Dũng (Phụ huynh)</option>
               </select>
             </div>
           </div>
 
-          {/* Wallet and Profile Stats (Rings) */}
-          {!loadingSession && session && (
-            <div className="flex items-center gap-3 md:gap-4">
-              
-              {/* XP Pill */}
-              <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3.5 py-1.5 rounded-full shadow-xs">
-                <span className="text-orange-500 font-bold text-xs md:text-sm">⚡ {session.user.xp.toLocaleString()}</span>
-                <span className="text-[10px] font-bold text-orange-400">XP</span>
-              </div>
-
-              {/* Balance Pill */}
-              <div 
-                id="header_wallet_btn"
-                onClick={() => setActiveTab("wallet")}
-                className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3.5 py-1.5 rounded-full cursor-pointer hover:bg-emerald-100/50 transition-colors shadow-xs"
+          {/* Wallet, Stats & Auth Section */}
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            
+            {/* Nút Đăng nhập / Đăng ký nếu chưa có tài khoản hoặc muốn đổi */}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => { setAuthModalMode('login'); setIsAuthModalOpen(true); }}
+                className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 border border-slate-200 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
               >
-                <span className="text-emerald-600 font-extrabold tracking-tight text-xs md:text-sm">{session.wallet.balance.toLocaleString()}đ</span>
-              </div>
+                <LogIn className="w-3.5 h-3.5" /> Đăng Nhập
+              </button>
 
-              {/* Avatar Indicator */}
-              <div 
-                id="header_profile_btn"
-                onClick={() => setActiveTab("profile")}
-                className="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1 rounded-full transition-all"
+              <button
+                type="button"
+                onClick={() => { setAuthModalMode('register'); setIsAuthModalOpen(true); }}
+                className="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl shadow-sm transition-all flex items-center gap-1 cursor-pointer"
               >
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-blue-105 flex items-center justify-center text-2xl border-2 border-slate-200 shadow-sm">
-                    {avatarToEmoji(session.user.avatar)}
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 bg-kids-pink text-white font-mono font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                    {session.user.level}
-                  </div>
-                </div>
-                <div className="hidden sm:block text-left">
-                  <span className="font-display font-bold text-slate-800 text-xs md:text-sm block">{session.user.name}</span>
-                  <span className="text-[10px] block font-semibold text-slate-400">
-                    {session.user.grade ? `Lớp ${session.user.grade} 🎒` : categoryToVietnamese(session.user.role)}
-                  </span>
-                </div>
-              </div>
-
+                <UserPlus className="w-3.5 h-3.5" /> Đăng Ký ✨
+              </button>
             </div>
-          )}
+
+            {/* Wallet and Profile Stats */}
+            {!loadingSession && session && (
+              <div className="flex items-center gap-2 sm:gap-3">
+                
+                {/* XP Pill */}
+                {session.user.role === 'student' && (
+                  <div className="hidden md:flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1 rounded-full shadow-xs">
+                    <span className="text-orange-600 font-extrabold text-xs">⚡ {session.user.xp.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-orange-400">XP</span>
+                  </div>
+                )}
+
+                {/* Balance Pill */}
+                <div 
+                  id="header_wallet_btn"
+                  onClick={() => setActiveTab("wallet")}
+                  className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full cursor-pointer hover:bg-emerald-100 transition-colors shadow-xs"
+                >
+                  <Coins className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700 font-extrabold text-xs">{session.wallet.balance.toLocaleString()}đ</span>
+                </div>
+
+                {/* Avatar Indicator & Profile Dropdown */}
+                <div className="relative" ref={profileDropdownRef}>
+                  <div 
+                    id="header_profile_btn"
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 p-1 pl-1.5 rounded-full border border-slate-200 transition-all shadow-xs"
+                  >
+                    <div className="relative">
+                      <div className="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-xl border border-indigo-200 shadow-xs">
+                        {avatarToEmoji(session.user.avatar)}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 bg-purple-600 text-white font-mono font-extrabold text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-white shadow-xs">
+                        {session.user.level}
+                      </div>
+                    </div>
+                    <div className="hidden lg:block text-left pr-1">
+                      <span className="font-display font-bold text-slate-800 text-xs block leading-tight truncate max-w-[100px]">{session.user.name}</span>
+                      <span className="text-[9px] block font-semibold text-slate-400">
+                        {session.user.grade ? `Lớp ${session.user.grade}` : categoryToVietnamese(session.user.role)}
+                      </span>
+                    </div>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
+
+                  {/* Profile Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 animate-fade-in text-left">
+                      <div className="p-2.5 border-b border-slate-100 bg-slate-50 rounded-xl mb-1">
+                        <div className="font-bold text-xs text-slate-800">{session.user.name}</div>
+                        <div className="text-[10px] text-slate-500 font-mono">@{session.user.username}</div>
+                        <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md">
+                          {session.user.grade ? `🎒 Học sinh Lớp ${session.user.grade}` : (session.user.role === 'teacher' ? '👩‍🏫 Giáo viên / Creator' : '👨‍💼 Phụ huynh')}
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => { setActiveTab("profile"); setIsProfileDropdownOpen(false); }}
+                        className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-indigo-600 rounded-xl flex items-center gap-2 transition-colors text-left"
+                      >
+                        <User className="w-4 h-4 text-slate-400" /> Hồ sơ cá nhân & Danh hiệu
+                      </button>
+
+                      <button
+                        onClick={() => { setActiveTab("wallet"); setIsProfileDropdownOpen(false); }}
+                        className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 rounded-xl flex items-center gap-2 transition-colors text-left"
+                      >
+                        <CreditCard className="w-4 h-4 text-slate-400" /> Quản lý Ví & Lịch sử ({session.wallet.balance.toLocaleString()}đ)
+                      </button>
+
+                      {(session.user.role === 'teacher' || session.user.role === 'creator' || session.user.role === 'admin') && (
+                        <button
+                          onClick={() => { setActiveTab("admin"); setIsProfileDropdownOpen(false); }}
+                          className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-purple-50 hover:text-purple-600 rounded-xl flex items-center gap-2 transition-colors text-left"
+                        >
+                          <BookOpen className="w-4 h-4 text-purple-400" /> Studio Sáng Tạo Game
+                        </button>
+                      )}
+
+                      <div className="border-t border-slate-100 my-1" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2 transition-colors text-left"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-400" /> Đăng xuất
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+          </div>
 
         </div>
       </nav>
 
-      {/* 2. CORE SUB-MENU ROUTINGS OR TABS */}
-      <div className="bg-white/80 border-b border-slate-100 px-4 py-2 text-center overflow-x-auto no-scrollbar">
+      {/* 2. CORE SUB-MENU ROUTINGS THÍCH ỨNG THEO ROLE */}
+      <div className="bg-white/90 border-b border-slate-100 px-4 py-2 text-center overflow-x-auto no-scrollbar shadow-2xs">
         <div className="max-w-4xl mx-auto flex items-center justify-center sm:justify-between gap-1">
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+            
+            {/* Tab Trang Chủ */}
             <button
               id="tab_home_btn"
               onClick={() => { setActiveTab("landing"); setSelectedGameDetail(null); }}
-              className={`px-4.5 py-2 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
                 activeTab === "landing" ? "bg-kids-blue text-white kids-btn-shadow-blue" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              🗺️ Trang Chủ
+              🗺️ Bản Đồ IQ
             </button>
+
+            {/* Tab Chợ Game */}
             <button
               id="tab_market_btn"
               onClick={() => { setActiveTab("marketplace"); setSelectedGameDetail(null); }}
-              className={`px-4.5 py-2 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
                 activeTab === "marketplace" ? "bg-kids-pink text-white kids-btn-shadow-pink" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               🛍️ Chợ Game
             </button>
+
+            {/* Tab Học Scratch STEM */}
             <button
               id="tab_scratch_btn"
               onClick={() => { setActiveTab("scratch"); setSelectedGameDetail(null); }}
-              className={`px-4.5 py-2 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
                 activeTab === "scratch" ? "bg-kids-purple text-white kids-btn-shadow-purple" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               🤖 Học Scratch (STEM)
             </button>
+
+            {/* Tab Bảng Vàng */}
             <button
               id="tab_leaderboard_btn"
               onClick={() => { setActiveTab("leaderboard"); setSelectedGameDetail(null); }}
-              className={`px-4.5 py-2 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
+              className={`px-4 py-1.5 rounded-xl text-xs sm:text-sm font-display font-black transition-all ${
                 activeTab === "leaderboard" ? "bg-kids-yellow text-slate-800 kids-btn-shadow-yellow" : "text-slate-600 hover:bg-slate-50"
               }`}
             >
@@ -823,18 +984,19 @@ export default function App() {
             </button>
           </div>
 
+          {/* Nút Studio Sáng Tạo / CMS cho Creator hoặc Admin */}
           <div className="flex gap-1">
-            {/* Show Admin/Creator option only if role allowed or for dynamic ease of preview */}
             <button
               id="tab_creator_btn"
               onClick={() => { setActiveTab("admin"); setSelectedGameDetail(null); }}
-              className={`px-4 py-2 rounded-xl text-xs font-display font-bold transition-all border ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-display font-bold transition-all border flex items-center gap-1.5 ${
                 activeTab === "admin" 
-                ? "bg-slate-800 text-white border-transparent" 
+                ? "bg-slate-900 text-white border-transparent shadow-xs" 
                 : "text-slate-700 bg-slate-50 hover:bg-slate-100 border-slate-200"
               }`}
             >
-              ⚙️ CMS & Creator Portal
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Studio Sáng Tạo</span>
             </button>
           </div>
         </div>

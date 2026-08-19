@@ -222,13 +222,18 @@ npm run dev
 
 ## 👥 3. TÀI KHOẢN MẪU ĐỂ TEST HỆ THỐNG (DEMO SEED DATA)
 
-Hệ thống tự động khởi tạo 3 tài khoản mẫu với đầy đủ số dư ví, quyền hạn và dữ liệu kiểm thử:
+Hệ thống tự động khởi tạo các tài khoản mẫu với mật khẩu mặc định là **`123456`**, đầy đủ số dư ví, quyền hạn và dữ liệu kiểm thử:
 
-| ID | Username | Tên hiển thị | Vai trò (Role) | Cấu hình & Trạng thái khởi tạo |
-| :--- | :--- | :--- | :--- | :--- |
-| `u1` | `kid_binh` | Thế Bình 🌟 | **Học sinh (Student)** | - Học sinh Lớp 2, Level 1, 120 XP, Streak 3 ngày.<br>- Số dư ví: **90.000 đ**.<br>- Đã mở khóa game: `g1` (Ghép Cặp Thần Tốc).<br>- Có sẵn lịch sử làm bài & điểm trên Bảng xếp hạng. |
-| `u2` | `giao_vien_lan` | Cô Lan Anh 👩‍🏫 | **Giáo viên (Teacher)** | - Level 5, 450 XP.<br>- Số dư ví: **500.000 đ**.<br>- Đã mở khóa game: `g1`, `g2`, `g3`.<br>- Có quyền tạo game custom và khóa học Scratch. |
-| `u3` | `phu_huynh_dung` | Bố Tiến Dũng 👨‍💼 | **Phụ huynh (Parent)** | - Level 1, 0 XP.<br>- Số dư ví: **1.000.000 đ**.<br>- Đã liên kết mua mở khóa game `g1`, `g2` cho con. |
+| ID | Username | Mật khẩu mặc định | Tên hiển thị | Vai trò (Role) | Cấu hình & Trạng thái khởi tạo |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `u1` | `kid_binh` | **`123456`** | Thế Bình 🌟 | **Học sinh (Student)** | - Học sinh Lớp 2, Level 1, 120 XP, Streak 3 ngày.<br>- Số dư ví: **90.000 đ**.<br>- Đã mở khóa game: `g1` (Ghép Cặp Thần Tốc).<br>- Có sẵn lịch sử làm bài & điểm trên Bảng xếp hạng. |
+| `u2` | `giao_vien_lan` | **`123456`** | Cô Lan Anh 👩‍🏫 | **Giáo viên / Creator** | - Level 5, 450 XP.<br>- Số dư ví: **500.000 đ**.<br>- Đã mở khóa game: `g1`, `g2`, `g3`.<br>- Toàn quyền vào Studio Sáng Tạo: Tạo Game mới, Thiết kế AI, Level Builder. |
+| `u3` | `phu_huynh_dung` | **`123456`** | Bố Tiến Dũng 👨‍💼 | **Phụ huynh (Parent)** | - Level 1, 0 XP.<br>- Số dư ví: **1.000.000 đ**.<br>- Đã liên kết mua mở khóa game `g1`, `g2` cho con, xem tiến độ học của con. |
+
+> [!TIP]
+> **Đăng nhập nhanh 1 chạm (1-Click Demo Login)**: Trên giao diện Modal Đăng nhập (`AuthModal`), bạn có thể nhấp trực tiếp vào các nút mẫu `🐯 Bé Bình`, `👩‍🏫 Cô Lan`, `👨‍💼 Bố Dũng` để điền tự động username và mật khẩu tức thì.
+> 
+> **Đăng ký tài khoản mới (Register)**: Người dùng mới có thể bấm nút **"Đăng Ký ✨"** ở Header, chọn Avatar linh vật 3D, chọn khối lớp (Lớp 1-9), chọn vai trò để nhận ngay quà tặng chào mừng (90.000đ + 100 XP cho Học sinh, 500.000đ cho Giáo viên, 1.000.000đ cho Phụ huynh).
 
 ---
 

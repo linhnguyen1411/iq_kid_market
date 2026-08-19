@@ -12,6 +12,7 @@ class User(Base):
 
     id = Column(String(50), primary_key=True)  # "u1", "u2"...
     username = Column(String(50), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=True)  # Hash mật khẩu an toàn bằng bcrypt
     name = Column(String(150), nullable=False)
     role = Column(String(20), nullable=False, default="student")  # student|teacher|parent|creator|admin
     grade = Column(Integer, nullable=True)

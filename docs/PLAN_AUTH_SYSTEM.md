@@ -4,12 +4,17 @@ Tài liệu thiết kế kiến trúc và kế hoạch triển khai toàn diện
 
 ---
 
-## 🎯 1. Đánh Giá Hiện Trạng Hệ Thống (Review)
+## 🎯 1. Đánh Giá Hiện Trạng & Tiến Độ Triển Khai
 
-### Kết quả rà soát:
-- ❌ **Chưa có chức năng Register / Login thật**: Hệ thống hiện tại đang sử dụng Mock Role Switcher (thẻ `<select>` ở Header) để đổi qua lại giữa 3 `userId` cứng (`u1`, `u2`, `u3`).
-- ❌ **Chưa có bảng mã băm mật khẩu**: Bảng `users` trong PostgreSQL chưa có trường `password_hash`, chưa tích hợp JWT Token hoặc cơ chế xác thực phiên làm việc.
-- ❌ **Chưa có Modal/Form Đăng nhập & Đăng ký**: Người dùng mới chưa thể tự tạo tài khoản riêng, chọn Avatar linh vật hoạt hình, chọn khối lớp (Lớp 1 - 9) hoặc đăng nhập lưu phiên làm việc.
+### Trạng thái: ✅ ĐÃ TRIỂN KHAI HOÀN TẤT (COMPLETED)
+- ✅ **Đã hoàn thiện chức năng Register / Login thật**: Sử dụng chuẩn JWT + Bcrypt an toàn.
+- ✅ **Đã thêm cột `password_hash` vào PostgreSQL**: Hashing an toàn bằng `passlib[bcrypt]`.
+- ✅ **Đã hoàn thiện component `AuthModal.tsx` cực kỳ lung linh**:
+  - Chuyển tab Đăng Nhập ⇄ Đăng Ký mượt mà.
+  - Bộ chọn Avatar linh vật 3D hoạt hình sinh động (6 avatar với âm thanh Web Audio).
+  - Bộ chọn Role 3D cards (Học sinh Lớp 1-9, Giáo viên, Phụ huynh).
+  - Nút Đăng nhập 1-Click nhanh (Demo: Bé Bình, Cô Lan, Bố Dũng - pass `123456`).
+- ✅ **Đã tích hợp Profile Badge & Dropdown Header**: Tự động lưu Token vào `localStorage` và đồng bộ Sub-menu tabs theo Role.
 
 ---
 

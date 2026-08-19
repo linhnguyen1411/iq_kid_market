@@ -13,16 +13,20 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 from . import models
+from .auth_utils import hash_password
 
 SEED_JSON_PATH = Path(__file__).parent / "seed_data.json"
 
 DEFAULT_USERS = [
-    {"id": "u1", "username": "kid_binh", "name": "Thế Bình 🌟", "role": "student",
-     "grade": 2, "avatar": "smile_tiger", "xp": 120, "level": 1, "streak": 3},
-    {"id": "u2", "username": "giao_vien_lan", "name": "Cô Lan Anh 👩‍🏫", "role": "teacher",
-     "grade": None, "avatar": "logic_owl", "xp": 450, "level": 5, "streak": 0},
-    {"id": "u3", "username": "phu_huynh_dung", "name": "Bố Tiến Dũng 👨‍💼", "role": "parent",
-     "grade": None, "avatar": "cool_fox", "xp": 0, "level": 1, "streak": 0},
+    {"id": "u1", "username": "kid_binh", "password_hash": hash_password("123456"),
+     "name": "Thế Bình 🌟", "role": "student", "grade": 2, "avatar": "smile_tiger",
+     "xp": 120, "level": 1, "streak": 3},
+    {"id": "u2", "username": "giao_vien_lan", "password_hash": hash_password("123456"),
+     "name": "Cô Lan Anh 👩‍🏫", "role": "teacher", "grade": None, "avatar": "logic_owl",
+     "xp": 450, "level": 5, "streak": 0},
+    {"id": "u3", "username": "phu_huynh_dung", "password_hash": hash_password("123456"),
+     "name": "Bố Tiến Dũng 👨‍💼", "role": "parent", "grade": None, "avatar": "cool_fox",
+     "xp": 0, "level": 1, "streak": 0},
 ]
 
 DEFAULT_WALLETS = {
