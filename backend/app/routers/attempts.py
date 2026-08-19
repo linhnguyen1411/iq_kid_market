@@ -1,4 +1,3 @@
-import time
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
@@ -21,8 +20,8 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     old_level = user.level
     user.level = (user.xp // XP_PER_LEVEL) + 1
 
+    # ID tự động sinh qua default generator của model
     attempt = models.Attempt(
-        id=f"att_{int(time.time() * 1000)}",
         user_id=body.userId,
         game_id=body.gameId,
         level_num=body.levelNum,

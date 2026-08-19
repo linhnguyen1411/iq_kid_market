@@ -32,6 +32,7 @@ Hệ thống được thiết kế theo mô hình tách biệt Frontend - Backen
                           |                FASTAPI BACKEND SERVICE                |
                           |       - Python 3.12 (hoặc 3.10+) + FastAPI            |
                           |       - SQLAlchemy ORM + Auto-seed on startup         |
+                          |       - Auto-generated Prefix IDs (Stripe-style)      |
                           |       - Google Gemini AI Integration (google-genai)   |
                           |       - Routers: session, games, wallet, attempts...  |
                           +-------------------------------------------------------+
@@ -44,60 +45,33 @@ Hệ thống được thiết kế theo mô hình tách biệt Frontend - Backen
                           +-------------------------------------------------------+
 ```
 
-#### 📁 Cấu trúc Thư mục Dự án:
+---
 
-```
-iq_kid_market/
-├── src/                               # Frontend: React 19 + TypeScript + Vite + Tailwind v4
-│   ├── App.tsx                        # Toàn bộ UI / Flow chính (gọi API qua /api/*)
-│   ├── components/
-│   │   ├── QuestionRenderer.tsx       # Shell điều phối & render game engines
-│   │   ├── ScratchSimulator.tsx       # Trình giả lập lập trình khối lệnh Scratch
-│   │   ├── TechArchBoard.tsx          # Bảng sơ đồ kiến trúc
-│   │   └── game-engines/              # 10 Engine game độc lập (Coding, Matching, Memory, Quiz...)
-│   │       ├── registry.ts            # Đăng ký engine mapping
-│   │       ├── soundUtils.ts          # Bộ phát âm thanh Web Audio API & tiện ích
-│   │       └── types.ts
-│   ├── data/
-│   │   └── seedData.ts                # Dữ liệu gốc định nghĩa 100 màn chơi & Scratch courses
-│   └── types.ts
-├── backend/                           # Backend: Python FastAPI + SQLAlchemy + PostgreSQL
-│   ├── app/
-│   │   ├── main.py                    # FastAPI entrypoint, CORS, startup auto-seed
-│   │   ├── database.py                # Cấu hình SQLAlchemy engine & session
-│   │   ├── models.py                  # Định nghĩa ORM Models (User, Wallet, Game, Attempt...)
-│   │   ├── schemas.py                 # Pydantic schemas (Request / Response validation)
-│   │   ├── seed.py                    # Script khởi tạo 3 user demo & seed data
-│   │   ├── seed_data.json             # Dữ liệu export nguyên vẹn từ seedData.ts
-│   │   ├── default_templates.py       # Template mẫu cho 10 loại game engine
-│   │   ├── ai_content.py              # Xử lý sinh nội dung qua Gemini AI & fallback mẫu
-│   │   └── routers/                   # Module hoá API: session, games, wallet, attempts, admin, misc
-│   ├── requirements.txt               # Dependencies backend
-│   ├── .env.example                   # Biến môi trường mẫu cho backend
-│   ├── Dockerfile                     # Dockerfile build backend container
-│   └── README.md                      # Tài liệu chi tiết phần backend
-├── Dockerfile                         # Dockerfile build frontend container (Vite preview)
-├── docker-compose.yml                 # Khởi chạy 3 services: db (Postgres) + backend + frontend
-├── vite.config.ts                     # Cấu hình Vite & Proxy /api/* -> http://localhost:8000
-├── GAME_ENGINE_RULES.md               # Quy chuẩn bắt buộc khi thêm/sửa game engine
-└── package.json
-```
+### 1.3 Cơ chế Tự động sinh Khóa chính (Auto-Generated Prefix IDs)
 
-> [!NOTE]
-> **Điểm nổi bật về kiến trúc**:
-> 1. **Dọn sạch hạ tầng ma**: Đã loại bỏ hoàn toàn Redis, MinIO và `server.ts`/`db.json` cũ để codebase tinh gọn, tập trung vào kiến trúc chuẩn FastAPI + PostgreSQL.
-> 2. **Frontend không phụ thuộc backend**: `App.tsx` chỉ giao tiếp qua endpoint chuẩn `/api/*`. Vite tự động cấu hình proxy sang backend (cả ở chế độ dev local `localhost:8000` và docker `backend:8000`).
+Hệ thống áp dụng chuẩn **Stripe-style Prefix ID** tự động ở cấp độ Model & Backend:
+- `users`: Tự động sinh `usr_<uuid12>` (vd: `usr_3f8a9c12b4e5`).
+- `wallet_transactions`: Tự động sinh `tx_<timestamp_ms>_<entropy>` (vừa time-sortable, vừa unique 100%).
+- `games`: Tự động sinh `game_<timestamp_ms>_<entropy>` (vd: `game_1786508943128_3f8a9c`).
+- `attempts`: Tự động sinh `att_<timestamp_ms>_<entropy>`.
+- `achievements`: Tự động sinh `ach_<entropy>`.
+- `scratch_courses`: Tự động sinh `sc_<entropy>`.
+- `purchases` & `scratch_lessons`: Tự động tăng (`SERIAL / autoincrement`).
+
+> [!TIP]
+> **Ưu điểm khi lên Production**:
+> - Nhìn vào ID trong log/URL/DB là nhận biết ngay loại thực thể.
+> - Đảm bảo tính duy nhất 100% khi hệ thống mở rộng đa server/sharding mà không sợ xung đột ID.
+> - Chống tấn công dò quét dữ liệu (ID enumeration attack) so với số nguyên tăng dần `1, 2, 3...`.
 
 ---
 
 ## 🛠️ 2. HƯỚNG DẪN TRIỂN KHAI LOCAL (DEPLOYMENT)
 
-Bạn có thể lựa chọn 1 trong 2 phương pháp triển khai dưới đây:
-
 ---
 
 ### 🐳 PHƯƠNG PHÁP 1: TRIỂN KHAI VỚI DOCKER COMPOSE (KHUYẾN NGHỊ)
-> **Yêu cầu**: Máy đã cài đặt **Docker** & **Docker Compose** (Docker Desktop trên Windows/macOS hoặc Docker Engine trên Linux).
+> **Yêu cầu**: Máy đã cài đặt và bật **Docker Desktop**.
 
 Chế độ này sẽ tự động khởi dựng cụm **3 Containers**:
 1. `iqkids_db`: PostgreSQL 15 Database (Cổng `5432`)
@@ -107,32 +81,31 @@ Chế độ này sẽ tự động khởi dựng cụm **3 Containers**:
 #### Các bước thực hiện:
 
 1. **Chuẩn bị file môi trường**:
-   - **Linux / macOS (Bash)**:
-     ```bash
-     cp backend/.env.example backend/.env
-     ```
    - **Windows (PowerShell)**:
      ```powershell
      Copy-Item backend/.env.example backend/.env
      ```
-   *(Tùy chọn: Mở file `backend/.env` điền `GEMINI_API_KEY` nếu bạn muốn dùng AI thật; nếu để trống hệ thống sẽ tự động fallback sang dữ liệu mẫu).*
+   - **Linux / macOS (Bash)**:
+     ```bash
+     cp backend/.env.example backend/.env
+     ```
+   *(Tùy chọn: Điền `GEMINI_API_KEY` vào file `backend/.env` nếu muốn dùng AI thật; để trống sẽ tự động fallback sang bài tập mẫu).*
 
-2. **Build và khởi chạy cụm Containers**:
+2. **Khởi chạy hệ thống**:
    ```bash
-   docker compose up --build
+   docker compose up -d --build
    ```
-   *(Hoặc thêm cờ `-d` nếu muốn chạy nền: `docker compose up --build -d`)*
 
-3. **Truy cập dịch vụ sau khi khởi chạy**:
+3. **Truy cập dịch vụ**:
    - 🌐 **Frontend App**: [http://localhost:3000](http://localhost:3000)
    - ⚡ **FastAPI Swagger Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
    - 🗄️ **PostgreSQL**: `localhost:5432` (User: `iqkids_user` | Password: `iqkids_password` | Database: `iqkids_db`)
 
 4. **Các lệnh quản trị Docker hữu ích**:
    ```bash
-   docker compose logs -f backend    # Xem log riêng service backend
-   docker compose down               # Dừng hệ thống, giữ lại volume dữ liệu Postgres
-   docker compose down -v            # Dừng và XÓA HẲN dữ liệu Postgres (Reset về trắng)
+   docker compose logs -f            # Xem log real-time toàn bộ dịch vụ
+   docker compose down               # Dừng hệ thống (giữ lại dữ liệu DB)
+   docker compose down -v            # Dừng và XOÁ TOÀN BỘ volume dữ liệu cũ (Reset sạch)
    ```
 
 ---
@@ -141,35 +114,22 @@ Chế độ này sẽ tự động khởi dựng cụm **3 Containers**:
 > **Yêu cầu cài đặt sẵn trên máy**:
 > - **Node.js**: Phiên bản ≥ 18
 > - **Python**: Phiên bản ≥ 3.12 (hoặc 3.10+)
-> - **PostgreSQL**: Phiên bản 15+ cài trực tiếp trên OS
+> - **PostgreSQL**: Phiên bản 15+ cài native
 
 #### Bước 1: Khởi tạo PostgreSQL Database
-
-- **Trên Windows (PowerShell sau khi cài PostgreSQL)**:
+- **Windows (PowerShell)**:
   ```powershell
   psql -U postgres -c "CREATE USER iqkids_user WITH PASSWORD 'iqkids_password';"
   psql -U postgres -c "CREATE DATABASE iqkids_db OWNER iqkids_user;"
   ```
-
-- **Trên macOS (Homebrew)**:
+- **macOS / Linux**:
   ```bash
-  brew install postgresql@15
-  brew services start postgresql@15
   psql postgres -c "CREATE USER iqkids_user WITH PASSWORD 'iqkids_password';"
   psql postgres -c "CREATE DATABASE iqkids_db OWNER iqkids_user;"
   ```
 
-- **Trên Linux (Debian / Ubuntu)**:
-  ```bash
-  sudo apt update && sudo apt install -y postgresql postgresql-contrib
-  sudo systemctl enable --now postgresql
-  sudo -u postgres psql -c "CREATE USER iqkids_user WITH PASSWORD 'iqkids_password';"
-  sudo -u postgres psql -c "CREATE DATABASE iqkids_db OWNER iqkids_user;"
-  ```
-
-#### Bước 2: Cài đặt và chạy Backend (FastAPI)
-
-- **Trên Windows (PowerShell)**:
+#### Bước 2: Khởi chạy Backend (FastAPI)
+- **Windows (PowerShell)**:
   ```powershell
   cd backend
   python -m venv venv
@@ -180,12 +140,11 @@ Chế độ này sẽ tự động khởi dựng cụm **3 Containers**:
   $env:GEMINI_API_KEY = ""
   $env:CORS_ORIGINS = "http://localhost:3000,http://localhost:5173"
 
-  python -m app.seed
+  python -m app.seed --reset
   uvicorn app.main:app --reload --port 8000
   ```
-  *(Nếu PowerShell báo lỗi chặn script `Activate.ps1`, mở PowerShell quyền Admin và chạy: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`)*
 
-- **Trên Linux / macOS (Bash)**:
+- **Linux / macOS (Bash)**:
   ```bash
   cd backend
   python3 -m venv venv
@@ -196,59 +155,49 @@ Chế độ này sẽ tự động khởi dựng cụm **3 Containers**:
   export GEMINI_API_KEY=""
   export CORS_ORIGINS="http://localhost:3000,http://localhost:5173"
 
-  python -m app.seed
+  python -m app.seed --reset
   uvicorn app.main:app --reload --port 8000
   ```
 
-#### Bước 3: Cài đặt và chạy Frontend (Vite)
-
-Mở một cửa sổ Terminal mới tại thư mục gốc dự án:
+#### Bước 3: Khởi chạy Frontend (Vite)
+Mở Terminal mới tại thư mục gốc:
 ```bash
 npm install
 npm run dev
 ```
-
-- Ứng dụng chạy tại: **`http://localhost:5173`**
-- Vite tự động proxy mọi request `/api/*` sang `http://localhost:8000`.
+Truy cập giao diện tại: **`http://localhost:5173`**
 
 ---
 
-## 👥 3. TÀI KHOẢN MẪU ĐỂ TEST HỆ THỐNG (DEMO SEED DATA)
+## 🔄 3. HƯỚNG DẪN RESET DATABASE SẠCH TỪ ĐẦU (CLEAN RESET)
 
-Hệ thống tự động khởi tạo 3 tài khoản mẫu với đầy đủ số dư ví, quyền hạn và dữ liệu kiểm thử:
+Nếu bạn đã thao tác nộp dữ liệu vào DB và muốn **xoá sạch toàn bộ để nạp lại từ đầu** theo cấu trúc mới:
+
+### Cách 1: Sử dụng Docker Compose (Nhanh nhất & Triệt để nhất)
+```powershell
+# Bước 1: Dừng container và xoá volume dữ liệu cũ
+docker compose down -v
+
+# Bước 2: Khởi động lại (hệ thống sẽ tự tạo bảng mới và tự động seed lại dữ liệu)
+docker compose up -d --build
+```
+
+### Cách 2: Sử dụng Script Python Native
+```powershell
+cd backend
+python -m app.seed --reset
+```
+*Lệnh `--reset` sẽ tự động `DROP ALL TABLES`, tạo lại toàn bộ cấu trúc bảng mới và nạp lại toàn bộ 3 user demo, 100 màn chơi, khoá học Scratch.*
+
+### Cách 3: Sử dụng Menu Script Tự Động
+Chạy `.\deploy-local.ps1` hoặc `deploy-local.bat`, sau đó chọn **[4] Reset sạch Database & Seed lại từ đầu**.
+
+---
+
+## 👥 4. TÀI KHOẢN MẪU ĐỂ TEST HỆ THỐNG
 
 | ID | Username | Tên hiển thị | Vai trò (Role) | Cấu hình & Trạng thái khởi tạo |
 | :--- | :--- | :--- | :--- | :--- |
 | `u1` | `kid_binh` | Thế Bình 🌟 | **Học sinh (Student)** | - Học sinh Lớp 2, Level 1, 120 XP, Streak 3 ngày.<br>- Số dư ví: **90.000 đ**.<br>- Đã mở khóa game: `g1` (Ghép Cặp Thần Tốc).<br>- Có sẵn lịch sử làm bài & điểm trên Bảng xếp hạng. |
 | `u2` | `giao_vien_lan` | Cô Lan Anh 👩‍🏫 | **Giáo viên (Teacher)** | - Level 5, 450 XP.<br>- Số dư ví: **500.000 đ**.<br>- Đã mở khóa game: `g1`, `g2`, `g3`.<br>- Có quyền tạo game custom và khóa học Scratch. |
 | `u3` | `phu_huynh_dung` | Bố Tiến Dũng 👨‍💼 | **Phụ huynh (Parent)** | - Level 1, 0 XP.<br>- Số dư ví: **1.000.000 đ**.<br>- Đã liên kết mua mở khóa game `g1`, `g2` cho con. |
-
----
-
-## 📋 4. NGUYÊN TẮC PHÁT TRIỂN & QUY CHUẨN ĐÓNG GÓP (PRINCIPLES)
-
-1. **Bảo toàn giao tiếp Frontend - Backend**:
-   - `App.tsx` chỉ gọi `fetch('/api/...')`. Không sửa path API hoặc cấu trúc dữ liệu response khi refactor backend.
-2. **Quy chuẩn Game Engine (`GAME_ENGINE_RULES.md`)**:
-   - Mỗi thể loại game là một component độc lập trong `src/components/game-engines/`.
-   - `QuestionRenderer.tsx` chỉ giữ vai trò khung chứa (shell), không can thiệp logic chấm điểm riêng của từng mini-game.
-   - Thêm game mới: tạo engine component mới + đăng ký 1 dòng vào `registry.ts`.
-3. **Quản lý Cơ sở dữ liệu**:
-   - Giai đoạn MVP sử dụng `Base.metadata.create_all()` khi khởi động app và `app.seed` để nạp dữ liệu.
-   - Dữ liệu `seed_data.json` được sinh tự động từ `src/data/seedData.ts`, không sửa tay trực tiếp.
-4. **Biến môi trường**:
-   - Không commit thông tin nhạy cảm (API Keys, Passwords) vào Git. Luôn dùng `.env` và commit file mẫu `.env.example`.
-
----
-
-## 📌 5. TỔNG KẾT DANH MỤC FILE LIÊN QUAN
-
-| Tệp tin | Vị trí | Mô tả |
-| :--- | :--- | :--- |
-| [`README.md`](file:///D:/encee/workspace/web/iq_kid_market/README.md) | `./` | Tài liệu chính thức của dự án |
-| [`DEPLOY_LOCAL_GUIDE.md`](file:///D:/encee/workspace/web/iq_kid_market/DEPLOY_LOCAL_GUIDE.md) | `./` | Hướng dẫn chi tiết triển khai Local & Kiến trúc |
-| [`GAME_ENGINE_RULES.md`](file:///D:/encee/workspace/web/iq_kid_market/GAME_ENGINE_RULES.md) | `./` | Quy tắc xây dựng & mở rộng Game Engine |
-| [`docker-compose.yml`](file:///D:/encee/workspace/web/iq_kid_market/docker-compose.yml) | `./` | Cấu hình Docker Compose (3 services: db, backend, frontend) |
-| [`Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/Dockerfile) | `./` | Dockerfile cho Frontend |
-| [`backend/Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/backend/Dockerfile) | `backend/` | Dockerfile cho Backend FastAPI |
-| [`backend/README.md`](file:///D:/encee/workspace/web/iq_kid_market/backend/README.md) | `backend/` | Tài liệu chuyên sâu về Backend FastAPI & Database |
