@@ -40,6 +40,35 @@ class SessionOut(BaseModel):
     purchases: list[str]
 
 
+# ---------- Authentication Schemas ----------
+class RegisterIn(BaseModel):
+    username: str
+    password: str
+    name: str
+    role: Optional[str] = "student"  # student | teacher | parent | creator
+    grade: Optional[int] = 1
+    avatar: Optional[str] = "smile_tiger"
+
+
+class LoginIn(BaseModel):
+    username: str
+    password: str
+
+
+class AuthOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
+    wallet: WalletOut
+    purchases: list[str]
+
+
+class ChangePasswordIn(BaseModel):
+    userId: str
+    old_password: str
+    new_password: str
+
+
 class UpdateProfileIn(BaseModel):
     userId: str
     name: Optional[str] = None

@@ -13,7 +13,7 @@ iq_kid_market/
 ├── src/                      # Frontend: React 19 + TypeScript + Vite + Tailwind v4
 │   ├── App.tsx                # Toàn bộ UI/flow chính (không cần sửa khi đổi backend)
 │   ├── components/
-│   │   └── game-engines/       # Mỗi loại game = 1 engine riêng (xem GAME_ENGINE_RULES.md)
+│   │   └── game-engines/       # Mỗi loại game = 1 engine riêng (xem docs/GAME_ENGINE_RULES.md)
 │   ├── data/
 │   └── types.ts
 ├── backend/                  # Backend: FastAPI + SQLAlchemy + PostgreSQL
@@ -30,12 +30,23 @@ iq_kid_market/
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── Dockerfile
+├── docs/                     # Tài liệu kiến trúc & quy chuẩn dự án
+│   ├── DEPLOY_LOCAL_GUIDE.md  # Hướng dẫn deploy local & tổng quan kiến trúc
+│   ├── GAME_ENGINE_RULES.md   # Rule bắt buộc khi thêm/sửa game engine
+│   └── PLAN_AUTH_SYSTEM.md    # Kế hoạch & kiến trúc hệ thống Auth (Register/Login)
+├── scripts/                  # Bộ script tự động (Deploy Docker & Dev Hot-Reload)
+│   ├── dev-local.bat          # ⚡ Chạy Dev nhanh 1-Click (Không cần Docker build)
+│   ├── dev-local.ps1          # ⚡ Script PowerShell Dev nhanh
+│   ├── dev-local.sh           # ⚡ Script Dev nhanh cho macOS/Linux
+│   ├── deploy-local.bat       # 🐳 Chạy full 3 Containers Docker
+│   ├── deploy-local.ps1       # 🐳 PowerShell deploy Docker
+│   └── deploy-local.sh        # 🐳 Bash deploy Docker
+├── data/                     # Dữ liệu phụ trợ & backup
+│   └── db.json
 ├── Dockerfile                 # Build frontend (Vite build + preview)
 ├── docker-compose.yml         # db + backend + frontend
 ├── vite.config.ts             # Proxy /api/* -> backend (localhost:8000 mặc định)
-├── GAME_ENGINE_RULES.md       # Rule bắt buộc khi thêm/sửa game engine
 └── package.json
-
 ```
 
 - Frontend gọi `fetch('/api/...')` như cũ; Vite dev server và Vite preview (trong Docker) đều proxy `/api/*` sang backend FastAPI, nên **không cần sửa** `App.tsx` dù chạy local hay Docker.
@@ -180,14 +191,20 @@ Sau khi lên xong:
 
 Lần chạy đầu tiên, `backend` tự đợi `db` healthy (`depends_on: condition: service_healthy`), tự tạo bảng và tự seed dữ liệu nếu bảng `users` rỗng.
 
-Các lệnh hữu ích khác:
+Các lệnh hữu ích & Workflow khi có update code:
 
 ```bash
-docker compose up --build -d      # chạy nền
-docker compose logs -f backend    # xem log riêng 1 service
-docker compose down               # dừng, giữ lại volume postgres_data
-docker compose down -v            # dừng và XOÁ LUÔN dữ liệu Postgres (reset sạch)
+# 1. Kéo code mới và chạy lại qua Docker (Khuyên dùng)
+git pull origin feature/feature-review
+docker compose up --build
 
+# 2. Mẹo Reset CSDL sạch sẽ từ đầu (khi đổi Schema hoặc muốn seed lại)
+docker compose down -v
+docker compose up --build
+
+# 3. Chế độ Dev lập trình trực tiếp (Hot-Reload không cần restart)
+# - Backend: cd backend && uvicorn app.main:app --reload --port 8000
+# - Frontend: npm run dev (Vite HMR cập nhật tức thì 0.1s)
 ```
 
 ---
@@ -198,8 +215,7 @@ docker compose down -v            # dừng và XOÁ LUÔN dữ liệu Postgres (
 
 - **Frontend không phụ thuộc backend cụ thể.** `App.tsx` chỉ gọi `fetch('/api/...')` — mọi thay đổi backend (ngôn ngữ, framework, hạ tầng) không được kéo theo sửa route path hay response shape đã thống nhất.
 - **Không giữ hạ tầng "ma".** Không khai báo service/dependency trong `docker-compose.yml` hay `requirements.txt` nếu không có code nào thực sự dùng tới (bài học từ việc dọn Redis/MinIO cũ — xem `backend/README.md`).
-- **MVP dùng** `create_all()`**, không dùng Alembic** — chấp nhận được cho dev/demo. Trước khi lên production hoặc khi cần schema có version, bắt buộc chuyển sang Alembic (`alembic init`, generate revision từ `app/models.py`) trước khi merge thay đổi schema.
-- **Auth hiện tại chỉ là placeholder** (`userId` truyền tay qua query/body, không có JWT/session thật). Không được coi đây là chuẩn bảo mật — phải thêm auth thật trước khi lên production.
+- **Hệ thống Xác thực (Auth System)**: Đã tích hợp chuẩn **JWT + Bcrypt** (`/api/auth/register`, `/api/auth/login`, `/api/auth/me`). Các tài khoản seed mẫu có mật khẩu mặc định là **`123456`** (`kid_binh`, `giao_vien_lan`, `phu_huynh_dung`). Hệ thống hỗ trợ đăng ký người dùng mới, chọn Avatar 3D, chọn khối lớp và vai trò.
 - **Biến môi trường không hardcode.** Luôn đọc qua `os.getenv` (backend) / `.env` (frontend nếu có), không commit secret thật vào `.env` — chỉ commit `.env.example`.
 
 ### 4.2. Backend (FastAPI)
