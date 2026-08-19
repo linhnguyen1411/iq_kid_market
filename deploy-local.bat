@@ -6,25 +6,24 @@ echo =======================================================================
 echo          🚀 IQ KID MARKET - BỘ CÔNG CỤ DEPLOY LOCAL TỰ ĐỘNG
 echo =======================================================================
 echo.
-echo [1] Chế độ 1: Chạy Docker Compose (Khuyên dùng - Full Stack 3 Containers)
-echo     - Chạy Frontend (3000), FastAPI Backend (8000), Postgres (5432).
+echo [1] Chế độ 1: Chạy Docker Compose (Khuyên dùng - Full Stack)
+echo     - Chạy 3 Containers: Frontend (3000), FastAPI Backend (8000), Postgres (5432).
+echo     - Tự động tạo bảng & seed dữ liệu 100 màn chơi, 3 user demo.
 echo.
 echo [2] Chế độ 2: Chạy Frontend Dev Server (Node.js + Vite)
 echo     - Dành cho phát triển giao diện (cần backend chạy sẵn ở port 8000).
 echo.
 echo [3] Kiểm tra cài đặt và môi trường local
-echo [4] Reset sạch Database & Seed lại từ đầu (Docker & Native)
-echo [5] Dừng Docker Containers
-echo [6] Thoát
+echo [4] Dừng Docker Containers
+echo [5] Thoát
 echo.
-set /p mode="Nhập lựa chọn của bạn (1-6): "
+set /p mode="Nhập lựa chọn của bạn (1-5): "
 
 if "%mode%"=="1" goto DOCKER
 if "%mode%"=="2" goto FRONTEND_DEV
 if "%mode%"=="3" goto CHECK_ENV
-if "%mode%"=="4" goto RESET_DB
-if "%mode%"=="5" goto DOCKER_DOWN
-if "%mode%"=="6" exit /b 0
+if "%mode%"=="4" goto DOCKER_DOWN
+if "%mode%"=="5" exit /b 0
 
 echo Lựa chọn không hợp lệ!
 pause
@@ -97,28 +96,6 @@ where docker >nul 2>&1 && (echo  [OK] Docker đã được cài đặt) || (echo
 where python >nul 2>&1 && (echo  [OK] Python đã được cài đặt) || (echo  [X] Python chưa cài đặt)
 where psql >nul 2>&1 && (echo  [OK] PostgreSQL psql đã được cài đặt) || (echo  [X] PostgreSQL psql chưa cài đặt)
 echo.
-pause
-goto END
-
-:RESET_DB
-echo.
-echo -----------------------------------------------------------------------
-echo ⚠️ ĐANG RESET SẠCH DATABASE & TẠO LẠI TOÀN BỘ DỮ LIỆU...
-echo -----------------------------------------------------------------------
-where docker >nul 2>&1
-if %errorlevel% equ 0 (
-    echo [1/2] Đang dừng và xóa sạch volume dữ liệu Postgres cũ...
-    docker compose down -v
-    echo [2/2] Đang khởi động lại và tự động seed dữ liệu mới...
-    docker compose up -d --build
-    echo [OK] Đã Reset Database thành công trên Docker!
-) else (
-    echo Đang reset qua Python Native...
-    cd backend
-    python -m app.seed --reset
-    cd ..
-    echo [OK] Đã Reset Database Native thành công!
-)
 pause
 goto END
 

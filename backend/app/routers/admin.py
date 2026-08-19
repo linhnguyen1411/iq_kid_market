@@ -21,12 +21,12 @@ def create_game(body: schemas.CreateGameIn, db: Session = Depends(get_db)):
 
     ts = int(time.time() * 1000)
     if body.customFirstLevel:
-        levels = [{**body.customFirstLevel, "id": f"lvl_{ts}_1"}]
+        levels = [{**body.customFirstLevel, "id": f"custom_g{ts}_l1"}]
     else:
         levels = [build_default_level(body.template_code)]
 
-    # id được tự động sinh bởi models.Game default generator
     game = models.Game(
+        id=f"custom_g_{ts}",
         title=body.title,
         description=body.description,
         detailed_description=body.detailed_description or body.description,
@@ -100,13 +100,13 @@ def add_level(body: schemas.AddLevelIn, db: Session = Depends(get_db)):
     ts = int(time.time() * 1000)
 
     new_level = {
-        "id": f"lvl_{body.gameId}_{lvl_num}_{ts}",
+        "id": f"level_{body.gameId}_{ts}",
         "level_num": lvl_num,
         "title": body.title,
         "xp_reward": body.xp_reward or 80,
         "coin_reward": body.coin_reward or 20,
         "questions": [{
-            "id": f"q_{body.gameId}_{lvl_num}_{ts}",
+            "id": f"q_{body.gameId}_{ts}",
             "question_type": body.question.question_type or game.template_code,
             "prompt": body.question.prompt,
             "points": body.question.points or 25,
@@ -141,15 +141,13 @@ def upload_games(body: schemas.UploadGamesIn, db: Session = Depends(get_db)):
 
     try:
         for g in games_to_import:
-            if not g.get("title") or not g.get("template_code"):
+            if not g.get("id") or not g.get("title") or not g.get("template_code"):
                 raise HTTPException(
                     status_code=400,
-                    detail="Dữ liệu đóng gói không hợp lệ. Phải chứa 'title' và 'template_code'.",
+                    detail="Dấu tích đóng gói không hợp lệ. Phải chứa 'id', 'title' và 'template_code'.",
                 )
 
-            game_id = g.get("id")
-            existing = db.get(models.Game, game_id) if game_id else None
-
+            existing = db.get(models.Game, g["id"])
             values = dict(
                 title=g["title"],
                 description=g.get("description") or "Trò chơi đóng gói sẵn",
@@ -170,7 +168,7 @@ def upload_games(body: schemas.UploadGamesIn, db: Session = Depends(get_db)):
                 for k, v in values.items():
                     setattr(existing, k, v)
             else:
-                db.add(models.Game(id=game_id, **values) if game_id else models.Game(**values))
+                db.add(models.Game(id=g["id"], **values))
 
         db.commit()
         return {"success": True, "count": len(games_to_import)}
@@ -219,6 +217,7 @@ def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
         creator_name = creator.name if creator else "Trí tuệ Nhân tạo Gemini"
 
         game = models.Game(
+            id=generated["id"],
             title=generated["title"],
             description=generated.get("description"),
             detailed_description=generated.get("detailed_description"),

@@ -4,12 +4,11 @@ echo "======================================================================="
 echo "          🚀 IQ KID MARKET - SCRIPT DEPLOY LOCAL TỰ ĐỘNG (BASH)"
 echo "======================================================================="
 echo ""
-echo "Chọn thao tác:"
+echo "Chọn chế độ deploy:"
 echo "[1] Chế độ Docker Compose Full Stack (Khuyên dùng)"
 echo "[2] Chế độ Frontend Dev Server (Node.js + Vite)"
-echo "[3] Reset sạch Database & Seed lại từ đầu"
-echo "[4] Dừng Docker Containers"
-read -p "Nhập lựa chọn (1-4): " mode
+echo "[3] Dừng Docker Containers"
+read -p "Nhập lựa chọn (1-3): " mode
 
 if [ "$mode" == "1" ]; then
     if [ ! -f backend/.env ]; then
@@ -30,11 +29,6 @@ elif [ "$mode" == "2" ]; then
     echo "🟢 Khởi chạy Frontend tại http://localhost:5173 ..."
     npm run dev
 elif [ "$mode" == "3" ]; then
-    echo "⚠️ Đang xóa sạch volume dữ liệu cũ và khởi động lại..."
-    docker compose down -v
-    docker compose up -d --build
-    echo "✅ Đã reset DB thành công!"
-elif [ "$mode" == "4" ]; then
     docker compose down
     echo "✅ Đã dừng Docker services."
 fi

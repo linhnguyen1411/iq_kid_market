@@ -1,24 +1,18 @@
 """
 Nạp dữ liệu khởi tạo vào Postgres:
-  - 3 user demo (u1 học sinh, u2 giáo viên, u3 phụ huynh) + ví + giao dịch.
-  - 5 game thật (100 màn chơi) + achievements + scratch courses, export nguyên vẹn từ seedData.ts -> seed_data.json.
+  - 3 user demo (u1 học sinh, u2 giáo viên, u3 phụ huynh) + ví + giao dịch, y hệt DEFAULT_STATE cũ của server.ts.
+  - 5 game thật (100 màn chơi) + achievements + scratch courses, export nguyên vẹn từ seedData.ts -> seed_data.json,
+    KHÔNG chép tay để tránh sai lệch nội dung tiếng Việt.
 
-Chạy tay:
-  python -m app.seed          # Nạp seed nếu DB rỗng
-  python -m app.seed --reset  # Xóa sạch bảng cũ và tạo lại DB mới tinh từ đầu
-
-Tự chạy:
-  main.py gọi run_seed() khi khởi động app nếu bảng users đang rỗng.
+Chạy tay:  python -m app.seed
+Tự chạy:  main.py gọi run_seed() khi khởi động nếu bảng users rỗng.
 """
-import sys
 import json
-import argparse
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 from . import models
-from .database import engine, Base, SessionLocal
 
 SEED_JSON_PATH = Path(__file__).parent / "seed_data.json"
 
@@ -32,9 +26,9 @@ DEFAULT_USERS = [
 ]
 
 DEFAULT_WALLETS = {
-    "u1": {"balance": 90000, "tx": [("tx_seed_1", 90000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
-    "u2": {"balance": 500000, "tx": [("tx_seed_2", 500000, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
-    "u3": {"balance": 1000000, "tx": [("tx_seed_3", 1000000, "nạp tiền", "Ví ba mẹ liên kết", "2026-06-22T07:15:00Z")]},
+    "u1": {"balance": 90000, "tx": [("tx_1", 90000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
+    "u2": {"balance": 500000, "tx": [("tx_2", 500000, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
+    "u3": {"balance": 1000000, "tx": [("tx_3", 1000000, "nạp tiền", "Ví ba mẹ liên kết", "2026-06-22T07:15:00Z")]},
 }
 
 DEFAULT_PURCHASES = {
@@ -43,6 +37,7 @@ DEFAULT_PURCHASES = {
     "u3": ["g1", "g2"],
 }
 
+# Điểm cao mẫu để bảng xếp hạng có dữ liệu ngay từ đầu (username ảo, không gắn user_id thật)
 DEMO_LEADERBOARD_ATTEMPTS = [
     {"id": "att_seed_1", "user_id": "u1", "game_id": "g1", "score": 280, "level_num": 5,
      "date": "2026-06-22T12:00:00"},
@@ -83,7 +78,7 @@ def run_seed(db: Session, force: bool = False) -> None:
             if not exists:
                 db.add(models.Purchase(user_id=user_id, game_id=game_id, purchased_price=0))
 
-    # ---- Games / Achievements / Scratch courses (từ seed_data.json) ----
+    # ---- Games / Achievements / Scratch courses (từ seed_data.json export) ----
     if SEED_JSON_PATH.exists():
         seed = json.loads(SEED_JSON_PATH.read_text(encoding="utf-8"))
 
@@ -146,28 +141,11 @@ def run_seed(db: Session, force: bool = False) -> None:
             ))
 
     db.commit()
-    print("[seed] Nạp dữ liệu hoàn tất thành công.")
-
-
-def reset_database() -> None:
-    """Xoá sạch toàn bộ bảng và tạo lại mới tinh."""
-    print("[seed] Đang xoá toàn bộ bảng CSDL cũ...")
-    Base.metadata.drop_all(bind=engine)
-    print("[seed] Đang tạo lại cấu trúc bảng mới...")
-    Base.metadata.create_all(bind=engine)
-    with SessionLocal() as session:
-        run_seed(session, force=True)
+    print("[seed] Hoàn tất.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="IQ Kid Market Database Seeder")
-    parser.add_argument("--reset", action="store_true", help="Xóa sạch CSDL cũ và tạo lại từ đầu")
-    parser.add_argument("--force", action="store_true", help="Ghi đè/Seed lại dữ liệu")
-    args = parser.parse_args()
-
-    if args.reset:
-        reset_database()
-    else:
-        Base.metadata.create_all(bind=engine)
-        with SessionLocal() as session:
-            run_seed(session, force=args.force)
+    from .database import SessionLocal, engine, Base
+    Base.metadata.create_all(bind=engine)
+    with SessionLocal() as session:
+        run_seed(session, force=True)

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+import time
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from .. import models, schemas
@@ -66,8 +67,8 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Số dư ví không đủ. Vui lòng nạp thêm tiền!")
 
     wallet.balance -= game.price
-    # ID tự động sinh qua default generator của model
     tx = models.WalletTransaction(
+        id=f"tx_{int(time.time() * 1000)}",
         wallet_user_id=wallet.user_id,
         amount=-game.price,
         type="mua game",

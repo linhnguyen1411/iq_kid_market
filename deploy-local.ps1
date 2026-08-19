@@ -1,23 +1,22 @@
-# IQ Kid Market - Interactive Local Deploy Script (PowerShell)
+﻿# IQ Kid Market - Interactive Local Deploy Script (PowerShell)
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Write-Host "=======================================================================" -ForegroundColor Cyan
-Write-Host "          IQ KID MARKET - BO CONG CU DEPLOY & QUAN LY LOCAL (PS)" -ForegroundColor Yellow
+Write-Host "          IQ KID MARKET - SCRIPT DEPLOY LOCAL TU DONG (PS)" -ForegroundColor Yellow
 Write-Host "=======================================================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Vui long chon thao tac:" -ForegroundColor White
-Write-Host " [1] Che do 1: Docker Compose Full Stack (Khuyen dung - 3 Containers)" -ForegroundColor Green
+Write-Host "Vui long chon che do deploy local:" -ForegroundColor White
+Write-Host " [1] Che do 1: Docker Compose Full Stack (Khuyen dung)" -ForegroundColor Green
 Write-Host "     - Chay Frontend (3000), FastAPI Backend (8000), PostgreSQL (5432)" -ForegroundColor Gray
 Write-Host " [2] Che do 2: Frontend Dev Server (Node.js + Vite)" -ForegroundColor Green
 Write-Host "     - Chay nhanh UI tai http://localhost:5173 (can backend port 8000)" -ForegroundColor Gray
 Write-Host " [3] Kiem tra moi truong Local (Health Check)" -ForegroundColor Yellow
-Write-Host " [4] Reset sach Database & Seed lai tu dau (Docker & Native)" -ForegroundColor Magenta
-Write-Host " [5] Dung toan bo Docker Containers cua du an" -ForegroundColor Red
-Write-Host " [6] Thoat" -ForegroundColor White
+Write-Host " [4] Dung toan bo Docker Containers cua du an" -ForegroundColor Red
+Write-Host " [5] Thoat" -ForegroundColor White
 Write-Host ""
 
-$choice = Read-Host "Nhap so lua chon cua ban (1-6)"
+$choice = Read-Host "Nhap so lua chon cua ban (1-5)"
 
 switch ($choice) {
     "1" {
@@ -65,24 +64,6 @@ switch ($choice) {
         if ($psql) { Write-Host "  [OK] PostgreSQL:  $($psql.Source)" -ForegroundColor Green } else { Write-Host "  [X]  PostgreSQL:  Chua co" -ForegroundColor Red }
     }
     "4" {
-        Write-Host "`n>>> DANG RESET SACH DATABASE..." -ForegroundColor Magenta
-        $hasDocker = Get-Command docker -ErrorAction SilentlyContinue
-        if ($hasDocker) {
-            Write-Host "[1/2] Dang dung va xoa sach volume Docker Postgres..." -ForegroundColor Yellow
-            docker compose down -v
-            Write-Host "[2/2] Dang khoi dong lai Docker Compose va auto-seed..." -ForegroundColor Yellow
-            docker compose up -d --build
-            Write-Host "`n[OK] Da reset Database tren Docker thanh cong!" -ForegroundColor Green
-            Start-Process "http://localhost:3000"
-        } else {
-            Write-Host "Dang chay reset qua Python Native..." -ForegroundColor Yellow
-            Set-Location backend
-            python -m app.seed --reset
-            Set-Location ..
-            Write-Host "`n[OK] Da reset Database Native thanh cong!" -ForegroundColor Green
-        }
-    }
-    "5" {
         Write-Host "`n>>> Dang dung cac Docker Containers..." -ForegroundColor Red
         docker compose down
         Write-Host "[OK] Da dung hoan toan cac dich vu Docker." -ForegroundColor Green

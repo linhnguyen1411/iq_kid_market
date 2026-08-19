@@ -1,3 +1,4 @@
+import time
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
@@ -16,8 +17,8 @@ def topup_wallet(body: schemas.TopupIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Không tìm thấy ví người dùng")
 
     wallet.balance += body.amount
-    # ID tự động sinh qua default generator của model
     tx = models.WalletTransaction(
+        id=f"tx_{int(time.time() * 1000)}",
         wallet_user_id=wallet.user_id,
         amount=body.amount,
         type="nạp tiền",
