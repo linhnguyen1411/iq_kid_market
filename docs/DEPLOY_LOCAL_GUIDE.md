@@ -255,6 +255,7 @@ Hệ thống tự động khởi tạo 3 tài khoản mẫu với đầy đủ s
 | [`README.md`](file:///D:/encee/workspace/web/iq_kid_market/README.md) | `./` | Tài liệu chính thức của dự án |
 | [`docs/DEPLOY_LOCAL_GUIDE.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/DEPLOY_LOCAL_GUIDE.md) | `docs/` | Hướng dẫn chi tiết triển khai Local & Kiến trúc |
 | [`docs/GAME_ENGINE_RULES.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/GAME_ENGINE_RULES.md) | `docs/` | Quy tắc xây dựng & mở rộng Game Engine |
+| [`docs/PLAN_AUTH_SYSTEM.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/PLAN_AUTH_SYSTEM.md) | `docs/` | Kế hoạch thiết kế & triển khai Auth (Register/Login) |
 | [`scripts/deploy-local.bat`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.bat) | `scripts/` | Script chạy tự động trên Windows |
 | [`scripts/deploy-local.ps1`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.ps1) | `scripts/` | Script PowerShell tương tác |
 | [`scripts/deploy-local.sh`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.sh) | `scripts/` | Shell script cho Linux/macOS |

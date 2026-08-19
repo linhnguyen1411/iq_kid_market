@@ -32,7 +32,8 @@ iq_kid_market/
 │   └── Dockerfile
 ├── docs/                     # Tài liệu kiến trúc & quy chuẩn dự án
 │   ├── DEPLOY_LOCAL_GUIDE.md  # Hướng dẫn deploy local & tổng quan kiến trúc
-│   └── GAME_ENGINE_RULES.md   # Rule bắt buộc khi thêm/sửa game engine
+│   ├── GAME_ENGINE_RULES.md   # Rule bắt buộc khi thêm/sửa game engine
+│   └── PLAN_AUTH_SYSTEM.md    # Kế hoạch & kiến trúc hệ thống Auth (Register/Login)
 ├── scripts/                  # Bộ script deploy tự động (Windows, Linux, macOS)
 │   ├── deploy-local.bat
 │   ├── deploy-local.ps1
