@@ -1,27 +1,26 @@
 @echo off
-chcp 65001 >nul
-title IQ Kid Market - Dev Runner (No Docker Frontend/Backend)
+title IQ Kid Market - Dev Runner (No Docker)
 
 cd /d "%~dp0\.."
-set ROOT_DIR=%cd%
+set "ROOT_DIR=%cd%"
 
 echo ===================================================
-echo 🚀 IQ KID MARKET - KHỞI ĐỘNG DEV NHANH (KHÔNG DOCKER)
+echo   IQ KID MARKET - KHOI DONG DEV NHANH (NO DOCKER)
 echo ===================================================
 echo.
 
-:: 1. Kiểm tra / Khởi động PostgreSQL Database
-echo [1/3] Kiểm tra Cơ sở dữ liệu PostgreSQL...
+:: 1. Kiem tra va khoi dong PostgreSQL Database
+echo [1/3] Kiem tra Co so du lieu PostgreSQL...
 where docker >nul 2>nul
 if %errorlevel% equ 0 (
-    echo Đang đảm bảo container PostgreSQL đang chạy...
+    echo Dang khoi dong PostgreSQL database...
     docker compose up -d db >nul 2>nul
 )
 
-:: 2. Khởi động Backend (FastAPI)
-echo [2/3] Đang khởi động Backend FastAPI (Port 8000)...
+:: 2. Khoi dong Backend (FastAPI)
+echo [2/3] Dang khoi dong Backend FastAPI (Port 8000)...
 if not exist "backend\venv" (
-    echo Chưa tìm thấy venv, đang tạo môi trường Python mới...
+    echo Chua tim thay venv, dang tao moi truong Python moi...
     python -m venv backend\venv
     call backend\venv\Scripts\activate.bat
     pip install -r backend\requirements.txt
@@ -29,17 +28,17 @@ if not exist "backend\venv" (
 
 start "IQ Kids - Backend API (Port 8000)" cmd /k "cd /d %ROOT_DIR%\backend && call venv\Scripts\activate.bat && uvicorn app.main:app --reload --port 8000"
 
-:: 3. Khởi động Frontend (Vite)
-echo [3/3] Đang khởi động Frontend Vite (Port 5173)...
+:: 3. Khoi dong Frontend (Vite)
+echo [3/3] Dang khoi dong Frontend Vite (Port 5173)...
 start "IQ Kids - Frontend Vite (Port 5173)" cmd /k "cd /d %ROOT_DIR% && npm run dev"
 
 echo.
 echo ===================================================
-echo 🎉 HỆ THỐNG ĐÃ KHỞI ĐỘNG THÀNH CÔNG!
+echo   HE THONG DA KHOI DONG THANH CONG!
 echo ---------------------------------------------------
-echo 🌐 Frontend UI:   http://localhost:5173
-echo 📡 Backend API:   http://localhost:8000/docs
-echo ⚡ Chế độ:        Hot-Reload (Sửa code tự update tức thì)
+echo   Frontend UI:   http://localhost:5173
+echo   Backend API:   http://localhost:8000/docs
+echo   Che do:        Hot-Reload (Sua code tu update)
 echo ===================================================
 echo.
 timeout /t 3 >nul
