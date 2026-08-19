@@ -302,9 +302,12 @@ Hệ thống tự động khởi tạo các tài khoản mẫu với mật khẩ
 | [`docs/DEPLOY_LOCAL_GUIDE.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/DEPLOY_LOCAL_GUIDE.md) | `docs/` | Hướng dẫn chi tiết triển khai Local & Kiến trúc |
 | [`docs/GAME_ENGINE_RULES.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/GAME_ENGINE_RULES.md) | `docs/` | Quy tắc xây dựng & mở rộng Game Engine |
 | [`docs/PLAN_AUTH_SYSTEM.md`](file:///D:/encee/workspace/web/iq_kid_market/docs/PLAN_AUTH_SYSTEM.md) | `docs/` | Kế hoạch thiết kế & triển khai Auth (Register/Login) |
-| [`scripts/deploy-local.bat`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.bat) | `scripts/` | Script chạy tự động trên Windows |
-| [`scripts/deploy-local.ps1`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.ps1) | `scripts/` | Script PowerShell tương tác |
-| [`scripts/deploy-local.sh`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.sh) | `scripts/` | Shell script cho Linux/macOS |
+| [`scripts/dev-local.bat`](file:///D:/encee/workspace/web/iq_kid_market/scripts/dev-local.bat) | `scripts/` | ⚡ Chạy Dev nhanh 1-Click trên Windows (Không cần Docker build) |
+| [`scripts/dev-local.ps1`](file:///D:/encee/workspace/web/iq_kid_market/scripts/dev-local.ps1) | `scripts/` | ⚡ Script PowerShell Dev nhanh có Hot-Reload |
+| [`scripts/dev-local.sh`](file:///D:/encee/workspace/web/iq_kid_market/scripts/dev-local.sh) | `scripts/` | ⚡ Shell script Dev nhanh cho Linux/macOS |
+| [`scripts/deploy-local.bat`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.bat) | `scripts/` | 🐳 Script chạy full Docker trên Windows |
+| [`scripts/deploy-local.ps1`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.ps1) | `scripts/` | 🐳 Script PowerShell deploy Docker |
+| [`scripts/deploy-local.sh`](file:///D:/encee/workspace/web/iq_kid_market/scripts/deploy-local.sh) | `scripts/` | 🐳 Shell script deploy Docker cho Linux/macOS |
 | [`docker-compose.yml`](file:///D:/encee/workspace/web/iq_kid_market/docker-compose.yml) | `./` | Cấu hình Docker Compose (3 services: db, backend, frontend) |
 | [`Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/Dockerfile) | `./` | Dockerfile cho Frontend |
 | [`backend/Dockerfile`](file:///D:/encee/workspace/web/iq_kid_market/backend/Dockerfile) | `backend/` | Dockerfile cho Backend FastAPI |

@@ -34,10 +34,13 @@ iq_kid_market/
 │   ├── DEPLOY_LOCAL_GUIDE.md  # Hướng dẫn deploy local & tổng quan kiến trúc
 │   ├── GAME_ENGINE_RULES.md   # Rule bắt buộc khi thêm/sửa game engine
 │   └── PLAN_AUTH_SYSTEM.md    # Kế hoạch & kiến trúc hệ thống Auth (Register/Login)
-├── scripts/                  # Bộ script deploy tự động (Windows, Linux, macOS)
-│   ├── deploy-local.bat
-│   ├── deploy-local.ps1
-│   └── deploy-local.sh
+├── scripts/                  # Bộ script tự động (Deploy Docker & Dev Hot-Reload)
+│   ├── dev-local.bat          # ⚡ Chạy Dev nhanh 1-Click (Không cần Docker build)
+│   ├── dev-local.ps1          # ⚡ Script PowerShell Dev nhanh
+│   ├── dev-local.sh           # ⚡ Script Dev nhanh cho macOS/Linux
+│   ├── deploy-local.bat       # 🐳 Chạy full 3 Containers Docker
+│   ├── deploy-local.ps1       # 🐳 PowerShell deploy Docker
+│   └── deploy-local.sh        # 🐳 Bash deploy Docker
 ├── data/                     # Dữ liệu phụ trợ & backup
 │   └── db.json
 ├── Dockerfile                 # Build frontend (Vite build + preview)
