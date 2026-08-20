@@ -79,12 +79,14 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
-  condition_type: string;
-  condition_threshold: number;
-  coin_reward: number;
-  xp_reward: number;
+  condition_type?: string;
+  condition_threshold?: number;
+  coin_reward?: number;
+  xp_reward?: number;
+  xp_bonus?: number;
   unlocked?: boolean;
   unlocked_at?: string;
+  progress_percent?: number;
 }
 
 export interface ScratchLesson {
@@ -118,16 +120,20 @@ export interface ScratchCourse {
 }
 
 export interface LeaderboardItem {
-  id: string;
+  id?: string;
+  userId?: string;
   name: string;
   username: string;
   avatar: string;
-  role: string;
+  role?: string;
   grade: number | null;
   level: number;
-  xp: number;
+  xp?: number;
+  score: number;
   streak: number;
   rank?: number;
+  gameId?: string;
+  date?: string;
 }
 
 export interface AdminStats {
