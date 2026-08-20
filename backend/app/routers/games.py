@@ -115,6 +115,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
     4. Tự động chia sẻ 80% doanh thu cho Ví của Creator (nếu có).
     5. Cấp bản quyền game (Purchase record) & Tăng lượt chơi.
     """
+    # 1. Khóa hàng ví người mua để đảm bảo số dư nhất quán
     wallet = (
         db.query(models.Wallet)
         .filter(models.Wallet.user_id == body.userId)
@@ -128,16 +129,19 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Trò chơi không tồn tại!")
 
+    # 2. Kiểm tra xem người dùng đã sở hữu game chưa
     already = db.query(models.Purchase).filter_by(user_id=body.userId, game_id=body.gameId).first()
     if already:
         raise HTTPException(status_code=400, detail="Bạn đã mua và sở hữu trò chơi này trước đó!")
 
+    # 3. Kiểm tra số dư ví
     if wallet.balance < game.price:
         raise HTTPException(
             status_code=400,
             detail=f"Số dư xu trong ví ({wallet.balance:,} xu) không đủ để mua game này ({game.price:,} xu). Vui lòng nạp thêm!",
         )
 
+    # 4. Trừ tiền người mua & Lưu transaction log
     wallet.balance -= game.price
     now_ts = int(time.time() * 1000)
     tx_buyer = models.WalletTransaction(
@@ -150,7 +154,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
     db.add(tx_buyer)
     db.add(models.Purchase(user_id=body.userId, game_id=body.gameId, purchased_price=game.price))
 
-    # Chia sẻ 80% doanh thu cho Creator nếu game do creator/teacher tạo
+    # 5. Chia sẻ 80% doanh thu cho Creator nếu game do creator/teacher tạo
     if game.creator_id and game.creator_id != "system" and game.creator_id != body.userId:
         creator_wallet = (
             db.query(models.Wallet)
@@ -170,9 +174,11 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
             )
             db.add(tx_creator)
 
+    # Tăng số lượt chơi/lượt tải của game
     game.plays_count = (game.plays_count or 0) + 1
     db.commit()
 
+    # Lấy danh sách toàn bộ game user đã sở hữu
     purchases = [p.game_id for p in db.query(models.Purchase).filter_by(user_id=body.userId).all()]
     return {
         "success": True,

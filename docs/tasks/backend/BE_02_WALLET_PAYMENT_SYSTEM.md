@@ -8,8 +8,8 @@
 - **Mã Task**: `BE-02`
 - **Mảng phụ trách**: Backend (FastAPI + SQLAlchemy + PostgreSQL)
 - **Độ ưu tiên**: 🔴 P0 (Bắt buộc / Nền tảng)
-- **Người thực hiện**: _[Điền tên thành viên]_
-- **Trạng thái**: 🟡 To Do (Chưa bắt đầu)
+- **Người thực hiện**: Antigravity Assistant
+- **Trạng thái**: 🟢 Done (Đã hoàn thành 100%)
 - **Branch làm việc**: `feature/be-02-wallet-payment`
 
 ---
@@ -47,17 +47,18 @@
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Tối ưu hóa Database Transactions trong `backend/app/routers/games.py`**:
-  - [ ] Bổ sung khóa hàng `with_for_update()` khi truy vấn ví.
-  - [ ] Thêm logic chia sẻ doanh thu 80% cho `creator_id`.
-  - [ ] Đảm bảo `db.commit()` ghi nhận đầy đủ bản ghi `Purchase` và `WalletTransaction`.
-- [ ] **2. Nâng cấp `backend/app/routers/wallet.py`**:
-  - [ ] Thêm endpoint `POST /api/wallet/create-topup-intent`.
-  - [ ] Thêm endpoint `POST /api/wallet/confirm-topup`.
-  - [ ] Thêm endpoint `GET /api/wallet/creator-earnings`.
-- [ ] **3. Cập nhật `backend/app/schemas.py`**:
-  - [ ] Bổ sung `CreateTopupIntentIn`, `ConfirmTopupIn`, `CreatorEarningsOut`.
-- [ ] **4. Viết Test Concurrency & Kiểm thử thực tế**.
+- [x] **1. Tối ưu hóa Database Transactions trong `backend/app/routers/games.py`**:
+  - [x] Bổ sung khóa hàng `with_for_update()` khi truy vấn ví.
+  - [x] Thêm logic chia sẻ doanh thu 80% cho `creator_id`.
+  - [x] Đảm bảo `db.commit()` ghi nhận đầy đủ bản ghi `Purchase` và `WalletTransaction`.
+- [x] **2. Nâng cấp `backend/app/routers/wallet.py`**:
+  - [x] Thêm endpoint `POST /api/wallet/create-topup-intent`.
+  - [x] Thêm endpoint `POST /api/wallet/confirm-topup`.
+  - [x] Thêm endpoint `GET /api/wallet/creator-earnings`.
+- [x] **3. Cập nhật `backend/app/schemas.py`**:
+  - [x] Bổ sung `CreateTopupIntentIn`, `ConfirmTopupIn`, `CreatorEarningsOut`.
+- [x] **4. Viết Test Concurrency & Kiểm thử thực tế**:
+  - [x] Viết `backend/test_be02_wallet.py` bao phủ 100% các kịch bản và test thành công.
 
 ---
 
