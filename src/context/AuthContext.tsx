@@ -59,6 +59,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchSession(currentUserId);
   }, [currentUserId, fetchSession]);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setAuthToken(null);
+      openAuthModal('login');
+    };
+    window.addEventListener('iqkids_auth_unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('iqkids_auth_unauthorized', handleUnauthorized);
+  }, [openAuthModal]);
+
   const login = async (token: string, loggedUser: User) => {
     setAuthToken(token);
     setCurrentUserId(loggedUser.id);

@@ -22,6 +22,10 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem('iqkids_auth_token');
+      window.dispatchEvent(new CustomEvent('iqkids_auth_unauthorized'));
+    }
     const errorData = await response.json().catch(() => ({ detail: 'Đã xảy ra lỗi máy chủ!' }));
     const message = errorData.detail || `Lỗi HTTP ${response.status}: ${response.statusText}`;
     throw new Error(message);
