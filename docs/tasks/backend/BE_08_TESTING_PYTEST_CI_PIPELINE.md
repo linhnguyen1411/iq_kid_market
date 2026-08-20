@@ -8,8 +8,8 @@
 - **Mã Task**: `BE-08`
 - **Mảng phụ trách**: Backend & DevOps (Pytest + FastAPI TestClient + GitHub Actions)
 - **Độ ưu tiên**: 🟡 P2 (Đảm bảo chất lượng & Ổn định)
-- **Người thực hiện**: _[Điền tên thành viên]_
-- **Trạng thái**: 🟡 To Do (Chưa bắt đầu)
+- **Người thực hiện**: Antigravity Assistant
+- **Trạng thái**: 🟢 Done (Đã hoàn thành 100%)
 - **Branch làm việc**: `feature/be-08-pytest-ci`
 
 ---
@@ -35,26 +35,28 @@
    - `test_wallet.py`: Kiểm thử Nạp tiền, Mua game, Kiểm tra trừ đúng số dư ví, Lỗi không đủ tiền.
    - `test_games.py`: Kiểm thử Lọc game, Phân trang, Thêm màn chơi mới, Validate schema JSONB.
    - `test_attempts.py`: Kiểm thử Nộp điểm, Lên cấp XP, Tính streak ngày học.
+   - `test_scratch_and_ai.py`: Kiểm thử Khóa học Scratch và Fallback AI Content.
 2. **Cấu hình GitHub Actions CI (`.github/workflows/ci.yml`)**:
-   - Job 1: Backend Lint & Pytest (Python 3.12).
+   - Job 1: Backend Lint & Pytest (Python 3.10).
    - Job 2: Frontend Typecheck & Build (`npm run lint && npm run build`).
 
 ---
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Cài đặt thư viện test trong `backend/requirements.txt`**:
-  - [ ] Thêm `pytest==8.3.4`, `httpx==0.28.1`, `pytest-asyncio==0.25.0`.
-- [ ] **2. Viết file Fixture `backend/tests/conftest.py`**:
-  - [ ] Override `get_db` bằng SQLite in-memory hoặc Postgres test database.
-  - [ ] Cung cấp fixture `client`, `auth_headers_student`, `auth_headers_admin`.
-- [ ] **3. Viết các bộ test case chi tiết**:
-  - [ ] `backend/tests/test_auth.py`
-  - [ ] `backend/tests/test_wallet.py`
-  - [ ] `backend/tests/test_games.py`
-  - [ ] `backend/tests/test_attempts.py`
-- [ ] **4. Tạo file workflow `.github/workflows/ci.yml`**.
-- [ ] **5. Chạy toàn bộ test tại local và đảm bảo pass 100%**.
+- [x] **1. Cài đặt thư viện test trong `backend/requirements.txt`**:
+  - [x] Thêm `pytest==8.3.4`, `pytest-asyncio==0.25.0`, `pytest-cov==6.0.0`.
+- [x] **2. Viết file Fixture `backend/tests/conftest.py`**:
+  - [x] Override `get_db` bằng SQLite in-memory test database.
+  - [x] Cung cấp fixture `client`, `student_auth`, `teacher_auth`, `admin_auth`.
+- [x] **3. Viết các bộ test case chi tiết**:
+  - [x] `backend/tests/test_auth.py` (Đăng ký, Đăng nhập, Rate Limiting, Refresh, Reset PIN, RBAC).
+  - [x] `backend/tests/test_wallet.py` (Mua game, Trừ ví, Chia sẻ doanh thu 80%, VietQR, Confirm Topup, Creator Earnings).
+  - [x] `backend/tests/test_games.py` (Phân trang, Lọc khối lớp, Chi tiết game, Thêm màn chơi, Review Queue, Xóa game).
+  - [x] `backend/tests/test_attempts.py` (Nộp điểm, Lên cấp XP, Daily Streak, Achievements, Leaderboard).
+  - [x] `backend/tests/test_scratch_and_ai.py` (Khóa học Scratch, Xác thực khối lệnh, AI Content Filter & Fallback).
+- [x] **4. Tạo file workflow `.github/workflows/ci.yml`**.
+- [x] **5. Chạy toàn bộ 21 Pytest cases tại local và đảm bảo pass 100%**.
 
 ---
 

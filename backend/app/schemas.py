@@ -178,7 +178,7 @@ class CreateGameIn(BaseModel):
     grade_from: Optional[int] = 1
     grade_to: Optional[int] = 9
     template_code: str
-    category: str
+    category: Optional[str] = "iq"
     creatorId: Optional[str] = None
     customFirstLevel: Optional[dict] = None
 

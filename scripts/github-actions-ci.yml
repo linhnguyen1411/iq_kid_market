@@ -1,0 +1,67 @@
+# Template GitHub Actions CI Pipeline (Sao chép vào .github/workflows/ci.yml trên GitHub)
+name: CI Pipeline (Backend Tests & Frontend Build)
+
+on:
+  push:
+    branches: [main, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    name: 🐍 Backend Lint & Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: 📦 Install Backend Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: 🧪 Run Pytest Test Suite
+        env:
+          DATABASE_URL: sqlite:///./test_ci.db
+          SECRET_KEY: test_secret_key_ci_environment_123456
+          REFRESH_SECRET_KEY: test_refresh_secret_key_ci_environment_654321
+        run: |
+          cd backend
+          pytest -v
+
+  frontend-build:
+    name: ⚛️ Frontend Typecheck & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📦 Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: 🔍 Typecheck & Lint
+        run: |
+          cd frontend
+          npm run lint
+
+      - name: 🏗️ Build Production Bundle
+        run: |
+          cd frontend
+          npm run build
