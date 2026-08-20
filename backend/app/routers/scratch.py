@@ -119,8 +119,14 @@ def get_scratch_course_detail(course_id: str, userId: str | None = None, db: Ses
 
 
 # ---------- 3. Chi tiết 1 bài học Scratch cụ thể ----------
+@router.get("/api/scratch/courses/{course_id}/lessons/{lesson_num}")
 @router.get("/api/scratch/lessons/{course_id}/{lesson_num}")
-def get_scratch_lesson(course_id: str, lesson_num: int, db: Session = Depends(get_db)):
+def get_scratch_lesson(
+    course_id: str,
+    lesson_num: int,
+    userId: str | None = None,
+    db: Session = Depends(get_db),
+):
     lesson = (
         db.query(models.ScratchLesson)
         .filter_by(course_id=course_id, lesson_num=lesson_num)
@@ -128,6 +134,19 @@ def get_scratch_lesson(course_id: str, lesson_num: int, db: Session = Depends(ge
     )
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học Scratch này!")
+
+    # Lấy trạng thái hoàn thành & sao nếu có userId
+    is_completed = False
+    stars = 0
+    if userId:
+        progress = (
+            db.query(models.UserScratchProgress)
+            .filter_by(user_id=userId, course_id=course_id, lesson_num=lesson_num)
+            .first()
+        )
+        if progress:
+            is_completed = progress.completed
+            stars = progress.stars_earned
 
     return {
         "id": lesson.id,
@@ -138,6 +157,8 @@ def get_scratch_lesson(course_id: str, lesson_num: int, db: Session = Depends(ge
         "target_block_sequence": lesson.target_block_sequence,
         "start_scene_json": lesson.start_scene_json,
         "xp_reward": lesson.xp_reward,
+        "completed": is_completed,
+        "stars": stars,
     }
 
 
@@ -152,7 +173,22 @@ def submit_scratch_lesson(body: schemas.ScratchSubmitIn, db: Session = Depends(g
     """
     user = db.get(models.User, body.userId)
     if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy học sinh!")
+        user = models.User(
+            id=body.userId,
+            username=body.userId,
+            name="Học Sinh Trải Nghiệm",
+            role="student",
+            grade=2,
+            avatar="smile_tiger",
+            xp=0,
+            level=1,
+            streak=1,
+        )
+        db.add(user)
+        db.flush()
+        wallet = models.Wallet(user_id=user.id, balance=90000)
+        db.add(wallet)
+        db.flush()
 
     lesson = (
         db.query(models.ScratchLesson)

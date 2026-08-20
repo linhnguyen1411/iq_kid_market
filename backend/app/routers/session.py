@@ -12,7 +12,23 @@ router = APIRouter(tags=["session"])
 def get_session(userId: str = "u1", db: Session = Depends(get_db)):
     user = db.get(models.User, userId)
     if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+        user = models.User(
+            id=userId,
+            username=userId,
+            name="Học Sinh Khách",
+            role="student",
+            grade=2,
+            avatar="smile_tiger",
+            xp=0,
+            level=1,
+            streak=1,
+        )
+        db.add(user)
+        db.flush()
+        wallet = models.Wallet(user_id=user.id, balance=90000)
+        db.add(wallet)
+        db.commit()
+        db.refresh(user)
 
     wallet = user.wallet
     balance = wallet.balance if wallet else 0
