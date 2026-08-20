@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   User as UserIcon, KeyRound, Save, 
-  Sparkles, Flame, Coins, ShieldCheck, CheckCircle2 
+  Sparkles, Flame, Coins, ShieldCheck, CheckCircle2, History 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -21,6 +21,10 @@ export const ProfilePage: React.FC = () => {
   const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Attempt History state
+  const [historyList, setHistoryList] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const avatarList = [
     { id: 'smile_tiger', emoji: '🐯', label: 'Hổ Vàng Thông Thái' },
     { id: 'smart_bear', emoji: '🐻', label: 'Gấu Trí Tuệ' },
@@ -29,6 +33,16 @@ export const ProfilePage: React.FC = () => {
     { id: 'wise_owl', emoji: '🦉', label: 'Cú Mèo Học Rộng' },
     { id: 'star_kid', emoji: '👦', label: 'Học Sinh Siêu Sao' },
   ];
+
+  useEffect(() => {
+    if (user?.id) {
+      setLoadingHistory(true);
+      api.attempts.getHistory(user.id)
+        .then((data) => setHistoryList(data || []))
+        .catch((err) => console.warn('Lỗi tải lịch sử chơi:', err))
+        .finally(() => setLoadingHistory(false));
+    }
+  }, [user?.id]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +106,7 @@ export const ProfilePage: React.FC = () => {
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
             <h2 className="text-2xl font-black">{user?.name}</h2>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 uppercase tracking-wider border border-white/20">
-              {user?.role}
+              {user?.role === 'student' ? 'Học sinh' : user?.role === 'teacher' ? 'Giáo viên' : user?.role === 'parent' ? 'Phụ huynh' : user?.role === 'admin' ? 'Quản trị' : 'Thành viên'}
             </span>
           </div>
           <p className="text-xs text-white/80 font-mono mb-4">@{user?.username} • ID: {user?.id}</p>
@@ -251,6 +265,58 @@ export const ProfilePage: React.FC = () => {
             </button>
           </form>
         </div>
+      </div>
+
+      {/* Attempt History Section */}
+      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+        <h3 className="text-base font-black text-slate-800 mb-1 flex items-center gap-2">
+          <History className="w-5 h-5 text-indigo-600" />
+          <span>LỊCH SỬ CHINH PHỤC THỬ THÁCH</span>
+        </h3>
+        <p className="text-xs text-slate-400 mb-4">Các màn chơi và bài thi đã hoàn thành gần đây</p>
+
+        {loadingHistory ? (
+          <div className="text-center py-8 text-slate-400 text-xs">Đang tải lịch sử...</div>
+        ) : historyList.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Trò chơi / Màn</th>
+                  <th className="py-2.5 px-3">Điểm số</th>
+                  <th className="py-2.5 px-3">Thời gian</th>
+                  <th className="py-2.5 px-3">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {historyList.map((item, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-3">
+                      <span className="font-bold text-slate-800 block">{item.game_id || item.gameId}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Màn {item.level_num || item.levelNum}</span>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-bold text-indigo-600">
+                      {item.score} điểm
+                    </td>
+                    <td className="py-3 px-3 text-slate-400 font-mono text-[11px]">
+                      {item.created_at || 'Vừa xong'}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Hoàn thành</span>
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-slate-400 text-xs font-medium">
+            Chưa có lịch sử làm bài nào. Hãy vào Chợ Game để thử sức ngay!
+          </div>
+        )}
       </div>
     </div>
   );

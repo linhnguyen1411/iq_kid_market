@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, Coins, ArrowUpRight, ArrowDownLeft, 
-  Sparkles, CheckCircle2, QrCode, X, DollarSign, ShieldCheck 
+  Sparkles, CheckCircle2, QrCode, X, DollarSign, ShieldCheck, TrendingUp 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -22,6 +22,19 @@ export const WalletPage: React.FC = () => {
   } | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Creator earnings
+  const [creatorEarnings, setCreatorEarnings] = useState<any>(null);
+
+  const isCreatorOrTeacher = user?.role === 'teacher' || user?.role === 'creator' || user?.role === 'admin';
+
+  useEffect(() => {
+    if (isCreatorOrTeacher) {
+      api.wallet.getCreatorEarnings()
+        .then((data) => setCreatorEarnings(data))
+        .catch((err) => console.warn('Lỗi tải thu nhập tác giả:', err));
+    }
+  }, [isCreatorOrTeacher, user?.id]);
 
   const topupOptions = [
     { amount: 20000, label: '20.000 xu', bonus: '+0%' },
@@ -146,6 +159,44 @@ export const WalletPage: React.FC = () => {
           }`}
         >
           {feedbackMsg.message}
+        </div>
+      )}
+
+      {/* Creator Revenue Dashboard for Teachers / Creators */}
+      {isCreatorOrTeacher && creatorEarnings && (
+        <div className="bg-gradient-to-r from-purple-900 to-indigo-900 text-white rounded-3xl p-6 md:p-8 shadow-xl border border-purple-500/30">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
+            <div>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-purple-300 block mb-1">
+                DOANH THU TÁC GIẢ (CHIA SẺ 80%)
+              </span>
+              <h3 className="text-xl font-black">Báo Cáo Thu Nhập Sáng Tạo 🎨</h3>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-2xl">
+              📊
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+              <span className="text-[10px] text-slate-300 font-bold uppercase block mb-1">Tổng Thu Nhập</span>
+              <span className="text-2xl font-black text-amber-300 font-mono">
+                {(creatorEarnings.totalRevenue || 0).toLocaleString('vi-VN')} xu
+              </span>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+              <span className="text-[10px] text-slate-300 font-bold uppercase block mb-1">Số Lượt Mua Bản Quyền</span>
+              <span className="text-2xl font-black text-white font-mono">
+                {creatorEarnings.totalSalesCount || 0} lượt
+              </span>
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+              <span className="text-[10px] text-slate-300 font-bold uppercase block mb-1">Tỷ Lệ Nhận</span>
+              <span className="text-2xl font-black text-emerald-300 font-mono">80.0%</span>
+            </div>
+          </div>
         </div>
       )}
 
