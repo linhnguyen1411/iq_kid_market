@@ -337,3 +337,47 @@ class UserAchievementItemOut(BaseModel):
     unlocked_at: Optional[str] = None
     progress_percent: int
 
+
+# ---------- Scratch Courses & Lessons ----------
+class ScratchSubmitIn(BaseModel):
+    userId: str
+    courseId: str
+    lessonNum: int
+    submittedSequence: Any  # list[str] hoặc chuỗi "move_forward,turn_left"
+
+
+class ScratchSubmitOut(BaseModel):
+    success: bool
+    message: str
+    xpAwarded: int
+    coinAwarded: int
+    nextLessonNum: Optional[int] = None
+    starsEarned: int
+
+
+class CreateScratchCourseIn(BaseModel):
+    id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    thumbnail: Optional[str] = "🐱"
+    difficulty: Optional[str] = "Cơ bản"
+
+
+class CreateScratchLessonIn(BaseModel):
+    course_id: str
+    lesson_num: Optional[int] = None
+    title: str
+    content: Optional[str] = None
+    target_block_sequence: str
+    start_scene_json: Optional[str] = None
+    xp_reward: Optional[int] = 30
+
+
+class UpdateScratchLessonIn(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    target_block_sequence: Optional[str] = None
+    start_scene_json: Optional[str] = None
+    xp_reward: Optional[int] = None
+
+
