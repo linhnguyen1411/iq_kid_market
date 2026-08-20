@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..auth_utils import require_roles, get_current_user_optional
 from ..default_templates import build_default_level, default_thumbnail
 from ..ai_content import generate_fallback_game, generate_game_with_gemini
 
@@ -12,12 +13,16 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 # ---------- Tạo game mới (form CMS) ----------
 @router.post("/games")
-def create_game(body: schemas.CreateGameIn, db: Session = Depends(get_db)):
+def create_game(
+    body: schemas.CreateGameIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
     if not body.title or not body.description or not body.template_code or not body.category:
         raise HTTPException(status_code=400, detail="Vui lòng nhập đầy đủ các trường bắt buộc")
 
-    creator = db.get(models.User, body.creatorId) if body.creatorId else None
-    creator_name = creator.name if creator else "Nhà Sáng Tạo Nhí"
+    creator_id = current_user.id if current_user else (body.creatorId or "system")
+    creator_name = current_user.name if current_user else "Nhà Sáng Tạo Nhí"
 
     ts = int(time.time() * 1000)
     if body.customFirstLevel:
@@ -35,7 +40,7 @@ def create_game(body: schemas.CreateGameIn, db: Session = Depends(get_db)):
         grade_from=body.grade_from or 1,
         grade_to=body.grade_to or 9,
         template_code=body.template_code,
-        creator_id=body.creatorId or "system",
+        creator_id=creator_id,
         creator_name=creator_name,
         review_status="pending_review",
         is_published=False,
@@ -53,7 +58,10 @@ def create_game(body: schemas.CreateGameIn, db: Session = Depends(get_db)):
 
 # ---------- Thống kê tổng quan ----------
 @router.get("/stats")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(
+    current_user: models.User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
     total_users = db.query(models.User).count()
     total_games = db.query(models.Game).count()
     custom_games_count = db.query(models.Game).filter(models.Game.is_seed == False).count()  # noqa: E712
@@ -80,7 +88,11 @@ def get_stats(db: Session = Depends(get_db)):
 
 # ---------- Thêm màn chơi mới vào game có sẵn ----------
 @router.post("/levels/add")
-def add_level(body: schemas.AddLevelIn, db: Session = Depends(get_db)):
+def add_level(
+    body: schemas.AddLevelIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
     if not body.gameId or not body.title or not body.question:
         raise HTTPException(status_code=400, detail="Thiếu thông tin trò chơi, tiêu đề màn hoặc câu hỏi chính!")
 
@@ -88,8 +100,9 @@ def add_level(body: schemas.AddLevelIn, db: Session = Depends(get_db)):
     if not game:
         raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi để cập nhật!")
 
-    # Phân quyền: chỉ chủ sở hữu (hoặc game hệ thống không có creator_id) mới được thêm màn
-    if game.creator_id and game.creator_id != body.creatorId and game.creator_id != "system":
+    # Phân quyền: chỉ chủ sở hữu (hoặc admin / game hệ thống) mới được thêm màn
+    user_id = current_user.id if current_user else body.creatorId
+    if game.creator_id and game.creator_id != user_id and current_user.role != "admin" and game.creator_id != "system":
         raise HTTPException(
             status_code=403,
             detail="Lỗi phân quyền: Bạn chỉ có thể bổ sung màn chơi mới cho trò chơi do chính mình thiết kế!",
@@ -133,7 +146,11 @@ def add_level(body: schemas.AddLevelIn, db: Session = Depends(get_db)):
 
 # ---------- Upload game/level đóng gói sẵn (JSON) ----------
 @router.post("/games/upload")
-def upload_games(body: schemas.UploadGamesIn, db: Session = Depends(get_db)):
+def upload_games(
+    body: schemas.UploadGamesIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
     if not body.gameObject:
         raise HTTPException(status_code=400, detail="Vui lòng đính kèm cấu hình đóng gói JSON!")
 
@@ -181,7 +198,11 @@ def upload_games(body: schemas.UploadGamesIn, db: Session = Depends(get_db)):
 
 # ---------- Sinh game bằng AI (Gemini) ----------
 @router.post("/games/ai-generate")
-def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
+def ai_generate_game(
+    body: schemas.AiGenerateIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
     if not body.topic or not body.template_code:
         raise HTTPException(status_code=400, detail="Vui lòng điền chủ đề học tập và lựa chọn Game Template!")
 
@@ -190,14 +211,14 @@ def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
     grade_from = body.grade_from or 1
     grade_to = body.grade_to or 5
 
-    creator = db.get(models.User, body.creatorId) if body.creatorId else None
+    creator_id = current_user.id if current_user else (body.creatorId or "system")
+    creator_name = current_user.name if current_user else "Hệ Thống AI"
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
-        creator_name = creator.name if creator else "Hệ Thống AI"
         fallback = generate_fallback_game(
             body.topic, body.template_code, grade_from, grade_to, category, price,
-            body.creatorId, creator_name,
+            creator_id, creator_name,
         )
         game = models.Game(is_seed=False, **{k: v for k, v in fallback.items()})
         db.add(game)
@@ -214,7 +235,7 @@ def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
 
     try:
         generated = generate_game_with_gemini(body.topic, body.template_code, grade_from, grade_to, category)
-        creator_name = creator.name if creator else "Trí tuệ Nhân tạo Gemini"
+        creator_name = current_user.name if current_user else "Trí tuệ Nhân tạo Gemini"
 
         game = models.Game(
             id=generated["id"],
@@ -227,7 +248,7 @@ def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
             grade_to=int(generated.get("grade_to") or grade_to),
             template_code=generated.get("template_code") or body.template_code,
             category=generated.get("category") or category,
-            creator_id=body.creatorId or "system",
+            creator_id=creator_id,
             creator_name=creator_name,
             review_status="pending_review",
             is_published=False,
@@ -247,7 +268,11 @@ def ai_generate_game(body: schemas.AiGenerateIn, db: Session = Depends(get_db)):
 
 # ---------- Xoá sạch toàn bộ game custom, về lại seed gốc ----------
 @router.post("/games/reset")
-def reset_custom_games(db: Session = Depends(get_db)):
+def reset_custom_games(
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    """Chỉ Admin mới có quyền reset toàn bộ game custom về seed gốc."""
     db.query(models.Game).filter(models.Game.is_seed == False).delete()  # noqa: E712
     db.commit()
     return {"success": True, "message": "Đã xóa sạch toàn bộ trò chơi custom & cấp độ thiết chế về mặc định thành công!"}
@@ -255,13 +280,22 @@ def reset_custom_games(db: Session = Depends(get_db)):
 
 # ---------- Hàng đợi kiểm duyệt ----------
 @router.get("/review/queue")
-def get_review_queue(db: Session = Depends(get_db)):
+def get_review_queue(
+    current_user: models.User = Depends(require_roles(["admin", "teacher"])),
+    db: Session = Depends(get_db),
+):
+    """Chỉ Admin hoặc Teacher mới có quyền xem hàng đợi kiểm duyệt."""
     games = db.query(models.Game).filter(models.Game.is_seed == False).all()  # noqa: E712
     return [schemas.GameOut.model_validate(g).model_dump() for g in games]
 
 
 @router.post("/review/decide")
-def decide_review(body: schemas.ReviewDecideIn, db: Session = Depends(get_db)):
+def decide_review(
+    body: schemas.ReviewDecideIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher"])),
+    db: Session = Depends(get_db),
+):
+    """Chỉ Admin hoặc Teacher mới có quyền phê duyệt hoặc từ chối game."""
     game = db.query(models.Game).filter(
         models.Game.id == body.gameId, models.Game.is_seed == False  # noqa: E712
     ).first()

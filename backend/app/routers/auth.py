@@ -9,15 +9,23 @@ from ..auth_utils import (
     hash_password,
     verify_password,
     create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
     get_current_user_optional,
+    get_current_user_required,
+    check_rate_limit,
+    record_failed_login,
+    clear_failed_login,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _build_auth_response(user: models.User, db: Session) -> dict:
-    """Helper: Đóng gói Token + Profile + Ví + Game đã mua."""
-    token = create_access_token({"sub": user.id, "username": user.username, "role": user.role})
+    """Helper: Đóng gói Access Token + Refresh Token + Profile + Ví + Game đã mua."""
+    token_payload = {"sub": user.id, "username": user.username, "role": user.role}
+    access_token = create_access_token(token_payload)
+    refresh_token = create_refresh_token(token_payload)
 
     wallet = user.wallet
     balance = wallet.balance if wallet else 0
@@ -34,7 +42,8 @@ def _build_auth_response(user: models.User, db: Session) -> dict:
     purchases = [p.game_id for p in user.purchases]
 
     return {
-        "access_token": token,
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": schemas.UserOut.model_validate(user).model_dump(),
         "wallet": {"balance": balance, "transactions": transactions},
@@ -108,21 +117,26 @@ def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
 def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
     username_clean = body.username.strip().lower()
 
-    # Tìm user theo username hoặc id
+    # 1. Kiểm tra Rate Limit chống Brute-force
+    check_rate_limit(username_clean)
+
+    # 2. Tìm user theo username hoặc id
     user = (
         db.query(models.User)
         .filter((models.User.username == username_clean) | (models.User.id == username_clean))
         .first()
     )
     if not user:
+        record_failed_login(username_clean)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Tên đăng nhập hoặc mật khẩu không chính xác!",
         )
 
-    # Nếu tài khoản đã có password_hash thì kiểm tra mật khẩu
+    # 3. Kiểm tra mật khẩu
     if user.password_hash:
         if not verify_password(body.password, user.password_hash):
+            record_failed_login(username_clean)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Tên đăng nhập hoặc mật khẩu không chính xác!",
@@ -132,7 +146,64 @@ def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
         user.password_hash = hash_password(body.password or "123456")
         db.commit()
 
+    # 4. Đăng nhập thành công -> Xóa lịch sử thất bại
+    clear_failed_login(username_clean)
+
     return _build_auth_response(user, db)
+
+
+@router.post("/refresh")
+def refresh_token(body: schemas.TokenRefreshIn, db: Session = Depends(get_db)):
+    """Cấp lại cặp Access Token & Refresh Token mới bằng Refresh Token hợp lệ."""
+    payload = decode_refresh_token(body.refresh_token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh Token đã hết hạn hoặc không hợp lệ. Vui lòng đăng nhập lại!",
+        )
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token không hợp lệ!")
+
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng tương ứng!")
+
+    token_payload = {"sub": user.id, "username": user.username, "role": user.role}
+    new_access_token = create_access_token(token_payload)
+    new_refresh_token = create_refresh_token(token_payload)
+
+    return {
+        "access_token": new_access_token,
+        "refresh_token": new_refresh_token,
+        "token_type": "bearer",
+    }
+
+
+@router.post("/reset-password")
+def reset_password(body: schemas.ResetPasswordIn, db: Session = Depends(get_db)):
+    """Đặt lại mật khẩu cho tài khoản thông qua Mã PIN bảo vệ phụ huynh (mặc định: 1234)."""
+    username_clean = body.username.strip().lower()
+    user = (
+        db.query(models.User)
+        .filter((models.User.username == username_clean) | (models.User.id == username_clean))
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài khoản người dùng!")
+
+    # Xác thực mã PIN bảo vệ (mặc định PIN demo 1234)
+    if body.parent_pin != "1234":
+        raise HTTPException(status_code=400, detail="Mã PIN phụ huynh không chính xác! (Mã mặc định: 1234)")
+
+    if len(body.new_password) < 4:
+        raise HTTPException(status_code=400, detail="Mật khẩu mới phải có ít nhất 4 ký tự!")
+
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+
+    return {"success": True, "message": "Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay."}
 
 
 @router.get("/me")
@@ -153,8 +224,13 @@ def get_current_user_profile(
 
 
 @router.post("/change-password")
-def change_password(body: schemas.ChangePasswordIn, db: Session = Depends(get_db)):
-    user = db.get(models.User, body.userId)
+def change_password(
+    body: schemas.ChangePasswordIn,
+    current_user: models.User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    # Lấy user từ Token hoặc từ body.userId
+    user = current_user or db.get(models.User, body.userId)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
 
