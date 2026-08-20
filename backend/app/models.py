@@ -14,12 +14,12 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=True)  # Hash mật khẩu an toàn bằng bcrypt
     name = Column(String(150), nullable=False)
-    role = Column(String(20), nullable=False, default="student")  # student|teacher|parent|creator|admin
-    grade = Column(Integer, nullable=True)
+    role = Column(String(20), nullable=False, default="student", index=True)  # student|teacher|parent|creator|admin
+    grade = Column(Integer, nullable=True, index=True)
     avatar = Column(String(50), default="smile_tiger")
-    xp = Column(Integer, default=0)
+    xp = Column(Integer, default=0, index=True)
     level = Column(Integer, default=1)
-    streak = Column(Integer, default=0)
+    streak = Column(Integer, default=0, index=True)
     last_active_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -47,11 +47,11 @@ class WalletTransaction(Base):
     __tablename__ = "wallet_transactions"
 
     id = Column(String(50), primary_key=True)  # "tx_<timestamp>"
-    wallet_user_id = Column(String(50), ForeignKey("wallets.user_id", ondelete="CASCADE"), nullable=False)
+    wallet_user_id = Column(String(50), ForeignKey("wallets.user_id", ondelete="CASCADE"), nullable=False, index=True)
     amount = Column(Integer, nullable=False)  # dương = nạp, âm = trừ
     type = Column(String(50))  # "nạp tiền" | "mua game"
     detail = Column(String(255))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     wallet = relationship("Wallet", back_populates="transactions")
 
@@ -64,23 +64,23 @@ class Game(Base):
     description = Column(Text)
     detailed_description = Column(Text)
     thumbnail = Column(String(20))
-    price = Column(Integer, default=0)
-    grade_from = Column(Integer, default=1)
-    grade_to = Column(Integer, default=9)
-    template_code = Column(String(50), nullable=False)  # matching|sequence|memory|quiz|...
-    category = Column(String(50), default="iq")
-    creator_id = Column(String(50), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    price = Column(Integer, default=0, index=True)
+    grade_from = Column(Integer, default=1, index=True)
+    grade_to = Column(Integer, default=9, index=True)
+    template_code = Column(String(50), nullable=False, index=True)  # matching|sequence|memory|quiz|...
+    category = Column(String(50), default="iq", index=True)
+    creator_id = Column(String(50), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     creator_name = Column(String(150), nullable=True)
-    review_status = Column(String(30), default="approved")  # pending_review|approved|rejected
+    review_status = Column(String(30), default="approved", index=True)  # pending_review|approved|rejected
     review_feedback = Column(Text, nullable=True)
-    is_published = Column(Boolean, default=True)
+    is_published = Column(Boolean, default=True, index=True)
     is_seed = Column(Boolean, default=False)  # true = game gốc trong seedData, không cho xoá
-    rating_avg = Column(Float, default=4.5)
+    rating_avg = Column(Float, default=4.5, index=True)
     plays_count = Column(Integer, default=0)
     # Levels + questions lồng nhau, schema câu hỏi rất linh hoạt (10 loại game engine, mỗi loại field khác nhau)
     # -> lưu nguyên khối JSONB thay vì chuẩn hoá hết ra bảng con, tránh join phức tạp không cần thiết cho MVP.
     levels = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     creator = relationship("User", back_populates="games_created")
     purchases = relationship("Purchase", back_populates="game", cascade="all, delete-orphan")
@@ -91,8 +91,8 @@ class Purchase(Base):
     __tablename__ = "purchases"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
     purchased_price = Column(Integer, default=0)
     purchased_at = Column(DateTime, default=datetime.utcnow)
 
@@ -104,13 +104,13 @@ class Attempt(Base):
     __tablename__ = "attempts"
 
     id = Column(String(50), primary_key=True)  # "att_<timestamp>"
-    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
     level_num = Column(Integer, nullable=False)
-    score = Column(Integer, default=0)
+    score = Column(Integer, default=0, index=True)
     completed = Column(Boolean, default=False)
     duration_secs = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     user = relationship("User", back_populates="attempts")
     game = relationship("Game", back_populates="attempts")

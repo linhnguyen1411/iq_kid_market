@@ -16,7 +16,7 @@
 | **BE-04** | Pipeline Sinh Game Tự Động Bằng Google Gemini AI (AI Content Pipeline) | 🟠 P1 | Antigravity | 🟢 Done | [Xem BE_04](./backend/BE_04_AI_GENERATOR_GEMINI_PIPELINE.md) |
 | **BE-05** | Hệ Thống Chấm Điểm, Daily Streak & Bảng Xếp Hạng (Gamification Backend) | 🟠 P1 | Antigravity | 🟢 Done | [Xem BE_05](./backend/BE_05_ATTEMPTS_SCORING_LEADERBOARD.md) |
 | **BE-06** | API Quản Lý Khóa Học & Bài Học Kéo-Thả Scratch (Scratch Backend) | 🟠 P1 | Antigravity | 🟢 Done | [Xem BE_06](./backend/BE_06_SCRATCH_COURSES_LESSONS.md) |
-| **BE-07** | Tích Hợp Alembic Database Migrations & Tối Ưu PostgreSQL Indexing | 🟡 P2 | _Chưa nhận_ | 🟡 To Do | [Xem BE_07](./backend/BE_07_DATABASE_MIGRATIONS_ALEMBIC.md) |
+| **BE-07** | Tích Hợp Alembic Database Migrations & Tối Ưu PostgreSQL Indexing | 🟡 P2 | Antigravity | 🟢 Done | [Xem BE_07](./backend/BE_07_DATABASE_MIGRATIONS_ALEMBIC.md) |
 | **BE-08** | Bộ Kiểm Thử Tự Động Pytest & Thiết Lập GitHub Actions CI Pipeline | 🟡 P2 | _Chưa nhận_ | 🟡 To Do | [Xem BE_08](./backend/BE_08_TESTING_PYTEST_CI_PIPELINE.md) |
 
 ---
