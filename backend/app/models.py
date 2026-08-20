@@ -168,3 +168,21 @@ class ScratchLesson(Base):
     xp_reward = Column(Integer, default=30)
 
     course = relationship("ScratchCourse", back_populates="lessons")
+
+
+class UserScratchProgress(Base):
+    __tablename__ = "user_scratch_progress"
+
+    id = Column(String(60), primary_key=True)  # "usp_<user_id>_<course_id>_<lesson_num>"
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(String(30), ForeignKey("scratch_courses.id", ondelete="CASCADE"), nullable=False)
+    lesson_id = Column(Integer, ForeignKey("scratch_lessons.id", ondelete="CASCADE"), nullable=False)
+    lesson_num = Column(Integer, nullable=False)
+    completed = Column(Boolean, default=True)
+    stars_earned = Column(Integer, default=3)
+    submitted_sequence = Column(Text, nullable=True)
+    completed_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", backref="scratch_progress")
+    course = relationship("ScratchCourse")
+    lesson = relationship("ScratchLesson")

@@ -158,29 +158,3 @@ def get_user_achievements(user_id: str, db: Session = Depends(get_db)):
 
     return result
 
-
-@router.get("/api/scratch/courses")
-def get_scratch_courses(db: Session = Depends(get_db)):
-    courses = db.query(models.ScratchCourse).all()
-    return [
-        {
-            "id": c.id,
-            "title": c.title,
-            "description": c.description,
-            "thumbnail": c.thumbnail,
-            "difficulty": c.difficulty,
-            "total_lessons": c.total_lessons,
-            "lessons": [
-                {
-                    "lesson_num": l.lesson_num,
-                    "title": l.title,
-                    "content": l.content,
-                    "target_block_sequence": l.target_block_sequence,
-                    "start_scene_json": l.start_scene_json,
-                    "xp_reward": l.xp_reward,
-                }
-                for l in c.lessons
-            ],
-        }
-        for c in courses
-    ]

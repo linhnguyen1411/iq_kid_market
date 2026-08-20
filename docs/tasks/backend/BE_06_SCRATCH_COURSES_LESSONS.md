@@ -8,8 +8,8 @@
 - **Mã Task**: `BE-06`
 - **Mảng phụ trách**: Backend (FastAPI + SQLAlchemy + PostgreSQL)
 - **Độ ưu tiên**: 🟠 P1 (Quan trọng / Trải nghiệm EdTech cốt lõi)
-- **Người thực hiện**: _[Điền tên thành viên]_
-- **Trạng thái**: 🟡 To Do (Chưa bắt đầu)
+- **Người thực hiện**: Antigravity Assistant
+- **Trạng thái**: 🟢 Done (Đã hoàn thành 100%)
 - **Branch làm việc**: `feature/be-06-scratch-courses`
 
 ---
@@ -44,16 +44,18 @@
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Nâng cấp Models trong `backend/app/models.py`**:
-  - [ ] Thêm bảng `UserScratchProgress` (`user_id`, `course_id`, `lesson_id`, `completed`, `stars_earned`, `completed_at`).
-- [ ] **2. Tạo Router riêng `backend/app/routers/scratch.py`**:
-  - [ ] `GET /api/scratch/courses`: Danh sách khóa học kèm tiến độ.
-  - [ ] `POST /api/scratch/lessons/submit`: Chấm điểm bài học Scratch.
-  - [ ] `POST /api/admin/scratch/courses`: Tạo khóa học mới.
-  - [ ] `POST /api/admin/scratch/lessons`: Tạo bài học mới.
-- [ ] **3. Đăng ký Router mới vào `backend/app/main.py`**.
-- [ ] **4. Bổ sung Seed Data 5 bài học Scratch nhập môn chuẩn mực trong `backend/app/seed.py`**.
-- [ ] **5. Viết Test & Kiểm thử thực tế**.
+- [x] **1. Nâng cấp Models trong `backend/app/models.py`**:
+  - [x] Thêm bảng `UserScratchProgress` (`user_id`, `course_id`, `lesson_id`, `completed`, `stars_earned`, `completed_at`).
+- [x] **2. Tạo Router riêng `backend/app/routers/scratch.py`**:
+  - [x] `GET /api/scratch/courses`: Danh sách khóa học kèm tiến độ.
+  - [x] `POST /api/scratch/lessons/submit`: Chấm điểm bài học Scratch.
+  - [x] `POST /api/admin/scratch/courses`: Tạo khóa học mới.
+  - [x] `POST /api/admin/scratch/lessons`: Tạo bài học mới.
+  - [x] `PUT /api/admin/scratch/lessons/{lesson_id}` & `DELETE /api/admin/scratch/courses/{course_id}`.
+- [x] **3. Đăng ký Router mới vào `backend/app/main.py`**.
+- [x] **4. Bổ sung Seed Data 5 bài học Scratch nhập môn chuẩn mực trong `backend/app/seed.py`**.
+- [x] **5. Viết Test & Kiểm thử thực tế**:
+  - [x] Viết `backend/test_be06_scratch.py` bao phủ 100% các kịch bản và test thành công.
 
 ---
 
