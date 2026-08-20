@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   Settings, PlusCircle, Sparkles, CheckCircle2, 
   XCircle, Trash2, Eye, BarChart2, ShieldCheck, 
-  BookOpen, Brain, RefreshCw 
+  BookOpen, Brain, RefreshCw, RotateCcw, TrendingUp 
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Game, AdminStats } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -18,7 +19,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [reviewQueue, setReviewQueue] = useState<Game[]>([]);
-  const [activeSubTab, setActiveSubTab] = useState<'create' | 'ai_gen' | 'review' | 'levels' | 'stats'>('create');
+  const [activeSubTab, setActiveSubTab] = useState<'create' | 'ai_gen' | 'review' | 'levels' | 'my_games' | 'stats'>('create');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -32,7 +33,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   const [gradeMax, setGradeMax] = useState('3');
 
   // AI Generator state
-  const [aiTopic, setAiTopic] = useState('Phép nhân bảng cửu chương và thế giới các loài động vật');
+  const [aiTopic, setAiTopic] = useState('Khám phá các hành tinh trong Hệ Mặt Trời 🪐');
   const [aiTemplate, setAiTemplate] = useState('quiz');
   const [aiGradeMin, setAiGradeMin] = useState('2');
   const [aiGradeMax, setAiGradeMax] = useState('4');
@@ -129,6 +130,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         question: {
           question_type: 'matching',
           prompt: questionPrompt || 'Nối các cặp tương ứng với nhau',
+          points: 25,
           data: {
             pairs: matchingPairs.filter((p) => p.left && p.right),
           },
@@ -164,6 +166,48 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     }
   };
 
+  const handleDeleteGame = async (gameId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa game này không?')) return;
+    setLoading(true);
+    try {
+      const res = await api.admin.deleteGame(gameId);
+      if (res.success) {
+        setMsg({ type: 'success', text: res.message });
+        await onRefreshGames();
+        await fetchData();
+      }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message || 'Lỗi xóa game' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetGames = async () => {
+    if (!window.confirm('Bạn có muốn đặt lại toàn bộ kho game về dữ liệu ban đầu không?')) return;
+    setLoading(true);
+    try {
+      const res = await api.admin.resetGames();
+      if (res.success) {
+        setMsg({ type: 'success', text: res.message });
+        await onRefreshGames();
+        await fetchData();
+      }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message || 'Lỗi reset game' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const chartData = [
+    { name: '20Q4', doanh_thu: 300000 },
+    { name: '21Q1', doanh_thu: 450000 },
+    { name: '21Q2', doanh_thu: 890000 },
+    { name: '21Q3', doanh_thu: 1500000 },
+    { name: '21Q4', doanh_thu: 2600000 },
+  ];
+
   return (
     <div className="flex flex-col gap-6 text-left">
       {/* Header Bar */}
@@ -181,8 +225,19 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
           </p>
         </div>
 
-        <div className="w-20 h-20 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-4xl shadow-lg shrink-0">
-          🛠️
+        <div className="flex items-center gap-2">
+          {user?.role === 'admin' && (
+            <button
+              onClick={handleResetGames}
+              className="px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/20"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Dữ Liệu Gốc</span>
+            </button>
+          )}
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-3xl shadow-lg shrink-0">
+            🛠️
+          </div>
         </div>
       </div>
 
@@ -192,8 +247,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
           { id: 'create', label: 'Tạo Game Thủ Công', icon: <PlusCircle className="w-4 h-4" /> },
           { id: 'ai_gen', label: 'Sinh Game Bằng AI Gemini', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
           { id: 'levels', label: 'Thêm Màn Chơi', icon: <BookOpen className="w-4 h-4" /> },
+          { id: 'my_games', label: `Kho Game (${games.length})`, icon: <Brain className="w-4 h-4" /> },
           { id: 'review', label: `Hàng Đợi Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4" /> },
-          { id: 'stats', label: 'Thống Kê Hệ Thống', icon: <BarChart2 className="w-4 h-4" /> },
+          { id: 'stats', label: 'Thống Kê & Doanh Thu', icon: <BarChart2 className="w-4 h-4" /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -505,7 +561,50 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         </div>
       )}
 
-      {/* Tab 4: Review Queue */}
+      {/* Tab 4: My Games Management */}
+      {activeSubTab === 'my_games' && (
+        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+          <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
+            <Brain className="w-5 h-5 text-indigo-600" />
+            <span>DANH SÁCH GAME ĐÃ TẠO</span>
+          </h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {games.map((g) => (
+              <div
+                key={g.id}
+                className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-2xl">{g.thumbnail || '🎮'}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
+                      {g.levels?.length || 0} Màn
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-black text-slate-800 mb-1">{g.title}</h4>
+                  <p className="text-xs text-slate-500 line-clamp-2 mb-3">{g.description}</p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200 flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold text-pink-600">{g.price} xu</span>
+                  {!g.is_seed && (
+                    <button
+                      onClick={() => handleDeleteGame(g.id)}
+                      className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors"
+                      title="Xóa game này"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 5: Review Queue */}
       {activeSubTab === 'review' && (
         <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
           <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
@@ -561,29 +660,69 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         </div>
       )}
 
-      {/* Tab 5: Stats */}
-      {activeSubTab === 'stats' && stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Tổng Thành Viên</span>
-            <span className="text-3xl font-black text-indigo-600">{stats.totalUsers}</span>
+      {/* Tab 6: Stats & Recharts Graph */}
+      {activeSubTab === 'stats' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Stats Cards (7 Cols) */}
+          <div className="lg:col-span-7 grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Tổng Thành Viên</span>
+              <span className="text-3xl font-black text-indigo-600">{stats?.totalUsers || 0}</span>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Tổng Số Game</span>
+              <span className="text-3xl font-black text-purple-600">{stats?.totalGames || games.length}</span>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Lượt Thử Sức</span>
+              <span className="text-3xl font-black text-amber-600">{stats?.attemptsCount || 0}</span>
+            </div>
+
+            <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
+              <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Doanh Thu Hệ Thống</span>
+              <span className="text-2xl font-black text-emerald-600">
+                {(stats?.totalRevenue || 0).toLocaleString('vi-VN')} xu
+              </span>
+            </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Tổng Số Game</span>
-            <span className="text-3xl font-black text-purple-600">{stats.totalGames}</span>
-          </div>
+          {/* Recharts AreaChart (5 Cols) */}
+          <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4 text-pink-500" />
+              <span>TĂNG TRƯỞNG DOANH THU HỆ THỐNG</span>
+            </h4>
 
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Lượt Thử Sức</span>
-            <span className="text-3xl font-black text-amber-600">{stats.attemptsCount}</span>
-          </div>
+            <div className="h-48 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorDoanhThu" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} />
+                  <Tooltip />
+                  <Area
+                    type="monotone"
+                    dataKey="doanh_thu"
+                    stroke="#ec4899"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorDoanhThu)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
 
-          <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-            <span className="text-xs font-bold text-slate-400 uppercase block mb-1">Doanh Thu Hệ Thống</span>
-            <span className="text-2xl font-black text-emerald-600">
-              {stats.totalRevenue.toLocaleString('vi-VN')} xu
-            </span>
+            <p className="text-[10px] text-slate-400 text-center mt-2">
+              Doanh số giao dịch phát sinh tự động khi phụ huynh nạp xu cho con
+            </p>
           </div>
         </div>
       )}

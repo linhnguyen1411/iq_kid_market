@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Gamepad2, Search, Filter, Lock, Play, 
-  Sparkles, CheckCircle2, Star, Coins, ArrowRight, X 
+  Sparkles, CheckCircle2, Star, Coins, ArrowRight, X, 
+  ArrowUpDown, RotateCcw 
 } from 'lucide-react';
 import { Game } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +26,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGrade, setSelectedGrade] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
+  const [sortBy, setSortBy] = useState('popular');
   const [selectedGameDetail, setSelectedGameDetail] = useState<Game | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -39,9 +41,9 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     }
   };
 
-  // Filter & Search logic
-  const filteredGames = useMemo(() => {
-    return games.filter((game) => {
+  // Filter & Search & Sort logic
+  const filteredAndSortedGames = useMemo(() => {
+    const list = games.filter((game) => {
       // 1. Search
       if (searchTerm.trim()) {
         const term = searchTerm.toLowerCase();
@@ -67,7 +69,24 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
 
       return true;
     });
-  }, [games, searchTerm, selectedCategory, selectedGrade, selectedType]);
+
+    // Sort
+    return list.sort((a, b) => {
+      if (sortBy === 'newest') return (b.id || '').localeCompare(a.id || '');
+      if (sortBy === 'rating') return (b.rating_avg || 5) - (a.rating_avg || 5);
+      if (sortBy === 'price_asc') return a.price - b.price;
+      if (sortBy === 'price_desc') return b.price - a.price;
+      return (b.plays_count || 0) - (a.plays_count || 0); // popular default
+    });
+  }, [games, searchTerm, selectedCategory, selectedGrade, selectedType, sortBy]);
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('all');
+    setSelectedGrade('all');
+    setSelectedType('all');
+    setSortBy('popular');
+  };
 
   const handleBuyGame = async (game: Game) => {
     if (!user) {
@@ -135,9 +154,20 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Filters Sidebar (3 Cols) */}
         <div className="lg:col-span-3 bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs text-left flex flex-col gap-5">
-          <div className="flex items-center gap-1.5 text-slate-800 text-xs font-black pb-2 border-b border-slate-100 uppercase tracking-wide">
-            <Filter className="w-4 h-4 text-indigo-600" />
-            <span>BỘ LỌC TÌM KIẾM</span>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-1.5 text-slate-800 text-xs font-black uppercase tracking-wide">
+              <Filter className="w-4 h-4 text-indigo-600" />
+              <span>BỘ LỌC TÌM KIẾM</span>
+            </div>
+            {(selectedCategory !== 'all' || selectedGrade !== 'all' || selectedType !== 'all' || searchTerm) && (
+              <button
+                onClick={handleResetFilters}
+                className="text-[10px] text-slate-400 hover:text-indigo-600 font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Đặt lại</span>
+              </button>
+            )}
           </div>
 
           {/* Filter 1: Grade */}
@@ -219,14 +249,31 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
 
         {/* Games Grid (9 Cols) */}
         <div className="lg:col-span-9">
-          <div className="flex justify-between items-center mb-4">
+          {/* Sắp xếp & Số lượng */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <p className="text-xs font-bold text-slate-500">
-              Hiển thị <span className="text-indigo-600 font-extrabold">{filteredGames.length}</span> trò chơi phù hợp
+              Hiển thị <span className="text-indigo-600 font-extrabold">{filteredAndSortedGames.length}</span> trò chơi phù hợp
             </p>
+
+            <div className="flex items-center gap-2 text-xs">
+              <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-400 font-medium">Sắp xếp:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 outline-hidden cursor-pointer"
+              >
+                <option value="popular">Phổ biến nhất 🔥</option>
+                <option value="rating">Đánh giá cao ⭐</option>
+                <option value="price_asc">Giá: Thấp đến Cao</option>
+                <option value="price_desc">Giá: Cao đến Thấp</option>
+                <option value="newest">Mới nhất</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {filteredGames.map((game) => {
+            {filteredAndSortedGames.map((game) => {
               const isBought = purchases.includes(game.id) || game.price === 0;
 
               return (
@@ -279,13 +326,19 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             })}
           </div>
 
-          {filteredGames.length === 0 && (
+          {filteredAndSortedGames.length === 0 && (
             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80">
               <div className="text-5xl mb-3">🔍</div>
               <h3 className="text-base font-bold text-slate-700 mb-1">Không tìm thấy trò chơi nào</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
                 Vui lòng thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các tiêu chí bộ lọc.
               </p>
+              <button
+                onClick={handleResetFilters}
+                className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+              >
+                Đặt lại tất cả bộ lọc
+              </button>
             </div>
           )}
         </div>
