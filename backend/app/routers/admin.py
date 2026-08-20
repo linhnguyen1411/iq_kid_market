@@ -1,6 +1,6 @@
 import os
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
@@ -11,7 +11,7 @@ from ..ai_content import generate_fallback_game, generate_game_with_gemini
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-# ---------- Tạo game mới (form CMS) ----------
+# ---------- 1. Tạo game mới (Form CMS Studio) ----------
 @router.post("/games")
 def create_game(
     body: schemas.CreateGameIn,
@@ -19,13 +19,17 @@ def create_game(
     db: Session = Depends(get_db),
 ):
     if not body.title or not body.description or not body.template_code or not body.category:
-        raise HTTPException(status_code=400, detail="Vui lòng nhập đầy đủ các trường bắt buộc")
+        raise HTTPException(status_code=400, detail="Vui lòng nhập đầy đủ các trường bắt buộc!")
 
     creator_id = current_user.id if current_user else (body.creatorId or "system")
     creator_name = current_user.name if current_user else "Nhà Sáng Tạo Nhí"
 
     ts = int(time.time() * 1000)
     if body.customFirstLevel:
+        # Validate data của câu hỏi trong màn đầu tiên nếu có
+        q_data = body.customFirstLevel.get("questions", [{}])[0].get("data")
+        if q_data:
+            schemas.AddLevelQuestionIn.validate_game_data(body.template_code, q_data)
         levels = [{**body.customFirstLevel, "id": f"custom_g{ts}_l1"}]
     else:
         levels = [build_default_level(body.template_code)]
@@ -56,7 +60,7 @@ def create_game(
     return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
 
 
-# ---------- Thống kê tổng quan ----------
+# ---------- 2. Thống kê tổng quan ----------
 @router.get("/stats")
 def get_stats(
     current_user: models.User | None = Depends(get_current_user_optional),
@@ -73,7 +77,6 @@ def get_stats(
         .all()
     )
     total_revenue_sum = sum(abs(t.amount) for t in total_revenue)
-
     users_list = db.query(models.User).all()
 
     return {
@@ -86,7 +89,7 @@ def get_stats(
     }
 
 
-# ---------- Thêm màn chơi mới vào game có sẵn ----------
+# ---------- 3. Thêm màn chơi mới vào game có sẵn ----------
 @router.post("/levels/add")
 def add_level(
     body: schemas.AddLevelIn,
@@ -108,6 +111,14 @@ def add_level(
             detail="Lỗi phân quyền: Bạn chỉ có thể bổ sung màn chơi mới cho trò chơi do chính mình thiết kế!",
         )
 
+    q_type = body.question.question_type or game.template_code
+
+    # Validate cấu trúc dữ liệu câu hỏi theo quy tắc chuẩn EdTech
+    try:
+        schemas.AddLevelQuestionIn.validate_game_data(q_type, body.question.data)
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+
     levels = list(game.levels or [])
     lvl_num = body.level_num or (len(levels) + 1)
     ts = int(time.time() * 1000)
@@ -120,7 +131,7 @@ def add_level(
         "coin_reward": body.coin_reward or 20,
         "questions": [{
             "id": f"q_{body.gameId}_{ts}",
-            "question_type": body.question.question_type or game.template_code,
+            "question_type": q_type,
             "prompt": body.question.prompt,
             "points": body.question.points or 25,
             "data": body.question.data,
@@ -144,7 +155,81 @@ def add_level(
     }
 
 
-# ---------- Upload game/level đóng gói sẵn (JSON) ----------
+# ---------- 4. Cập nhật thông tin 1 màn chơi có sẵn ----------
+@router.put("/levels/{game_id}/{level_num}")
+def update_level(
+    game_id: str,
+    level_num: int,
+    body: schemas.UpdateLevelIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
+    game = db.get(models.Game, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi!")
+
+    if game.creator_id and game.creator_id != current_user.id and current_user.role != "admin" and game.creator_id != "system":
+        raise HTTPException(status_code=403, detail="Bạn không có quyền chỉnh sửa màn chơi này!")
+
+    levels = list(game.levels or [])
+    target_idx = next((i for i, l in enumerate(levels) if l.get("level_num") == level_num), None)
+    if target_idx is None:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy màn chơi số {level_num} trong game này!")
+
+    level_obj = levels[target_idx]
+    if body.title:
+        level_obj["title"] = body.title
+    if body.xp_reward is not None:
+        level_obj["xp_reward"] = body.xp_reward
+    if body.coin_reward is not None:
+        level_obj["coin_reward"] = body.coin_reward
+
+    if body.question:
+        q_type = body.question.question_type or game.template_code
+        try:
+            schemas.AddLevelQuestionIn.validate_game_data(q_type, body.question.data)
+        except ValueError as val_err:
+            raise HTTPException(status_code=400, detail=str(val_err))
+
+        level_obj["questions"] = [{
+            "id": f"q_{game_id}_{int(time.time()*1000)}",
+            "question_type": q_type,
+            "prompt": body.question.prompt,
+            "points": body.question.points or 25,
+            "data": body.question.data,
+        }]
+
+    levels[target_idx] = level_obj
+    game.levels = levels
+    db.commit()
+    db.refresh(game)
+
+    return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
+
+
+# ---------- 5. Xóa trò chơi (Chỉ áp dụng game custom, cấm xóa seed gốc) ----------
+@router.delete("/games/{game_id}")
+def delete_game(
+    game_id: str,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
+    game = db.get(models.Game, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi để xóa!")
+
+    if game.is_seed:
+        raise HTTPException(status_code=400, detail="Không thể xóa trò chơi gốc mặc định của hệ thống!")
+
+    if game.creator_id and game.creator_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Bạn chỉ có quyền xóa trò chơi do chính mình thiết kế!")
+
+    db.delete(game)
+    db.commit()
+    return {"success": True, "message": f'Đã xóa trò chơi "{game.title}" thành công!'}
+
+
+# ---------- 6. Upload game/level đóng gói sẵn (JSON) ----------
 @router.post("/games/upload")
 def upload_games(
     body: schemas.UploadGamesIn,
@@ -196,7 +281,7 @@ def upload_games(
         raise HTTPException(status_code=500, detail=f"Đóng gói không hợp lệ: {err}")
 
 
-# ---------- Sinh game bằng AI (Gemini) ----------
+# ---------- 7. Sinh game bằng AI (Gemini) ----------
 @router.post("/games/ai-generate")
 def ai_generate_game(
     body: schemas.AiGenerateIn,
@@ -266,7 +351,7 @@ def ai_generate_game(
         raise HTTPException(status_code=500, detail=f"Lỗi thiết kế từ hệ thống trí tuệ nhân tạo Gemini: {err}")
 
 
-# ---------- Xoá sạch toàn bộ game custom, về lại seed gốc ----------
+# ---------- 8. Xoá sạch toàn bộ game custom, về lại seed gốc ----------
 @router.post("/games/reset")
 def reset_custom_games(
     current_user: models.User = Depends(require_roles(["admin"])),
@@ -278,14 +363,18 @@ def reset_custom_games(
     return {"success": True, "message": "Đã xóa sạch toàn bộ trò chơi custom & cấp độ thiết chế về mặc định thành công!"}
 
 
-# ---------- Hàng đợi kiểm duyệt ----------
+# ---------- 9. Hàng đợi kiểm duyệt giáo án ----------
 @router.get("/review/queue")
 def get_review_queue(
+    status: str | None = None,
     current_user: models.User = Depends(require_roles(["admin", "teacher"])),
     db: Session = Depends(get_db),
 ):
     """Chỉ Admin hoặc Teacher mới có quyền xem hàng đợi kiểm duyệt."""
-    games = db.query(models.Game).filter(models.Game.is_seed == False).all()  # noqa: E712
+    q = db.query(models.Game).filter(models.Game.is_seed == False)  # noqa: E712
+    if status and status != "all":
+        q = q.filter(models.Game.review_status == status)
+    games = q.all()
     return [schemas.GameOut.model_validate(g).model_dump() for g in games]
 
 

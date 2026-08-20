@@ -125,6 +125,14 @@ class GameOut(BaseModel):
         from_attributes = True
 
 
+class PaginatedGamesOut(BaseModel):
+    items: list[GameOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
 class PurchaseIn(BaseModel):
     userId: str
     gameId: str
@@ -149,6 +157,64 @@ class AddLevelQuestionIn(BaseModel):
     points: Optional[int] = 25
     data: Any
 
+    @classmethod
+    def validate_game_data(cls, q_type: str, v: Any) -> Any:
+        """Kiểm tra tính toàn vẹn của dữ liệu data theo GAME_ENGINE_RULES.md."""
+        if not isinstance(v, dict):
+            raise ValueError("Thuộc tính 'data' của câu hỏi phải là một JSON Object (Dictionary)!")
+
+        if q_type == "matching":
+            pairs = v.get("pairs")
+            if not pairs or not isinstance(pairs, list) or len(pairs) < 1:
+                raise ValueError("Game Nối Cột (matching) bắt buộc phải có mảng 'pairs' với ít nhất 1 cặp {left, right}!")
+            for p in pairs:
+                if not isinstance(p, dict) or "left" not in p or "right" not in p:
+                    raise ValueError("Mỗi phần tử trong 'pairs' phải chứa cả 'left' và 'right'!")
+
+        elif q_type == "quiz":
+            options = v.get("options")
+            answer = v.get("answer")
+            if not options or not isinstance(options, list) or len(options) < 2:
+                raise ValueError("Game Trắc Nghiệm (quiz) bắt buộc phải có mảng 'options' với ít nhất 2 đáp án lựa chọn!")
+            if not answer:
+                raise ValueError("Game Trắc Nghiệm (quiz) bắt buộc phải có trường 'answer' xác định đáp án đúng!")
+
+        elif q_type == "sequence":
+            seq = v.get("sequence")
+            answer = v.get("answer")
+            if not seq or not isinstance(seq, list) or len(seq) < 2:
+                raise ValueError("Game Điền Dãy Số (sequence) bắt buộc phải có mảng 'sequence' chứa các số/phần tử!")
+            if answer is None or answer == "":
+                raise ValueError("Game Điền Dãy Số (sequence) bắt buộc phải có trường 'answer'!")
+
+        elif q_type == "memory":
+            items = v.get("items")
+            if not items or not isinstance(items, list) or len(items) < 2:
+                raise ValueError("Game Lật Thẻ Trí Nhớ (memory) bắt buộc phải có mảng 'items' với ít nhất 2 hình/icon!")
+
+        elif q_type == "sorting":
+            items = v.get("items")
+            correct_seq = v.get("correct_sequence_ids")
+            if not items or not isinstance(items, list) or len(items) < 2:
+                raise ValueError("Game Sắp Xếp (sorting) bắt buộc phải có mảng 'items' với ít nhất 2 bước/phần tử!")
+            if not correct_seq or not isinstance(correct_seq, list):
+                raise ValueError("Game Sắp Xếp (sorting) bắt buộc phải có mảng 'correct_sequence_ids' chỉ thứ tự đúng!")
+
+        elif q_type == "flashcard":
+            cards = v.get("cards")
+            if not cards or not isinstance(cards, list) or len(cards) < 1:
+                raise ValueError("Game Thẻ Ghi Nhớ (flashcard) bắt buộc phải có mảng 'cards' chứa ít nhất 1 thẻ {front, back}!")
+
+        elif q_type == "scratch":
+            if "cat_pos" not in v or "star_pos" not in v:
+                raise ValueError("Game Lập Trình Scratch bắt buộc phải có tọa độ 'cat_pos' và 'star_pos'!")
+
+        elif q_type == "math":
+            if "expression" not in v or "answer" not in v:
+                raise ValueError("Game Toán Học (math) bắt buộc phải có biểu thức 'expression' và đáp án 'answer'!")
+
+        return v
+
 
 class AddLevelIn(BaseModel):
     gameId: str
@@ -158,6 +224,13 @@ class AddLevelIn(BaseModel):
     coin_reward: Optional[int] = 20
     question: AddLevelQuestionIn
     creatorId: Optional[str] = None
+
+
+class UpdateLevelIn(BaseModel):
+    title: Optional[str] = None
+    xp_reward: Optional[int] = None
+    coin_reward: Optional[int] = None
+    question: Optional[AddLevelQuestionIn] = None
 
 
 class UploadGamesIn(BaseModel):

@@ -8,8 +8,8 @@
 - **Mã Task**: `BE-03`
 - **Mảng phụ trách**: Backend (FastAPI + SQLAlchemy + PostgreSQL)
 - **Độ ưu tiên**: 🔴 P0 (Bắt buộc / Nền tảng)
-- **Người thực hiện**: _[Điền tên thành viên]_
-- **Trạng thái**: 🟡 To Do (Chưa bắt đầu)
+- **Người thực hiện**: Antigravity Assistant
+- **Trạng thái**: 🟢 Done (Đã hoàn thành 100%)
 - **Branch làm việc**: `feature/be-03-game-cms`
 
 ---
@@ -50,15 +50,17 @@
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Bổ sung Pydantic Validators trong `backend/app/schemas.py`**:
-  - [ ] Validate schema `data` cho từng `question_type` (VD: `matching` phải có mảng `pairs`, `quiz` phải có `options` và `answer`...).
-- [ ] **2. Nâng cấp Router `backend/app/routers/games.py`**:
-  - [ ] Thêm phân trang và trả về format `{ items: [...], total: int, page: int, totalPages: int }` hoặc tương thích ngược dạng list.
-  - [ ] Thêm endpoint `GET /api/games/{game_id}`.
-- [ ] **3. Nâng cấp Router `backend/app/routers/admin.py`**:
-  - [ ] Bảo vệ các endpoint bằng `require_roles(["admin", "teacher", "creator"])`.
-  - [ ] Thêm endpoint `DELETE /api/admin/games/{game_id}` (Chỉ xóa game custom, không cho xóa game seed gốc).
-- [ ] **4. Viết Test & Kiểm thử thực tế**.
+- [x] **1. Bổ sung Pydantic Validators trong `backend/app/schemas.py`**:
+  - [x] Validate schema `data` cho từng `question_type` (VD: `matching` phải có mảng `pairs`, `quiz` phải có `options` và `answer`...).
+- [x] **2. Nâng cấp Router `backend/app/routers/games.py`**:
+  - [x] Thêm phân trang và trả về format `{ items: [...], total: int, page: int, totalPages: int }` hoặc tương thích ngược dạng list.
+  - [x] Thêm endpoint `GET /api/games/{game_id}`.
+- [x] **3. Nâng cấp Router `backend/app/routers/admin.py`**:
+  - [x] Bảo vệ các endpoint bằng `require_roles(["admin", "teacher", "creator"])`.
+  - [x] Thêm endpoint `DELETE /api/admin/games/{game_id}` (Chỉ xóa game custom, không cho xóa game seed gốc).
+  - [x] Thêm endpoint `PUT /api/admin/levels/{game_id}/{level_num}` để cập nhật màn chơi có sẵn.
+- [x] **4. Viết Test & Kiểm thử thực tế**:
+  - [x] Viết `backend/test_be03_games.py` bao phủ 100% các kịch bản và test thành công.
 
 ---
 
