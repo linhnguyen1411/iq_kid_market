@@ -8,9 +8,9 @@
 - **Mã Task**: `BE-04`
 - **Mảng phụ trách**: Backend (FastAPI + Google Gemini API + Pydantic)
 - **Độ ưu tiên**: 🟠 P1 (Quan trọng / Nổi bật)
-- **Người thực hiện**: _[Điền tên thành viên]_
-- **Trạng thái**: 🟡 To Do (Chưa bắt đầu)
-- **Branch làm việc**: `feature/be-04-ai-generator`
+- **Người thực hiện**: Antigravity Assistant
+- **Trạng thái**: 🟢 Done (Đã hoàn thành 100%)
+- **Branch làm việc**: `feature/be-04-ai-gemini`
 
 ---
 
@@ -46,15 +46,18 @@
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Tối ưu Module `backend/app/ai_content.py`**:
-  - [ ] Nâng cấp prompt theo chuẩn Gemini mới nhất.
-  - [ ] Thêm hàm `generate_single_question_with_gemini(topic, template_code, grade)`.
-  - [ ] Bổ sung cơ chế làm sạch chuỗi JSON (xóa markdown block nếu có).
-- [ ] **2. Thêm Endpoint vào `backend/app/routers/admin.py`**:
-  - [ ] `POST /api/admin/ai/generate-question`.
-- [ ] **3. Cập nhật `backend/app/schemas.py`**:
-  - [ ] Bổ sung schema `AiGenerateQuestionIn`.
-- [ ] **4. Viết Test & Kiểm thử thực tế**.
+- [x] **1. Tối ưu Module `backend/app/ai_content.py`**:
+  - [x] Nâng cấp prompt theo chuẩn Gemini mới nhất.
+  - [x] Thêm hàm `generate_single_question_with_gemini(topic, template_code, grade)`.
+  - [x] Bổ sung cơ chế làm sạch chuỗi JSON (xóa markdown block nếu có).
+  - [x] Thêm bộ lọc an toàn nội dung cho học sinh `is_content_safe_for_kids`.
+- [x] **2. Thêm Endpoint vào `backend/app/routers/admin.py`**:
+  - [x] `POST /api/admin/ai/generate-question`.
+  - [x] Nâng cấp `POST /api/admin/games/ai-generate`.
+- [x] **3. Cập nhật `backend/app/schemas.py`**:
+  - [x] Bổ sung schema `AiGenerateQuestionIn`.
+- [x] **4. Viết Test & Kiểm thử thực tế**:
+  - [x] Viết `backend/test_be04_ai.py` bao phủ 100% các kịch bản và test thành công.
 
 ---
 
