@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Sparkles, Award, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { GAME_ENGINES } from "./game-engines/registry";
 import type { Question } from "./game-engines/types";
+import TextToSpeechButton from "./TextToSpeechButton";
 
 export interface QuestionRendererProps {
   question: Question;
@@ -80,10 +81,11 @@ export default function QuestionRenderer({
       </div>
 
       {/* Prompts and Instructions */}
-      <div className="text-center mb-8">
-        <p className="inline-block bg-kids-blue/10 text-slate-800 px-5 py-2.5 rounded-full text-sm md:text-base font-medium mb-3 border border-kids-blue/20">
+      <div className="text-center mb-8 flex items-center justify-center gap-2">
+        <p className="inline-block bg-kids-blue/10 text-slate-800 px-5 py-2.5 rounded-full text-sm md:text-base font-medium border border-kids-blue/20">
           💡 {question.prompt}
         </p>
+        <TextToSpeechButton text={question.prompt} />
       </div>
 
       <AnimatePresence mode="wait">

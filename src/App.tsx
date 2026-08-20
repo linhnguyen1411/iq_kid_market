@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SoundProvider } from './context/SoundContext';
 import Header from './layouts/Header';
 import NavigationTabs, { TabType } from './layouts/NavigationTabs';
 import Footer from './layouts/Footer';
@@ -144,7 +145,9 @@ function MainLayout() {
 export default function App() {
   return (
     <AuthProvider>
-      <MainLayout />
+      <SoundProvider>
+        <MainLayout />
+      </SoundProvider>
     </AuthProvider>
   );
 }

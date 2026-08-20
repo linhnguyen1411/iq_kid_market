@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Brain, Sparkles, Coins, LogOut, User as UserIcon, 
   Settings, Trophy, CreditCard, ChevronDown, 
-  LogIn, UserPlus, ShieldCheck, GraduationCap, Heart 
+  LogIn, UserPlus, ShieldCheck, GraduationCap, Heart, Volume2, VolumeX 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useSound } from '../context/SoundContext';
 
 interface HeaderProps {
   activeTab: string;
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
     user, wallet, authToken, currentUserId, 
     switchUser, logout, openAuthModal 
   } = useAuth();
+  const { isSoundEnabled, toggleSound } = useSound();
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -101,13 +103,27 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
                     e.stopPropagation();
                     setActiveTab('wallet');
                   }}
-                  className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-black hover:bg-amber-600"
+                  className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-black hover:bg-amber-600 cursor-pointer"
                 >
                   +
                 </button>
               </div>
             </>
           )}
+
+          {/* GLOBAL SOUND TOGGLE BUTTON */}
+          <button
+            type="button"
+            onClick={toggleSound}
+            title={isSoundEnabled ? 'Bấm để tắt hiệu ứng âm thanh' : 'Bấm để bật hiệu ứng âm thanh'}
+            className={`p-2 rounded-full border transition-all cursor-pointer flex items-center justify-center shadow-xs ${
+              isSoundEnabled
+                ? 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'
+                : 'bg-slate-100 border-slate-200 text-slate-400 hover:text-slate-600'
+            }`}
+          >
+            {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
 
           {/* USER PROFILE DROPDOWN */}
           <div className="relative" ref={dropdownRef}>
