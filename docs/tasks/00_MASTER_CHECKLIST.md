@@ -28,7 +28,7 @@
 | **FE-01** | Tái Cấu Trúc App.tsx (3100+ Dòng) Thành Pages, Layouts & State Store | 🔴 P0 | Antigravity | 🟢 Done | [Xem FE_01](./frontend/FE_01_APP_REFACTOR_MODULAR_ROUTING.md) |
 | **FE-02** | Hoàn Thiện UI Auth Modal, Profile 3D Avatar & Đổi Mật Khẩu | 🔴 P0 | Antigravity | 🟢 Done | [Xem FE_02](./frontend/FE_02_AUTH_PROFILE_USER_EXPERIENCE.md) |
 | **FE-03** | Chợ Game Trí Tuệ, Bộ Lọc Đa Chiều & Mua Game 1-Chạm (Marketplace) | 🔴 P0 | Antigravity | 🟢 Done | [Xem FE_03](./frontend/FE_03_MARKETPLACE_STORE_CHECKOUT.md) |
-| **FE-04** | Chuẩn Hóa & Mở Rộng Hệ Thống 10+ Game Engines (Math, Puzzle, UX) | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_04](./frontend/FE_04_GAME_ENGINES_EXPANSION.md) |
+| **FE-04** | Chuẩn Hóa & Mở Rộng Hệ Thống 10+ Game Engines (Math, Puzzle, UX) | 🟠 P1 | Antigravity | 🟢 Done | [Xem FE_04](./frontend/FE_04_GAME_ENGINES_EXPANSION.md) |
 | **FE-05** | Nâng Cấp Scratch Simulator Studio Kéo Thả Khối Lệnh & Canvas Mô Phỏng | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_05](./frontend/FE_05_SCRATCH_SIMULATOR_STUDIO.md) |
 | **FE-06** | Màn Hình Bảng Vàng Vinh Danh & Bộ Sưu Tập Huy Hiệu Gamification | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_06](./frontend/FE_06_LEADERBOARD_ACHIEVEMENTS_UI.md) |
 | **FE-07** | Studio Sáng Tạo Game Cho Giáo Viên & Trình Sinh Game AI Trực Quan | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_07](./frontend/FE_07_ADMIN_CMS_STUDIO_AI_CREATOR.md) |

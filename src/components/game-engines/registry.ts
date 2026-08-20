@@ -9,6 +9,8 @@ import SortingEngine from "./SortingEngine";
 import FlashcardEngine from "./FlashcardEngine";
 import ScratchEngine from "./ScratchEngine";
 import CodingEngine from "./CodingEngine";
+import MathEngine from "./MathEngine";
+import LogicGridEngine from "./LogicGridEngine";
 
 /**
  * ĐĂNG KÝ GAME ENGINE Ở ĐÂY.
@@ -30,4 +32,7 @@ export const GAME_ENGINES: Record<string, GameEngineComponent> = {
   flashcard: FlashcardEngine,
   scratch: ScratchEngine,
   coding: CodingEngine,
+  math: MathEngine,
+  logic_grid: LogicGridEngine,
+  logic: LogicGridEngine,
 };
