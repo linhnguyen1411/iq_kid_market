@@ -279,6 +279,13 @@ class AiGenerateIn(BaseModel):
     creatorId: Optional[str] = None
 
 
+class AiGenerateQuestionIn(BaseModel):
+    topic: str
+    template_code: str
+    grade: Optional[int] = 2
+    category: Optional[str] = "iq"
+
+
 class ReviewDecideIn(BaseModel):
     gameId: str
     action: str  # "approve" | "reject"

@@ -6,7 +6,12 @@ from .. import models, schemas
 from ..database import get_db
 from ..auth_utils import require_roles, get_current_user_optional
 from ..default_templates import build_default_level, default_thumbnail
-from ..ai_content import generate_fallback_game, generate_game_with_gemini
+from ..ai_content import (
+    generate_fallback_game,
+    generate_game_with_gemini,
+    generate_single_question_with_gemini,
+    is_content_safe_for_kids,
+)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -281,7 +286,7 @@ def upload_games(
         raise HTTPException(status_code=500, detail=f"Đóng gói không hợp lệ: {err}")
 
 
-# ---------- 7. Sinh game bằng AI (Gemini) ----------
+# ---------- 7. Sinh game bằng AI (Gemini Pipeline) ----------
 @router.post("/games/ai-generate")
 def ai_generate_game(
     body: schemas.AiGenerateIn,
@@ -291,6 +296,11 @@ def ai_generate_game(
     if not body.topic or not body.template_code:
         raise HTTPException(status_code=400, detail="Vui lòng điền chủ đề học tập và lựa chọn Game Template!")
 
+    # 1. Lọc an toàn nội dung cho học sinh
+    safe, msg = is_content_safe_for_kids(body.topic)
+    if not safe:
+        raise HTTPException(status_code=400, detail=msg)
+
     category = body.category or "iq"
     price = body.price or 0
     grade_from = body.grade_from or 1
@@ -298,41 +308,27 @@ def ai_generate_game(
 
     creator_id = current_user.id if current_user else (body.creatorId or "system")
     creator_name = current_user.name if current_user else "Hệ Thống AI"
-    api_key = os.getenv("GEMINI_API_KEY")
-
-    if not api_key:
-        fallback = generate_fallback_game(
-            body.topic, body.template_code, grade_from, grade_to, category, price,
-            creator_id, creator_name,
-        )
-        game = models.Game(is_seed=False, **{k: v for k, v in fallback.items()})
-        db.add(game)
-        db.commit()
-        db.refresh(game)
-        return {
-            "success": True,
-            "warning": (
-                "Để kích hoạt trí tuệ nhân tạo Gemini thực thụ, vui lòng cài đặt biến GEMINI_API_KEY "
-                "trong file .env. Hiện tại đang hiển thị game giáo án sinh tự động chuẩn EdTech!"
-            ),
-            "game": schemas.GameOut.model_validate(game).model_dump(),
-        }
 
     try:
-        generated = generate_game_with_gemini(body.topic, body.template_code, grade_from, grade_to, category)
-        creator_name = current_user.name if current_user else "Trí tuệ Nhân tạo Gemini"
+        generated = generate_game_with_gemini(
+            topic=body.topic,
+            template_code=body.template_code,
+            grade_from=grade_from,
+            grade_to=grade_to,
+            category=category,
+        )
 
         game = models.Game(
-            id=generated["id"],
-            title=generated["title"],
-            description=generated.get("description"),
-            detailed_description=generated.get("detailed_description"),
-            thumbnail=generated.get("thumbnail"),
-            price=int(generated.get("price") or price),
-            grade_from=int(generated.get("grade_from") or grade_from),
-            grade_to=int(generated.get("grade_to") or grade_to),
-            template_code=generated.get("template_code") or body.template_code,
-            category=generated.get("category") or category,
+            id=generated.get("id") or f"ai_g_{int(time.time()*1000)}",
+            title=generated.get("title") or f"AI: {body.topic}",
+            description=generated.get("description") or f"Game bài học về {body.topic}",
+            detailed_description=generated.get("detailed_description") or generated.get("description"),
+            thumbnail=generated.get("thumbnail") or "🤖",
+            price=price,
+            grade_from=grade_from,
+            grade_to=grade_to,
+            template_code=body.template_code,
+            category=category,
             creator_id=creator_id,
             creator_name=creator_name,
             review_status="pending_review",
@@ -345,13 +341,53 @@ def ai_generate_game(
         db.add(game)
         db.commit()
         db.refresh(game)
-        return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
+        return {
+            "success": True,
+            "message": "Trò chơi AI đã được khởi tạo thành công và chuyển vào hàng đợi kiểm duyệt!",
+            "game": schemas.GameOut.model_validate(game).model_dump(),
+        }
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
     except Exception as err:  # noqa: BLE001
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Lỗi thiết kế từ hệ thống trí tuệ nhân tạo Gemini: {err}")
 
 
-# ---------- 8. Xoá sạch toàn bộ game custom, về lại seed gốc ----------
+# ---------- 8. Sinh 1 câu hỏi / màn chơi đơn lẻ bằng AI ----------
+@router.post("/ai/generate-question")
+def generate_ai_question(
+    body: schemas.AiGenerateQuestionIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
+    """
+    Dành cho Giáo viên / Creator khi soạn bài: Gợi ý nhanh 1 câu hỏi đơn lẻ theo Game Template.
+    """
+    if not body.topic or not body.template_code:
+        raise HTTPException(status_code=400, detail="Vui lòng cung cấp chủ đề và mã template!")
+
+    safe, msg = is_content_safe_for_kids(body.topic)
+    if not safe:
+        raise HTTPException(status_code=400, detail=msg)
+
+    try:
+        question_data = generate_single_question_with_gemini(
+            topic=body.topic,
+            template_code=body.template_code,
+            grade=body.grade or 2,
+            category=body.category or "iq",
+        )
+        return {
+            "success": True,
+            "question": question_data,
+        }
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+    except Exception as err:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi sinh câu hỏi AI: {err}")
+
+
+# ---------- 9. Xoá sạch toàn bộ game custom, về lại seed gốc ----------
 @router.post("/games/reset")
 def reset_custom_games(
     current_user: models.User = Depends(require_roles(["admin"])),
