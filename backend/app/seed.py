@@ -7,9 +7,18 @@ Nạp dữ liệu khởi tạo vào Postgres:
 Chạy tay:  python -m app.seed
 Tự chạy:  main.py gọi run_seed() khi khởi động nếu bảng users rỗng.
 """
+import os
+import sys
 import json
 from pathlib import Path
 from datetime import datetime, timezone
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 from sqlalchemy.orm import Session
 from . import models
