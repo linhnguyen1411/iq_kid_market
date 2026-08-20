@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Trophy, Medal, Sparkles, Award, 
-  Flame, Filter, CheckCircle2, Lock 
+  Flame, Filter, CheckCircle2, Lock, Clock, Calendar, Zap 
 } from 'lucide-react';
-import { LeaderboardItem, Achievement } from '../types';
+import { LeaderboardItem } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { BadgeShowcase } from '../components/BadgeShowcase';
+import { playSynthSound } from '../components/game-engines/soundUtils';
 
 export const LeaderboardPage: React.FC = () => {
   const { user } = useAuth();
 
+  const [activeTab, setActiveTab] = useState<'leaderboard' | 'badges'>('leaderboard');
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
-  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [selectedGrade, setSelectedGrade] = useState<string>('all');
+  const [timeframe, setTimeframe] = useState<string>('all_time');
   const [loading, setLoading] = useState(true);
 
   const fetchLeaderboardData = async () => {
     setLoading(true);
     try {
-      const [lbData, achData] = await Promise.all([
-        api.scores.getLeaderboard({
-          grade: selectedGrade !== 'all' ? selectedGrade : undefined,
-        }),
-        user?.id ? api.scores.getUserAchievements(user.id) : Promise.resolve([]),
-      ]);
+      const lbData = await api.scores.getLeaderboard({
+        grade: selectedGrade !== 'all' ? Number(selectedGrade) : undefined,
+        timeframe: timeframe !== 'all_time' ? timeframe : undefined,
+      });
       setLeaderboard(lbData);
-      setAchievements(achData);
     } catch (err) {
       console.error('Lỗi khi tải bảng xếp hạng:', err);
     } finally {
@@ -35,19 +35,32 @@ export const LeaderboardPage: React.FC = () => {
 
   useEffect(() => {
     fetchLeaderboardData();
-  }, [selectedGrade, user?.id]);
+  }, [selectedGrade, timeframe, user?.id]);
 
   const top3 = leaderboard.slice(0, 3);
   const remainingList = leaderboard.slice(3);
 
+  // Avatar helper
+  const renderAvatarEmoji = (avatarCode?: string) => {
+    switch (avatarCode) {
+      case 'smile_tiger': return '🐯';
+      case 'smart_owl': return '🦉';
+      case 'cool_fox': return '🦊';
+      case 'happy_panda': return '🐼';
+      case 'super_rabbit': return '🐰';
+      case 'brave_dragon': return '🐲';
+      default: return '🎓';
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-8 text-left">
-      {/* Header Banner */}
+    <div className="flex flex-col gap-6 text-left">
+      {/* 1. Header Banner */}
       <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 rounded-3xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
         <div>
           <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-[10px] font-bold px-3 py-1 rounded-full mb-2 uppercase tracking-wider">
             <Trophy className="w-3.5 h-3.5 text-yellow-200" />
-            ĐUA TOP TRÍ TUỆ TOÀN DIỆN
+            ĐUA TOP TRÍ TUỆ TOÀN TRƯỜNG
           </span>
           <h2 className="text-2xl md:text-3xl font-black mb-2">
             Bảng Vàng Vinh Danh & Danh Hiệu 🏆
@@ -57,167 +70,245 @@ export const LeaderboardPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Filter Bar */}
-        <div className="bg-white/15 backdrop-blur-md p-2 rounded-2xl border border-white/20 flex items-center gap-1">
-          {['all', '1', '2', '3', '4', '5'].map((grade) => (
-            <button
-              key={grade}
-              onClick={() => setSelectedGrade(grade)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                selectedGrade === grade
-                  ? 'bg-white text-orange-600 shadow-sm'
-                  : 'text-white/80 hover:bg-white/10'
-              }`}
-            >
-              {grade === 'all' ? 'Toàn Trường' : `Lớp ${grade}`}
-            </button>
-          ))}
+        {/* Tab Toggle Navigation */}
+        <div className="bg-black/20 backdrop-blur-md p-1.5 rounded-2xl border border-white/20 flex items-center gap-1">
+          <button
+            onClick={() => {
+              setActiveTab('leaderboard');
+              playSynthSound('click');
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'leaderboard'
+                ? 'bg-white text-orange-600 shadow-md'
+                : 'text-white/80 hover:bg-white/10'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Bảng Vàng Thi Đua</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('badges');
+              playSynthSound('click');
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'badges'
+                ? 'bg-white text-orange-600 shadow-md'
+                : 'text-white/80 hover:bg-white/10'
+            }`}
+          >
+            <Award className="w-4 h-4" />
+            <span>Kho Huy Hiệu</span>
+          </button>
         </div>
       </div>
 
-      {/* Top 3 Podium */}
-      {top3.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end max-w-4xl mx-auto w-full pt-6">
-          {/* Top 2 */}
-          {top3[1] && (
-            <div className="bg-white rounded-3xl p-6 border-2 border-slate-200 shadow-sm flex flex-col items-center text-center order-2 md:order-1 relative">
-              <div className="w-8 h-8 rounded-full bg-slate-300 text-slate-800 font-black text-sm flex items-center justify-center absolute -top-4 shadow-sm">
-                🥈
+      {activeTab === 'badges' ? (
+        /* Tab 2: Badges Showcase */
+        <BadgeShowcase />
+      ) : (
+        /* Tab 1: Leaderboard */
+        <div className="space-y-6">
+          {/* Filters Bar: Timeframe & Grade */}
+          <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+            {/* Filter: Khối Lớp */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 font-mono">Khối Lớp:</span>
+              <div className="flex flex-wrap items-center gap-1">
+                {['all', '1', '2', '3', '4', '5'].map((grade) => (
+                  <button
+                    key={grade}
+                    onClick={() => {
+                      setSelectedGrade(grade);
+                      playSynthSound('click');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedGrade === grade
+                        ? 'bg-orange-500 text-white shadow-xs'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {grade === 'all' ? 'Tất cả khối' : `Lớp ${grade}`}
+                  </button>
+                ))}
               </div>
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-slate-400 to-slate-600 text-white flex items-center justify-center text-2xl font-bold shadow-md mb-2">
-                {top3[1].avatar === 'smile_tiger' ? '🐯' : '👦'}
+            </div>
+
+            {/* Filter: Mốc Thời Gian */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-500 font-mono">Thời gian:</span>
+              <div className="flex items-center gap-1">
+                {[
+                  { code: 'all_time', label: 'Toàn thời gian' },
+                  { code: 'weekly', label: 'Tuần này' },
+                  { code: 'daily', label: 'Hôm nay' },
+                ].map((tf) => (
+                  <button
+                    key={tf.code}
+                    onClick={() => {
+                      setTimeframe(tf.code);
+                      playSynthSound('click');
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      timeframe === tf.code
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    {tf.label}
+                  </button>
+                ))}
               </div>
-              <h4 className="text-sm font-black text-slate-800">{top3[1].name}</h4>
-              <span className="text-[10px] text-slate-400 font-mono mb-2">@{top3[1].username}</span>
-              <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                {top3[1].xp} XP
-              </span>
+            </div>
+          </div>
+
+          {/* 2. Top 3 Podium (Bục Vinh Quang) */}
+          {top3.length > 0 && (
+            <div className="bg-gradient-to-b from-slate-900 to-indigo-950 rounded-3xl p-6 md:p-8 text-white shadow-xl border border-indigo-900/50">
+              <div className="text-center mb-4">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-amber-400">
+                  TOP 3 HỌC SINH XUẤT SẮC NHẤT
+                </span>
+              </div>
+
+              <div className="flex justify-center items-end gap-3 md:gap-8 pt-6 pb-2">
+                {/* Hạng 2 (Bạc) */}
+                {top3[1] && (
+                  <div className="flex flex-col items-center flex-1 max-w-[140px]">
+                    <div className="text-2xl mb-1">🥈</div>
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 text-3xl flex items-center justify-center border-3 border-slate-300 shadow-md">
+                      {renderAvatarEmoji(top3[1].avatar)}
+                    </div>
+                    <p className="font-black text-xs text-slate-200 mt-2 line-clamp-1 text-center">
+                      {top3[1].name || top3[1].username}
+                    </p>
+                    <span className="text-[11px] font-mono font-bold text-slate-400">
+                      {top3[1].score.toLocaleString('vi-VN')} XP
+                    </span>
+                    <div className="w-full h-24 bg-gradient-to-t from-slate-700 to-slate-500 rounded-t-2xl mt-2 flex items-center justify-center font-black text-slate-200 text-2xl shadow-lg border-t-2 border-slate-300">
+                      2
+                    </div>
+                  </div>
+                )}
+
+                {/* Hạng 1 (Vàng - Ở Giữa, Cao Nhất) */}
+                {top3[0] && (
+                  <div className="flex flex-col items-center flex-1 max-w-[160px] -mt-6">
+                    <div className="text-4xl mb-1 animate-bounce">👑</div>
+                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-300 to-yellow-100 text-4xl flex items-center justify-center border-4 border-amber-400 shadow-2xl ring-4 ring-amber-400/40">
+                      {renderAvatarEmoji(top3[0].avatar)}
+                    </div>
+                    <p className="font-black text-sm text-yellow-300 mt-2 line-clamp-1 text-center">
+                      {top3[0].name || top3[0].username}
+                    </p>
+                    <span className="text-xs font-mono font-black text-amber-400">
+                      {top3[0].score.toLocaleString('vi-VN')} XP
+                    </span>
+                    <div className="w-full h-36 bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-950 text-4xl shadow-xl border-t-2 border-yellow-200">
+                      1
+                    </div>
+                  </div>
+                )}
+
+                {/* Hạng 3 (Đồng) */}
+                {top3[2] && (
+                  <div className="flex flex-col items-center flex-1 max-w-[140px]">
+                    <div className="text-2xl mb-1">🥉</div>
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-700 to-amber-600 text-3xl flex items-center justify-center border-3 border-amber-600 shadow-md">
+                      {renderAvatarEmoji(top3[2].avatar)}
+                    </div>
+                    <p className="font-black text-xs text-amber-200 mt-2 line-clamp-1 text-center">
+                      {top3[2].name || top3[2].username}
+                    </p>
+                    <span className="text-[11px] font-mono font-bold text-amber-300">
+                      {top3[2].score.toLocaleString('vi-VN')} XP
+                    </span>
+                    <div className="w-full h-18 bg-gradient-to-t from-amber-800 to-amber-600 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-100 text-2xl shadow-lg border-t-2 border-amber-500">
+                      3
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Top 1 */}
-          {top3[0] && (
-            <div className="bg-gradient-to-b from-amber-50 to-white rounded-3xl p-8 border-2 border-amber-300 shadow-lg flex flex-col items-center text-center order-1 md:order-2 relative scale-105">
-              <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-900 font-black text-base flex items-center justify-center absolute -top-5 shadow-md animate-bounce">
-                👑
-              </div>
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 text-white flex items-center justify-center text-3xl font-bold shadow-lg mb-2">
-                {top3[0].avatar === 'smile_tiger' ? '🐯' : '🌟'}
-              </div>
-              <h4 className="text-base font-black text-slate-900">{top3[0].name}</h4>
-              <span className="text-xs text-slate-400 font-mono mb-2">@{top3[0].username}</span>
-              <span className="text-sm font-black text-amber-600 bg-amber-100/80 px-4 py-1.5 rounded-full border border-amber-200">
-                {top3[0].xp} XP
-              </span>
-            </div>
-          )}
+          {/* 3. Top 4 - 20 Leaderboard Table */}
+          <div className="bg-white rounded-3xl p-5 shadow-xs border border-slate-200/80">
+            <h3 className="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-indigo-600" />
+              <span>BẢNG XẾP HẠNG THÀNH TÍCH (HẠNG 4 TRỞ ĐI)</span>
+            </h3>
 
-          {/* Top 3 */}
-          {top3[2] && (
-            <div className="bg-white rounded-3xl p-6 border-2 border-amber-200 shadow-sm flex flex-col items-center text-center order-3 md:order-3 relative">
-              <div className="w-8 h-8 rounded-full bg-amber-600 text-white font-black text-sm flex items-center justify-center absolute -top-4 shadow-sm">
-                🥉
+            {loading ? (
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-14 bg-slate-50 rounded-2xl animate-pulse" />
+                ))}
               </div>
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-600 to-orange-700 text-white flex items-center justify-center text-2xl font-bold shadow-md mb-2">
-                {top3[2].avatar === 'smile_tiger' ? '🐯' : '👧'}
+            ) : remainingList.length > 0 ? (
+              <div className="space-y-2">
+                {remainingList.map((item, index) => {
+                  const rank = index + 4;
+                  const isCurrentUser = user && (user.id === item.userId || user.username === item.username);
+
+                  return (
+                    <div
+                      key={item.userId || index}
+                      className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+                        isCurrentUser
+                          ? 'bg-amber-50/80 border-amber-300 ring-2 ring-amber-200 shadow-xs'
+                          : 'bg-slate-50/60 border-slate-100 hover:bg-slate-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-7 h-7 rounded-xl bg-slate-200 text-slate-700 font-mono font-black text-xs flex items-center justify-center">
+                          {rank}
+                        </span>
+
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-2xl border border-slate-200 shadow-2xs">
+                          {renderAvatarEmoji(item.avatar)}
+                        </div>
+
+                        <div>
+                          <h4 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                            <span>{item.name || item.username}</span>
+                            {isCurrentUser && (
+                              <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-md">
+                                (Bạn)
+                              </span>
+                            )}
+                          </h4>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            Cấp độ {item.level || 1} • {item.grade ? `Lớp ${item.grade}` : 'Học sinh'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        {item.streak > 0 && (
+                          <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2.5 py-1 rounded-xl border border-orange-200 flex items-center gap-1">
+                            <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+                            <span>{item.streak} ngày</span>
+                          </span>
+                        )}
+
+                        <span className="text-xs font-mono font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-100">
+                          {item.score.toLocaleString('vi-VN')} XP
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <h4 className="text-sm font-black text-slate-800">{top3[2].name}</h4>
-              <span className="text-[10px] text-slate-400 font-mono mb-2">@{top3[2].username}</span>
-              <span className="text-xs font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
-                {top3[2].xp} XP
-              </span>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-10 text-xs text-slate-400 font-medium">
+                Chưa có thêm học sinh nào trong khoảng xếp hạng này. Hãy là người tiếp theo! 🚀
+              </div>
+            )}
+          </div>
         </div>
       )}
-
-      {/* Leaderboard Table & Achievements */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Full Leaderboard (7 Cols) */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-          <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
-            <Medal className="w-5 h-5 text-amber-500" />
-            <span>DANH SÁCH THỨ HẠNG</span>
-          </h3>
-
-          <div className="flex flex-col gap-2">
-            {leaderboard.map((item, idx) => (
-              <div
-                key={item.id}
-                className={`flex items-center justify-between p-3.5 rounded-2xl border transition-colors ${
-                  item.id === user?.id
-                    ? 'bg-indigo-50/70 border-indigo-200'
-                    : 'bg-white border-slate-100 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className={`w-7 h-7 rounded-full font-mono text-xs font-black flex items-center justify-center ${
-                    idx === 0 ? 'bg-amber-400 text-slate-900' :
-                    idx === 1 ? 'bg-slate-300 text-slate-800' :
-                    idx === 2 ? 'bg-amber-600 text-white' : 'text-slate-500 bg-slate-100'
-                  }`}>
-                    {idx + 1}
-                  </span>
-
-                  <div>
-                    <h5 className="text-xs font-bold text-slate-800">{item.name}</h5>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Cấp {item.level || 1} • {item.streak || 0} ngày 🔥
-                    </span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-xs font-black text-indigo-600 block">{item.xp} XP</span>
-                  <span className="text-[10px] text-slate-400">Lớp {item.grade || 'Tiểu học'}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* User Achievements Collection (5 Cols) */}
-        <div className="lg:col-span-5 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs">
-          <h3 className="text-base font-black text-slate-800 mb-4 flex items-center gap-2">
-            <Award className="w-5 h-5 text-indigo-600" />
-            <span>BỘ SƯU TẬP DANH HIỆU</span>
-          </h3>
-
-          <div className="grid grid-cols-1 gap-3">
-            {achievements.map((ach) => (
-              <div
-                key={ach.id}
-                className={`p-3.5 rounded-2xl border flex items-center gap-3 transition-all ${
-                  ach.unlocked
-                    ? 'bg-gradient-to-r from-amber-50/50 to-indigo-50/30 border-amber-200'
-                    : 'bg-slate-50 border-slate-200/60 opacity-60'
-                }`}
-              >
-                <div className="text-3xl shrink-0">
-                  {ach.icon || '🏅'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <h5 className="text-xs font-black text-slate-800 truncate">{ach.title}</h5>
-                    {ach.unlocked ? (
-                      <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-0.5">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>Đã mở</span>
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-slate-400 flex items-center gap-0.5">
-                        <Lock className="w-3 h-3" />
-                        <span>Chưa mở</span>
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5">{ach.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
