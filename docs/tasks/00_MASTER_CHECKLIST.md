@@ -31,7 +31,7 @@
 | **FE-04** | Chuẩn Hóa & Mở Rộng Hệ Thống 10+ Game Engines (Math, Puzzle, UX) | 🟠 P1 | Antigravity | 🟢 Done | [Xem FE_04](./frontend/FE_04_GAME_ENGINES_EXPANSION.md) |
 | **FE-05** | Nâng Cấp Scratch Simulator Studio Kéo Thả Khối Lệnh & Canvas Mô Phỏng | 🟠 P1 | Antigravity | 🟢 Done | [Xem FE_05](./frontend/FE_05_SCRATCH_SIMULATOR_STUDIO.md) |
 | **FE-06** | Màn Hình Bảng Vàng Vinh Danh & Bộ Sưu Tập Huy Hiệu Gamification | 🟠 P1 | Antigravity | 🟢 Done | [Xem FE_06](./frontend/FE_06_LEADERBOARD_ACHIEVEMENTS_UI.md) |
-| **FE-07** | Studio Sáng Tạo Game Cho Giáo Viên & Trình Sinh Game AI Trực Quan | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_07](./frontend/FE_07_ADMIN_CMS_STUDIO_AI_CREATOR.md) |
+| **FE-07** | Studio Sáng Tạo Game Cho Giáo Viên & Trình Sinh Game AI Trực Quan | 🟠 P1 | Antigravity | 🟢 Done | [Xem FE_07](./frontend/FE_07_ADMIN_CMS_STUDIO_AI_CREATOR.md) |
 | **FE-08** | Tối Ưu Giao Diện iPad/Tablet, Hỗ Trợ PWA & Trình Quản Lý Âm Thanh | 🟡 P2 | _Chưa nhận_ | 🟡 To Do | [Xem FE_08](./frontend/FE_08_RESPONSIVE_PWA_SOUND_SYSTEM.md) |
 
 ---
