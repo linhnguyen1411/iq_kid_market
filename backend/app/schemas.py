@@ -93,11 +93,43 @@ class UpdateProfileIn(BaseModel):
     grade: Optional[int] = None
 
 
-# ---------- Wallet ----------
+# ---------- Wallet & Payment ----------
 class TopupIn(BaseModel):
     userId: str
     amount: int
-    method: Optional[str] = None
+    method: Optional[str] = "QR Code"
+
+
+class CreateTopupIntentIn(BaseModel):
+    userId: str
+    amount: int
+    method: Optional[str] = "VietQR"
+
+
+class TopupIntentOut(BaseModel):
+    tx_id: str
+    amount: int
+    qr_url: str
+    bank_name: str
+    bank_account: str
+    account_holder: str
+    transfer_content: str
+
+
+class ConfirmTopupIn(BaseModel):
+    userId: str
+    tx_id: str
+    amount: Optional[int] = None
+
+
+class CreatorEarningsOut(BaseModel):
+    creatorId: str
+    creatorName: str
+    availableBalance: int
+    totalRevenue: int
+    totalSalesCount: int
+    recentEarnings: list[dict]
+    gameBreakdown: list[dict]
 
 
 # ---------- Games / Marketplace ----------

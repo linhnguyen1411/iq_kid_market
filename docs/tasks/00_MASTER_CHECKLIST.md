@@ -11,7 +11,7 @@
 | Mã Task | Tên Nhiệm Vụ | Độ Ưu Tiên | Phụ Trách | Trạng Thái | Link Chi Tiết |
 | :--- | :--- | :---: | :---: | :---: | :--- |
 | **BE-01** | Hệ Thống Xác Thực & Phân Quyền Nâng Cao (Auth, JWT & RBAC) | 🔴 P0 | Antigravity | 🟢 Done | [Xem BE_01](./backend/BE_01_AUTH_JWT_RBAC.md) |
-| **BE-02** | Quản Lý Ví Xu, Giao Dịch & Cổng Nạp Tiền Mô Phỏng (Wallet & Payment) | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem BE_02](./backend/BE_02_WALLET_PAYMENT_SYSTEM.md) |
+| **BE-02** | Quản Lý Ví Xu, Giao Dịch & Cổng Nạp Tiền Mô Phỏng (Wallet & Payment) | 🔴 P0 | Antigravity | 🟢 Done | [Xem BE_02](./backend/BE_02_WALLET_PAYMENT_SYSTEM.md) |
 | **BE-03** | API Quản Lý Game, Levels JSONB & Hàng Đợi Kiểm Duyệt (Game CMS) | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem BE_03](./backend/BE_03_GAME_CMS_LEVEL_MANAGEMENT.md) |
 | **BE-04** | Pipeline Sinh Game Tự Động Bằng Google Gemini AI (AI Content Pipeline) | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem BE_04](./backend/BE_04_AI_GENERATOR_GEMINI_PIPELINE.md) |
 | **BE-05** | Hệ Thống Chấm Điểm, Daily Streak & Bảng Xếp Hạng (Gamification Backend) | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem BE_05](./backend/BE_05_ATTEMPTS_SCORING_LEADERBOARD.md) |
