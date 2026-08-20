@@ -7,6 +7,8 @@ router = APIRouter(tags=["session"])
 
 
 @router.get("/api/session")
+@router.get("/api/session/user/{userId}")
+@router.get("/api/session/{userId}")
 def get_session(userId: str = "u1", db: Session = Depends(get_db)):
     user = db.get(models.User, userId)
     if not user:

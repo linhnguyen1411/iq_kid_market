@@ -244,3 +244,26 @@ def change_password(
     db.commit()
 
     return {"success": True, "message": "Đổi mật khẩu thành công!"}
+
+
+@router.put("/profile")
+@router.post("/profile")
+def update_profile_auth(
+    body: schemas.UpdateProfileIn,
+    current_user: models.User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    user = current_user or db.get(models.User, body.userId)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+
+    if body.name:
+        user.name = body.name
+    if body.avatar:
+        user.avatar = body.avatar
+    if body.grade is not None:
+        user.grade = int(body.grade)
+
+    db.commit()
+    db.refresh(user)
+    return {"success": True, "user": schemas.UserOut.model_validate(user).model_dump()}

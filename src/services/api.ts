@@ -78,7 +78,7 @@ export const api = {
 
   // ---------- SESSION ----------
   session: {
-    getUserSession: (userId: string) => apiRequest<UserSession>(`/session/user/${userId}`),
+    getUserSession: (userId: string) => apiRequest<UserSession>(`/session?userId=${encodeURIComponent(userId)}`),
   },
 
   // ---------- GAMES MARKETPLACE ----------
