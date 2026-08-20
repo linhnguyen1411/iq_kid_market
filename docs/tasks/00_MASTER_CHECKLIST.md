@@ -21,12 +21,12 @@
 
 ---
 
-### 🎨 B. FRONTEND TASKS (React 19 + TypeScript + Vite + Tailwind CSS v4)
+### 🎨 B. FRONTEND (React 19 + TypeScript + Vite + Tailwind CSS v4)
 
-| Mã Task | Tên Nhiệm Vụ | Độ Ưu Tiên | Phụ Trách | Trạng Thái | Link Chi Tiết |
+| Mã Task | Tên Tính Năng & Nghiệp Vụ | Độ Ưu Tiên | Người Nhận | Trạng Thái | Link Chi Tiết |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **FE-01** | Tái Cấu Trúc App.tsx (3100+ Dòng) Thành Pages, Layouts & State Store | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem FE_01](./frontend/FE_01_APP_REFACTOR_MODULAR_ROUTING.md) |
-| **FE-02** | Hoàn Thiện UI Auth Modal, Profile 3D Avatar & Đổi Mật Khẩu | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem FE_02](./frontend/FE_02_AUTH_PROFILE_USER_EXPERIENCE.md) |
+| **FE-01** | Tái Cấu Trúc App.tsx (3100+ Dòng) Thành Pages, Layouts & State Store | 🔴 P0 | Antigravity | 🟢 Done | [Xem FE_01](./frontend/FE_01_APP_REFACTOR_MODULAR_ROUTING.md) |
+| **FE-02** | Xây Dựng & Chuẩn Hóa 4 Game Engines Trí Tuệ (Game Engines) | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem FE_02](./frontend/FE_02_STANDARDIZE_GAME_ENGINES.md) |
 | **FE-03** | Chợ Game Trí Tuệ, Bộ Lọc Đa Chiều & Mua Game 1-Chạm (Marketplace) | 🔴 P0 | _Chưa nhận_ | 🟡 To Do | [Xem FE_03](./frontend/FE_03_MARKETPLACE_STORE_CHECKOUT.md) |
 | **FE-04** | Chuẩn Hóa & Mở Rộng Hệ Thống 10+ Game Engines (Math, Puzzle, UX) | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_04](./frontend/FE_04_GAME_ENGINES_EXPANSION.md) |
 | **FE-05** | Nâng Cấp Scratch Simulator Studio Kéo Thả Khối Lệnh & Canvas Mô Phỏng | 🟠 P1 | _Chưa nhận_ | 🟡 To Do | [Xem FE_05](./frontend/FE_05_SCRATCH_SIMULATOR_STUDIO.md) |
