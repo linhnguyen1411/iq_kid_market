@@ -20,6 +20,7 @@ class User(Base):
     xp = Column(Integer, default=0)
     level = Column(Integer, default=1)
     streak = Column(Integer, default=0)
+    last_active_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     wallet = relationship("Wallet", uselist=False, back_populates="user", cascade="all, delete-orphan")
@@ -124,6 +125,18 @@ class Achievement(Base):
     badge_code = Column(String(50))
     xp_bonus = Column(Integer, default=100)
     icon = Column(String(20))
+
+
+class UserAchievement(Base):
+    __tablename__ = "user_achievements"
+
+    id = Column(String(50), primary_key=True)  # "ua_<user_id>_<achievement_id>"
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    achievement_id = Column(String(30), ForeignKey("achievements.id", ondelete="CASCADE"), nullable=False)
+    unlocked_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", backref="unlocked_achievements")
+    achievement = relationship("Achievement")
 
 
 class ScratchCourse(Base):

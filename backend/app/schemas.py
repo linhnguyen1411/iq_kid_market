@@ -285,7 +285,7 @@ class ReviewDecideIn(BaseModel):
     feedback: Optional[str] = None
 
 
-# ---------- Attempts ----------
+# ---------- Attempts & Gamification ----------
 class SubmitAttemptIn(BaseModel):
     userId: str
     gameId: str
@@ -293,3 +293,40 @@ class SubmitAttemptIn(BaseModel):
     score: int
     completed: Optional[bool] = True
     duration: Optional[int] = 15
+
+
+class SubmitAttemptOut(BaseModel):
+    success: bool
+    score: int
+    xpAwarded: int
+    newXp: int
+    levelUp: bool
+    newLevel: int
+    newStreak: int
+    coinReward: int
+    unlockedAchievements: list[dict]
+    message: str
+
+
+class LeaderboardItemOut(BaseModel):
+    userId: str
+    name: str
+    avatar: str
+    grade: Optional[int] = None
+    score: int
+    xp: int
+    streak: int
+    level: int
+
+
+class UserAchievementItemOut(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    badge_code: Optional[str] = None
+    icon: Optional[str] = None
+    xp_bonus: int
+    unlocked: bool
+    unlocked_at: Optional[str] = None
+    progress_percent: int
+
