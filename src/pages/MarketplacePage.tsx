@@ -1,18 +1,32 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Gamepad2, Search, Filter, Lock, Play, 
   Sparkles, CheckCircle2, Star, Coins, ArrowRight, X, 
-  ArrowUpDown, RotateCcw 
+  ArrowUpDown, RotateCcw, Flame, Trophy, Layers 
 } from 'lucide-react';
 import { Game } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { GameCard } from '../components/GameCard';
+import { GameDetailModal } from '../components/GameDetailModal';
+import { PurchaseModal } from '../components/PurchaseModal';
+import { playSynthSound } from '../components/game-engines/soundUtils';
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 interface MarketplacePageProps {
   games: Game[];
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   onPlayGame: (game: Game, levelNum?: number) => void;
+  onNavigateToWallet?: () => void;
 }
 
 export const MarketplacePage: React.FC<MarketplacePageProps> = ({
@@ -20,33 +34,32 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   selectedCategory,
   setSelectedCategory,
   onPlayGame,
+  onNavigateToWallet = () => {},
 }) => {
-  const { user, wallet, purchases, addPurchase, updateUserWallet, openAuthModal } = useAuth();
+  const { user, purchases } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 250);
+
   const [selectedGrade, setSelectedGrade] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
-  const [selectedGameDetail, setSelectedGameDetail] = useState<Game | null>(null);
-  const [isPurchasing, setIsPurchasing] = useState(false);
-  const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
-  const categoryToVietnamese = (cat: string) => {
-    switch (cat) {
-      case 'math': return 'Toán Học Logic';
-      case 'iq': return 'Tư Duy IQ';
-      case 'scratch': return 'Lập Trình Robot';
-      case 'vietnamese': return 'Tiếng Việt';
-      default: return 'Trí Tuệ';
-    }
-  };
+  // Modals state
+  const [detailGame, setDetailGame] = useState<Game | null>(null);
+  const [purchaseGame, setPurchaseGame] = useState<Game | null>(null);
+
+  // Featured Games for top carousel / banner
+  const featuredGames = useMemo(() => {
+    return games.filter((g) => g.rating_avg && g.rating_avg >= 4.8).slice(0, 3);
+  }, [games]);
 
   // Filter & Search & Sort logic
   const filteredAndSortedGames = useMemo(() => {
     const list = games.filter((game) => {
-      // 1. Search
-      if (searchTerm.trim()) {
-        const term = searchTerm.toLowerCase();
+      // 1. Search with debounce
+      if (debouncedSearch.trim()) {
+        const term = debouncedSearch.toLowerCase();
         const matchTitle = game.title.toLowerCase().includes(term);
         const matchDesc = game.description.toLowerCase().includes(term);
         if (!matchTitle && !matchDesc) return false;
@@ -63,14 +76,14 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         if (gNum < game.grade_from || gNum > game.grade_to) return false;
       }
 
-      // 4. Type
+      // 4. Type (Free vs Paid)
       if (selectedType === 'free' && game.price > 0) return false;
       if (selectedType === 'paid' && game.price === 0) return false;
 
       return true;
     });
 
-    // Sort
+    // Sort logic
     return list.sort((a, b) => {
       if (sortBy === 'newest') return (b.id || '').localeCompare(a.id || '');
       if (sortBy === 'rating') return (b.rating_avg || 5) - (a.rating_avg || 5);
@@ -78,7 +91,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       if (sortBy === 'price_desc') return b.price - a.price;
       return (b.plays_count || 0) - (a.plays_count || 0); // popular default
     });
-  }, [games, searchTerm, selectedCategory, selectedGrade, selectedType, sortBy]);
+  }, [games, debouncedSearch, selectedCategory, selectedGrade, selectedType, sortBy]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -88,56 +101,68 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
     setSortBy('popular');
   };
 
-  const handleBuyGame = async (game: Game) => {
-    if (!user) {
-      openAuthModal('login');
-      return;
-    }
-
-    if ((wallet?.balance || 0) < game.price) {
-      setPurchaseError(`Số dư ví (${(wallet?.balance || 0).toLocaleString('vi-VN')} xu) không đủ ${game.price.toLocaleString('vi-VN')} xu để mua game này!`);
-      return;
-    }
-
-    setIsPurchasing(true);
-    setPurchaseError(null);
-    try {
-      const res = await api.games.purchaseGame(user.id, game.id);
-      if (res.success) {
-        addPurchase(game.id);
-        updateUserWallet(res.newBalance);
-        setSelectedGameDetail(null);
-      }
-    } catch (err: any) {
-      setPurchaseError(err.message || 'Không thể thực hiện giao dịch mua game!');
-    } finally {
-      setIsPurchasing(false);
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white rounded-2xl p-4.5 shadow-xs border border-slate-200/80 text-left">
+    <div className="flex flex-col gap-6 text-left">
+      {/* 1. Hero Featured Games Banner */}
+      {featuredGames.length > 0 && selectedCategory === 'all' && !searchTerm && (
+        <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-purple-500/20">
+          <div className="z-10 max-w-xl">
+            <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-md text-[10px] font-bold px-3 py-1 rounded-full mb-2 uppercase tracking-wider text-yellow-300 border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 animate-spin" />
+              BỘ TRÒ CHƠI TIÊU BIỂU TRONG TUẦN
+            </span>
+            <h2 className="text-2xl md:text-3xl font-black mb-2 tracking-tight">
+              Khám Phá Sàn Game Trí Tuệ IQ Kids 🚀
+            </h2>
+            <p className="text-xs md:text-sm text-purple-100 leading-relaxed">
+              Bộ sưu tập hơn 90+ màn chơi Toán học, Não bộ IQ, Lập trình Scratch và Tiếng Việt được thiết kế chuẩn sư phạm dành riêng cho học sinh Việt Nam.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 z-10 overflow-x-auto max-w-full pb-2 md:pb-0">
+            {featuredGames.map((fg) => (
+              <div
+                key={fg.id}
+                onClick={() => setDetailGame(fg)}
+                className="bg-white/10 backdrop-blur-md hover:bg-white/20 p-3.5 rounded-2xl border border-white/20 cursor-pointer transition-all duration-300 hover:scale-105 min-w-[140px] text-center"
+              >
+                <div className="text-3xl mb-1">{fg.thumbnail || '🎮'}</div>
+                <h5 className="text-xs font-black text-white line-clamp-1">{fg.title}</h5>
+                <span className="text-[10px] text-amber-300 font-bold flex items-center justify-center gap-0.5 mt-0.5">
+                  <Star className="w-3 h-3 fill-amber-300" />
+                  {fg.rating_avg ? fg.rating_avg.toFixed(1) : '5.0'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Background Ornaments */}
+          <div className="absolute -right-12 -bottom-12 w-56 h-56 bg-pink-500/20 rounded-full blur-3xl" />
+          <div className="absolute -left-12 -top-12 w-56 h-56 bg-indigo-500/20 rounded-full blur-3xl" />
+        </div>
+      )}
+
+      {/* 2. Search & Toolbar Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white rounded-2xl p-4.5 shadow-xs border border-slate-200/80">
         <div>
-          <h2 className="text-lg md:text-xl text-slate-800 font-black flex items-center gap-2">
-            <Gamepad2 className="w-6 h-6 text-pink-600" />
-            <span>SÀN GAME THÔNG THÁI</span>
-          </h2>
-          <p className="text-slate-500 text-xs font-medium">
-            Lọc và khám phá 90+ trò chơi rèn trí tuệ cho học sinh tiểu học & THCS
+          <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+            <Gamepad2 className="w-5 h-5 text-pink-600" />
+            <span>DANH MỤC TRÒ CHƠI GIÁO DỤC</span>
+          </h3>
+          <p className="text-slate-400 text-xs">
+            Tìm kiếm theo từ khóa hoặc tùy chọn khối lớp phù hợp với bé
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full max-w-xs">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        {/* Real-time Debounced Search Input */}
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Tìm kiếm trò chơi..."
+            placeholder="Tìm theo tên trò chơi, chủ đề..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-hidden rounded-xl py-2 pl-9 pr-4 text-xs font-semibold text-slate-800 transition-all"
+            className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-hidden rounded-xl py-2.5 pl-9 pr-8 text-xs font-semibold text-slate-800 transition-all"
           />
           {searchTerm && (
             <button
@@ -150,14 +175,14 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         </div>
       </div>
 
-      {/* Main Layout: Filters (Left) + Grid (Right) */}
+      {/* 3. Main Layout: Filters Sidebar (Left) + Games Grid (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Filters Sidebar (3 Cols) */}
-        <div className="lg:col-span-3 bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs text-left flex flex-col gap-5">
+        <div className="lg:col-span-3 bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs flex flex-col gap-5">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-1.5 text-slate-800 text-xs font-black uppercase tracking-wide">
               <Filter className="w-4 h-4 text-indigo-600" />
-              <span>BỘ LỌC TÌM KIẾM</span>
+              <span>BỘ LỌC ĐA CHIỀU</span>
             </div>
             {(selectedCategory !== 'all' || selectedGrade !== 'all' || selectedType !== 'all' || searchTerm) && (
               <button
@@ -170,7 +195,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             )}
           </div>
 
-          {/* Filter 1: Grade */}
+          {/* Filter 1: Khối Lớp */}
           <div>
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 font-mono">
               KHỐI LỚP HỌC
@@ -179,10 +204,13 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               {['all', '1', '2', '3', '4', '5'].map((gradeVal) => (
                 <button
                   key={gradeVal}
-                  onClick={() => setSelectedGrade(gradeVal)}
+                  onClick={() => {
+                    setSelectedGrade(gradeVal);
+                    playSynthSound('click');
+                  }}
                   className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                     selectedGrade === gradeVal
-                      ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-2xs'
+                      ? 'bg-indigo-50 border-indigo-500 text-indigo-700 shadow-2xs font-extrabold'
                       : 'bg-slate-50 border-slate-200/60 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -192,22 +220,25 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             </div>
           </div>
 
-          {/* Filter 2: Category */}
+          {/* Filter 2: Thể Loại */}
           <div>
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 font-mono">
-              THỂ LOẠI
+              THỂ LOẠI BÀI HỌC
             </h4>
             <div className="flex flex-col gap-1">
               {[
                 { code: 'all', label: 'Tất Cả Thể Loại' },
-                { code: 'iq', label: 'Tư Duy IQ Cognitive' },
+                { code: 'iq', label: 'Tư Duy IQ Não Bộ' },
                 { code: 'math', label: 'Toán Học Logic' },
                 { code: 'scratch', label: 'Lập Trình Robot Scratch' },
                 { code: 'vietnamese', label: 'Tiếng Việt & Ngôn Ngữ' },
               ].map((cat) => (
                 <button
                   key={cat.code}
-                  onClick={() => setSelectedCategory(cat.code)}
+                  onClick={() => {
+                    setSelectedCategory(cat.code);
+                    playSynthSound('click');
+                  }}
                   className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     selectedCategory === cat.code
                       ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-2xs'
@@ -220,10 +251,10 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             </div>
           </div>
 
-          {/* Filter 3: Type */}
+          {/* Filter 3: Loại Phí */}
           <div>
             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 font-mono">
-              LOẠI PHÍ
+              LOẠI BẢN QUYỀN
             </h4>
             <div className="grid grid-cols-3 gap-1.5">
               {[
@@ -233,10 +264,13 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               ].map((typeItem) => (
                 <button
                   key={typeItem.code}
-                  onClick={() => setSelectedType(typeItem.code)}
+                  onClick={() => {
+                    setSelectedType(typeItem.code);
+                    playSynthSound('click');
+                  }}
                   className={`py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
                     selectedType === typeItem.code
-                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-2xs'
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-2xs font-extrabold'
                       : 'bg-slate-50 border-slate-200/60 text-slate-600 hover:bg-slate-100'
                   }`}
                 >
@@ -247,21 +281,21 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
           </div>
         </div>
 
-        {/* Games Grid (9 Cols) */}
+        {/* Games Grid & Sort (9 Cols) */}
         <div className="lg:col-span-9">
-          {/* Sắp xếp & Số lượng */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <p className="text-xs font-bold text-slate-500">
-              Hiển thị <span className="text-indigo-600 font-extrabold">{filteredAndSortedGames.length}</span> trò chơi phù hợp
+          {/* Sắp xếp & Số lượng Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white rounded-xl p-3 border border-slate-200/80">
+            <p className="text-xs font-bold text-slate-600">
+              Tìm thấy <strong className="text-indigo-600 font-extrabold">{filteredAndSortedGames.length}</strong> trò chơi phù hợp
             </p>
 
             <div className="flex items-center gap-2 text-xs">
               <ArrowUpDown className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-400 font-medium">Sắp xếp:</span>
+              <span className="text-slate-400 font-medium">Sắp xếp theo:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs font-bold text-slate-700 outline-hidden cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-bold text-slate-700 outline-hidden cursor-pointer"
               >
                 <option value="popular">Phổ biến nhất 🔥</option>
                 <option value="rating">Đánh giá cao ⭐</option>
@@ -272,66 +306,31 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
             </div>
           </div>
 
+          {/* Games Card Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredAndSortedGames.map((game) => {
               const isBought = purchases.includes(game.id) || game.price === 0;
 
               return (
-                <div
+                <GameCard
                   key={game.id}
-                  onClick={() => setSelectedGameDetail(game)}
-                  className="bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-300 p-4.5 shadow-xs hover:shadow-md cursor-pointer transform hover:-translate-y-0.5 transition-all flex flex-col justify-between text-left group"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-slate-50 to-indigo-50 flex items-center justify-center text-2xl border border-slate-100 group-hover:scale-105 transition-transform">
-                        {game.thumbnail || '🎮'}
-                      </div>
-                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-100">
-                        {categoryToVietnamese(game.category)}
-                      </span>
-                    </div>
-
-                    <h4 className="text-sm text-slate-800 font-black line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
-                      {game.title}
-                    </h4>
-                    <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
-                      {game.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-1 text-[11px] text-amber-500 font-bold">
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                      <span>{game.rating_avg ? game.rating_avg.toFixed(1) : '5.0'}</span>
-                      <span className="text-slate-400 font-normal">({game.plays_count || 0})</span>
-                    </div>
-
-                    <div>
-                      {game.price === 0 ? (
-                        <span className="text-emerald-600 font-extrabold text-xs">MIỄN PHÍ</span>
-                      ) : isBought ? (
-                        <span className="text-indigo-600 text-[10px] bg-indigo-50 px-2 py-0.5 rounded-md font-bold border border-indigo-100">
-                          ĐÃ SỞ HỮU
-                        </span>
-                      ) : (
-                        <span className="text-pink-600 font-mono font-black text-xs">
-                          {game.price.toLocaleString('vi-VN')} xu
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  game={game}
+                  isPurchased={isBought}
+                  onSelectDetail={(g) => setDetailGame(g)}
+                  onPlayDirect={(g) => onPlayGame(g, 1)}
+                  onBuyDirect={(g) => setPurchaseGame(g)}
+                />
               );
             })}
           </div>
 
+          {/* Empty State */}
           {filteredAndSortedGames.length === 0 && (
-            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80">
+            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
               <div className="text-5xl mb-3">🔍</div>
-              <h3 className="text-base font-bold text-slate-700 mb-1">Không tìm thấy trò chơi nào</h3>
+              <h3 className="text-base font-bold text-slate-700 mb-1">Không tìm thấy trò chơi nào phù hợp</h3>
               <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4">
-                Vui lòng thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các tiêu chí bộ lọc.
+                Hãy thử thay đổi từ khóa tìm kiếm hoặc bấm đặt lại toàn bộ bộ lọc.
               </p>
               <button
                 onClick={handleResetFilters}
@@ -344,93 +343,37 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
         </div>
       </div>
 
-      {/* Game Detail Modal */}
-      {selectedGameDetail && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150 text-left relative">
-            <button
-              onClick={() => {
-                setSelectedGameDetail(null);
-                setPurchaseError(null);
-              }}
-              className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {/* 4. Game Detail Modal */}
+      {detailGame && (
+        <GameDetailModal
+          game={detailGame}
+          isPurchased={purchases.includes(detailGame.id) || detailGame.price === 0}
+          onClose={() => setDetailGame(null)}
+          onPlayGame={(g, lvl) => {
+            setDetailGame(null);
+            onPlayGame(g, lvl);
+          }}
+          onInitiatePurchase={(g) => {
+            setDetailGame(null);
+            setPurchaseGame(g);
+          }}
+        />
+      )}
 
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-50 to-pink-50 flex items-center justify-center text-4xl border border-slate-100 shadow-2xs">
-                {selectedGameDetail.thumbnail || '🎮'}
-              </div>
-              <div>
-                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-100">
-                  {categoryToVietnamese(selectedGameDetail.category)}
-                </span>
-                <h3 className="text-lg font-black text-slate-800 mt-1">
-                  {selectedGameDetail.title}
-                </h3>
-                <p className="text-xs text-slate-400">
-                  Tác giả: <span className="font-semibold text-slate-600">{selectedGameDetail.creator_name || 'Hệ thống'}</span>
-                </p>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              {selectedGameDetail.detailed_description || selectedGameDetail.description}
-            </p>
-
-            <div className="grid grid-cols-3 gap-2 p-3 bg-slate-50 rounded-2xl mb-4 text-center">
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Độ tuổi</span>
-                <span className="text-xs font-black text-slate-700">Lớp {selectedGameDetail.grade_from}-{selectedGameDetail.grade_to}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Số Màn</span>
-                <span className="text-xs font-black text-slate-700">{selectedGameDetail.levels?.length || 1} Màn</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Giá bán</span>
-                <span className="text-xs font-black text-pink-600">
-                  {selectedGameDetail.price === 0 ? 'Miễn phí' : `${selectedGameDetail.price.toLocaleString('vi-VN')} xu`}
-                </span>
-              </div>
-            </div>
-
-            {purchaseError && (
-              <div className="p-3 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
-                ⚠️ {purchaseError}
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="flex items-center gap-3">
-              {purchases.includes(selectedGameDetail.id) || selectedGameDetail.price === 0 ? (
-                <button
-                  onClick={() => {
-                    const game = selectedGameDetail;
-                    setSelectedGameDetail(null);
-                    onPlayGame(game, 1);
-                  }}
-                  className="flex-1 py-3 bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Play className="w-4 h-4 fill-white" />
-                  <span>VÀO CHƠI NGAY (MÀN 1)</span>
-                </button>
-              ) : (
-                <button
-                  disabled={isPurchasing}
-                  onClick={() => handleBuyGame(selectedGameDetail)}
-                  className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                >
-                  <Coins className="w-4 h-4 text-amber-300" />
-                  <span>
-                    {isPurchasing ? 'Đang xử lý mua...' : `MUA GAME BẰNG ${selectedGameDetail.price.toLocaleString('vi-VN')} XU`}
-                  </span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* 5. One-Click Purchase Checkout Modal */}
+      {purchaseGame && (
+        <PurchaseModal
+          game={purchaseGame}
+          onClose={() => setPurchaseGame(null)}
+          onSuccess={(g) => {
+            setPurchaseGame(null);
+            onPlayGame(g, 1);
+          }}
+          onNavigateToWallet={() => {
+            setPurchaseGame(null);
+            onNavigateToWallet();
+          }}
+        />
       )}
     </div>
   );
