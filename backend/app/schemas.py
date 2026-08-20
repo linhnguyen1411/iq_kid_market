@@ -45,7 +45,7 @@ class RegisterIn(BaseModel):
     username: str
     password: str
     name: str
-    role: Optional[str] = "student"  # student | teacher | parent | creator
+    role: Optional[str] = "student"  # student | teacher | parent | creator | admin
     grade: Optional[int] = 1
     avatar: Optional[str] = "smile_tiger"
 
@@ -57,10 +57,27 @@ class LoginIn(BaseModel):
 
 class AuthOut(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     user: UserOut
     wallet: WalletOut
     purchases: list[str]
+
+
+class TokenRefreshIn(BaseModel):
+    refresh_token: str
+
+
+class RefreshTokenOut(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+
+
+class ResetPasswordIn(BaseModel):
+    username: str
+    parent_pin: Optional[str] = "1234"  # Mã PIN bảo vệ của phụ huynh (mặc định 1234)
+    new_password: str
 
 
 class ChangePasswordIn(BaseModel):

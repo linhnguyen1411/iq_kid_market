@@ -1,4 +1,14 @@
 import os
+import sys
+
+# Đảm bảo in Tiếng Việt UTF-8 không bị lỗi cp1252 trên Windows
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

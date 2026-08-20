@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text
+    Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
@@ -78,7 +78,7 @@ class Game(Base):
     plays_count = Column(Integer, default=0)
     # Levels + questions lồng nhau, schema câu hỏi rất linh hoạt (10 loại game engine, mỗi loại field khác nhau)
     # -> lưu nguyên khối JSONB thay vì chuẩn hoá hết ra bảng con, tránh join phức tạp không cần thiết cho MVP.
-    levels = Column(JSONB, nullable=False, default=list)
+    levels = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     creator = relationship("User", back_populates="games_created")
