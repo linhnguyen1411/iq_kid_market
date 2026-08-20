@@ -102,7 +102,13 @@ function MainLayout() {
 
             {activeTab === 'wallet' && <WalletPage />}
 
-            {activeTab === 'profile' && <ProfilePage />}
+            {activeTab === 'profile' && (
+              <ProfilePage
+                games={games}
+                onPlayGame={handleStartPlayGame}
+                onNavigateToWallet={() => setActiveTab('wallet')}
+              />
+            )}
 
             {activeTab === 'admin' && (
               <AdminPage
