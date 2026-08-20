@@ -93,6 +93,7 @@ function MainLayout() {
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
                 onPlayGame={handleStartPlayGame}
+                onNavigateToWallet={() => setActiveTab('wallet')}
               />
             )}
 
