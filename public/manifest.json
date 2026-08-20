@@ -1,0 +1,22 @@
+{
+  "name": "IQ Kids Market - Sàn Đấu Trí Tuệ & Lập Trình Cho Bé",
+  "short_name": "IQ Kids",
+  "description": "Nền tảng trò chơi giáo dục, toán học, tư duy logic và lập trình robot trực quan dành cho học sinh Việt Nam.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F8FAFC",
+  "theme_color": "#3B82F6",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/logo.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}

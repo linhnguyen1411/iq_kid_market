@@ -1,6 +1,10 @@
 // Web Audio API Sound Synthesizer helpers, tách riêng để đảm bảo zero external file dependency
 export function playSynthSound(type: 'correct' | 'incorrect' | 'click' | 'victory') {
   try {
+    // Kiểm tra cài đặt âm thanh toàn cục
+    const soundEnabled = typeof window !== 'undefined' && localStorage.getItem('iqkids_sound_enabled') !== 'false';
+    if (!soundEnabled) return;
+
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
