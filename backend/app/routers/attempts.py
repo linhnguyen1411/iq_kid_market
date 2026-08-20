@@ -129,6 +129,7 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
         created_at=now_dt,
     )
     db.add(attempt)
+    db.flush()
 
     # 2. Tính toán điểm kinh nghiệm XP & Level
     if body.completed:
