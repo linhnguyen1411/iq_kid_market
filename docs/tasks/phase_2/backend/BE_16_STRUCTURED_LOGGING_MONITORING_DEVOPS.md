@@ -1,13 +1,13 @@
-# [BE-16] Giám Sát Lỗi Sentry, Logging Cấu Trúc & Docker Production Architecture (DevOps & Reliability)
+# [BE-16] Hệ Thống Ghi Log Cấu Trúc Nội Bộ & Docker Local Production (Local Logging & DevOps)
 
-> **Mô tả nghiệp vụ**: Chuẩn hóa toàn bộ hạ tầng vận hành Production của dự án IQ Kid Market theo kiến trúc tinh gọn, độc lập. Bao gồm: Hệ thống ghi log có cấu trúc (Structured Logging với Loguru), bắt lỗi và cảnh báo thời gian thực với **Sentry SDK**, tối ưu hóa **Dockerfile Multi-Stage** cho cả Frontend và Backend, cấu hình Nginx Reverse Proxy kèm chứng chỉ SSL/TLS, và thiết lập Health Check kiểm tra tình trạng dịch vụ.
+> **Mô tả nghiệp vụ**: Chuẩn hóa toàn bộ hạ tầng vận hành và ghi log của ứng dụng IQ Kid Market **100% Nội Bộ (Không Dùng Dịch Vụ SaaS Third-Party Ngoài Như Sentry)**. Bao gồm: Hệ thống ghi log có cấu trúc (Structured JSON Logging với Loguru có xoay vòng file tự động), API xem log hệ thống dành riêng cho Admin, tối ưu hóa Dockerfile Multi-Stage siêu nhẹ, và cấu hình Nginx Reverse Proxy an toàn.
 
 ---
 
 ## 📌 1. THÔNG TIN TASK
 - **Mã Task**: `BE-16`
-- **Mảng phụ trách**: Backend & DevOps (Loguru + Sentry + Docker + Nginx)
-- **Độ ưu tiên**: 🟡 P2 (Ổn định hệ thống & Chuẩn hóa triển khai Production)
+- **Mảng phụ trách**: Backend & DevOps (Loguru + Docker + Nginx)
+- **Độ ưu tiên**: 🟡 P2 (Ổn định hạ tầng & Dễ bảo trì nội bộ)
 - **Người thực hiện**: DevOps / Tech Lead
 - **Trạng thái**: ⚪ Ready (Sẵn sàng triển khai)
 - **Branch làm việc**: `feature/be-16-devops-logging`
@@ -16,45 +16,44 @@
 
 ## 📖 2. ĐIỂM LƯU Ý VỀ CÔNG NGHỆ & THUẬT NGỮ CẦN NẮM
 
-1. **Structured JSON Logging (Loguru)**:
-   - Toàn bộ log của backend (Request URL, Client IP, User ID, Processing Time, Exception Traceback) được định dạng theo chuỗi JSON chuẩn có trường rõ ràng, dễ dàng đẩy lên các công cụ xem log tập trung.
-2. **Sentry Error Tracking**:
-   - Tự động bắt mọi ngoại lệ Unhandled Exceptions (HTTP 500), ghi nhận ngữ cảnh (Request body, headers, database query lỗi) và gửi thông báo tức thì tới Telegram / Slack / Email của đội ngũ kỹ thuật.
+1. **Local Structured JSON Logging (Loguru - 100% Nội Bộ)**:
+   - Toàn bộ log lỗi, log request, thời gian xử lý API được ghi ra thư mục `backend/logs/` dưới dạng file xoay vòng theo ngày (`app_YYYY-MM-DD.log`, nén zip sau 7 ngày, tối đa 50MB/file).
+   - Không gửi dữ liệu ra bất kỳ server ngoài nào, đảm bảo an toàn thông tin và quyền riêng tư của học sinh.
+2. **In-App Error Tracing & Admin Log Viewer**:
+   - Tự động bắt unhandled exceptions (HTTP 500), ghi nhận traceback chi tiết vào file log lỗi riêng `logs/errors.log`.
+   - Cung cấp API `GET /api/admin/system/logs` để Admin có thể xem 100 dòng log mới nhất trực tiếp trên giao diện Admin Studio.
 3. **Multi-Stage Docker Build**:
-   - Frontend: Stage 1 build Node 20 ➔ Stage 2 chỉ giữ artifact HTML/CSS/JS chạy trên Nginx Alpine siêu nhẹ (< 25MB).
-   - Backend: Stage 1 cài dependencies ➔ Stage 2 chạy Python 3.10-slim không chứa công cụ build thừa (< 150MB).
-4. **Nginx Reverse Proxy & Gzip / Brotli Compression**:
-   - Nén tài nguyên tĩnh và bảo vệ FastAPI server đằng sau proxy.
+   - Tinh gọn chỉ giữ các container thiết yếu: Frontend (Nginx Alpine), Backend (FastAPI Python-slim), Database (PostgreSQL).
 
 ---
 
 ## 🎯 3. CHI TIẾT TÍNH NĂNG CẦN PHÁT TRIỂN (FEATURE SCOPE)
 
 1. **Module Logging `backend/app/logger.py`**:
-   - Cấu hình Loguru ghi log ra Console và file xoay vòng (Log Rotation: `logs/app_{time:YYYY-MM-DD}.log`, max 50MB).
-2. **Tích Hợp Sentry SDK**:
-   - Đọc `SENTRY_DSN` từ biến môi trường.
-   - Bắt các lỗi exception và trace request timeline.
-3. **Endpoint Metrics & Health Check Mở Rộng**:
-   - `GET /api/health`: Kiểm tra tình trạng kết nối PostgreSQL và Disk Space.
+   - Cấu hình Loguru ghi log ra Console và file xoay vòng `logs/app_{time:YYYY-MM-DD}.log`.
+   - Bắt và format các exception tự động.
+2. **API Tra Cứu Log Dành Cho Admin (`GET /api/admin/system/logs`)**:
+   - Chỉ cho phép tài khoản `role == 'admin'` truy cập.
+   - Trả về danh sách các log lỗi gần nhất để dễ dàng gỡ lỗi ngay trên web.
+3. **Endpoint Health Check (`GET /api/health`)**:
+   - Kiểm tra kết nối CSDL và dung lượng ổ đĩa.
 4. **Docker Production Compose Tinh Gọn (`docker-compose.prod.yml`)**:
-   - Bao gồm các container: `frontend` (Nginx), `backend` (FastAPI Gunicorn 4 workers), `postgres` (PostgreSQL 16), `certbot` (Let's Encrypt SSL).
+   - Frontend + Backend + PostgreSQL.
 
 ---
 
 ## 📋 4. DANH SÁCH CÔNG VIỆC CHI TIẾT (CHECKLIST)
 
-- [ ] **1. Thêm `loguru==0.7.3` và `sentry-sdk[fastapi]==2.19.2` vào `requirements.txt`**.
-- [ ] **2. Viết Middleware ghi nhận Request Timeline & Log trong `backend/app/middleware.py`**.
-- [ ] **3. Cập nhật `backend/Dockerfile` và `Dockerfile` frontend chuẩn Multi-Stage**.
-- [ ] **4. Tạo file cấu hình `nginx/default.conf`**.
-- [ ] **5. Tạo file `docker-compose.prod.yml` hoàn chỉnh**.
-- [ ] **6. Viết tài liệu hướng dẫn triển khai 1-chạm `docs/DEPLOY_PRODUCTION_GUIDE.md`**.
+- [ ] **1. Thêm `loguru==0.7.3` vào `requirements.txt`**.
+- [ ] **2. Viết Middleware ghi nhận Log Request trong `backend/app/middleware.py`**.
+- [ ] **3. Thêm Endpoint `GET /api/admin/system/logs` vào `backend/app/routers/admin.py`**.
+- [ ] **4. Cập nhật `backend/Dockerfile` và `Dockerfile` frontend chuẩn Multi-Stage**.
+- [ ] **5. Viết tài liệu hướng dẫn chạy Docker `docs/DEPLOY_LOCAL_DOCKER.md`**.
 
 ---
 
 ## 🧪 5. TIÊU CHÍ NGHIỆM THU (ACCEPTANCE CRITERIA)
 
-- [ ] Chạy `docker compose -f docker-compose.prod.yml up -d` ➔ Toàn bộ services khởi động thành công và truy cập được web qua cổng 80/443.
-- [ ] Gọi API bị lỗi ➔ Sentry ghi nhận issue kèm stack trace đầy đủ.
-- [ ] Log hệ thống được xuất ra file JSON có cấu trúc rõ ràng.
+- [ ] Khi có lỗi 500 xảy ra ➔ Chi tiết lỗi được lưu vào `backend/logs/errors.log`.
+- [ ] Admin đăng nhập vào xem được log hệ thống trực quan trên web.
+- [ ] Không có bất kỳ kết nối hay phụ thuộc nào vào dịch vụ SaaS ngoài.

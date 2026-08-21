@@ -1,43 +1,52 @@
 # 🌟 IQ KID MARKET — MASTER TASK CHECKLIST & QUY TRÌNH TRIỂN KHAI PHASE 2
 
-> **Giai đoạn**: Phase 2 — Production-Ready, VietQR Order Management, Parent Portal, Real-time PvP, AI Caching & Advanced Gamification.  
-> **Mục tiêu**: Hoàn thiện toàn bộ các điểm còn thiếu sót / hardcode / mock data của Phase 1, nâng cấp hệ thống lên chất lượng Production thương mại hóa thực tế, tinh gọn kiến trúc (VietQR động không phụ thuộc Webhook bên ngoài, In-memory Cache không phụ thuộc Redis), bổ sung cổng giám sát phụ huynh, đấu trường đối kháng thời gian thực, và tối ưu hóa trải nghiệm người dùng.
+> **Giai đoạn**: Phase 2 — Giao Diện Lung Linh, Tinh Gọn 100% Nội Bộ (Không Third-Party), Cổng Phụ Huynh, Đánh Giá Sao & Gamification Nâng Cao.  
+> **Định hướng chiến lược**: 
+> 1. **ƯU TIÊN SỐ 1**: Tập trung làm giao diện cực kỳ đẹp mắt, màu sắc lung linh, âm thanh vui tươi chuẩn EdTech thiếu nhi và sửa triệt để các lỗi state / hiển thị.
+> 2. **100% NỘI BỘ (KHÔNG DÙNG THIRD-PARTY)**: Loại bỏ hoàn toàn các dịch vụ bên ngoài như Webhook, Redis, Sentry, Image API bên thứ 3. Ứng dụng tự vận hành độc lập, an toàn và dễ bảo trì.
 
 ---
 
-## 📌 1. BẢNG TỔNG HỢP TIẾN ĐỘ PHASE 2 (MASTER CHECKLIST)
+## 📌 1. BẢNG PHÂN CẤP ƯU TIÊN & TIẾN ĐỘ PHASE 2 (MASTER CHECKLIST)
 
-### ⚙️ A. BACKEND TASKS (FastAPI + SQLAlchemy + PostgreSQL + WebSocket + In-Memory Cache)
+### 🔴 NHÓM P0: ƯU TIÊN CAO NHẤT (LÀM GIAO DIỆN ĐẸP, ÂM THANH NỘI BỘ & FIX BUG)
 
-| Mã Task | Tên Nhiệm Vụ & Nghiệp Vụ | Độ Ưu Tiên | Phụ Trách | Trạng Thái | Link Chi Tiết |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **BE-09** | Hệ Thống Đơn Nạp Tiền VietQR Động & Đối Soát Giao Dịch Nội Bộ | 🔴 P0 | Backend Team | ⚪ Ready | [Xem BE_09](./backend/BE_09_VIETQR_PAYMENT_ORDER_MANAGEMENT.md) |
-| **BE-10** | Hệ Thống Đánh Giá, Xếp Hạng Sao & Kiểm Duyệt Bình Luận (Reviews & Ratings) | 🔴 P0 | Backend Team | ⚪ Ready | [Xem BE_10](./backend/BE_10_REVIEWS_RATINGS_FEEDBACK_SYSTEM.md) |
-| **BE-11** | Động Cơ Nhiệm Vụ Hàng Ngày, Điểm Danh & Vòng Quay May Mắn (Daily Quests Engine) | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_11](./backend/BE_11_DAILY_QUESTS_LOGIN_REWARDS.md) |
-| **BE-12** | Cổng Phụ Huynh, Giới Hạn Giờ Chơi & Báo Cáo Năng Lực (Parent Portal API) | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_12](./backend/BE_12_PARENT_PORTAL_SCREEN_TIME_CONTROLS.md) |
-| **BE-13** | Nâng Cấp AI Generator: Question Caching & Kiểm Chuẩn Đa Engine Tự Động | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_13](./backend/BE_13_AI_PIPELINE_CACHING_CURRICULUM_VALIDATION.md) |
-| **BE-14** | Đấu Trường 1v1 Đối Kháng Thời Gian Thực (WebSocket Real-time PvP Rooms) | 🟡 P2 | Backend Team | ⚪ Ready | [Xem BE_14](./backend/BE_14_REALTIME_MULTIPLAYER_PVP_ROOMS.md) |
-| **BE-15** | Bộ Nhớ Đệm Nhẹ In-Memory & Giới Hạn Tần Suất Truy Cập (Lightweight Caching) | 🟡 P2 | Backend Team | ⚪ Ready | [Xem BE_15](./backend/BE_15_LIGHTWEIGHT_CACHING_RATE_LIMITING.md) |
-| **BE-16** | Giám Sát Lỗi Sentry, Logging Cấu Trúc & Docker Production Architecture | 🟡 P2 | DevOps Team | ⚪ Ready | [Xem BE_16](./backend/BE_16_STRUCTURED_LOGGING_MONITORING_DEVOPS.md) |
+| Mã Task | Mảng | Tên Tính Năng & Trọng Tâm Phát Triển | Phụ Trách | Link Chi Tiết |
+| :--- | :---: | :--- | :---: | :--- |
+| **FE-09** | Frontend | Nâng Cấp Giao Diện Lung Linh, Bộ Âm Thanh HQ Nội Bộ & Sửa Lỗi State | Frontend Lead | [Xem FE_09](./frontend/FE_09_HQ_SOUND_SYSTEM_BGM_PLAYER.md) |
+| **FE-10** | Frontend | Màn Hình Đánh Giá 5 Sao, Viết Nhận Xét Khách Quan & Yêu Thích (Wishlist) | Frontend Dev | [Xem FE_10](./frontend/FE_10_REVIEWS_RATINGS_UI_WISHLIST.md) |
+| **FE-12** | Frontend | Giao Diện Cổng Phụ Huynh, Biểu Đồ Radar 5 Năng Lực & Đặt Giới Hạn Giờ Chơi | Frontend Dev | [Xem FE_12](./frontend/FE_12_PARENT_PORTAL_CHILD_ANALYTICS_UI.md) |
+| **FE-13** | Frontend | Hoàn Thiện Dynamic Form Cho Toàn Bộ 12 Game Engines Trong Creator Studio | Frontend Dev | [Xem FE_13](./frontend/FE_13_STUDIO_CMS_FULL_12_ENGINES_EDITOR.md) |
+| **BE-10** | Backend | Hệ Thống Đánh Giá, Xếp Hạng Sao & Kiểm Duyệt Bình Luận (Local DB) | Backend Dev | [Xem BE_10](./backend/BE_10_REVIEWS_RATINGS_FEEDBACK_SYSTEM.md) |
+| **BE-12** | Backend | Cổng Phụ Huynh, Quản Lý Giờ Chơi & Mã PIN Bcrypt An Toàn | Backend Dev | [Xem BE_12](./backend/BE_12_PARENT_PORTAL_SCREEN_TIME_CONTROLS.md) |
 
 ---
 
-### 🎨 B. FRONTEND TASKS (React 19 + TypeScript + Vite + Tailwind CSS v4 + WebSocket + Audio)
+### 🟠 NHÓM P1: TÍNH NĂNG TƯƠNG TÁC, NHIỆM VỤ & KHÁM PHÁ (LOCAL 100%)
 
-| Mã Task | Tên Tính Năng & Trải Nghiệm Người Dùng | Độ Ưu Tiên | Phụ Trách | Trạng Thái | Link Chi Tiết |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **FE-09** | Tích Hợp Bộ Âm Thanh Bản Quyền Chất Lượng Cao & Trình Phát Nhạc Nền BGM | 🔴 P0 | Frontend Team | ⚪ Ready | [Xem FE_09](./frontend/FE_09_HQ_SOUND_SYSTEM_BGM_PLAYER.md) |
-| **FE-10** | Màn Hình Đánh Giá 5 Sao, Viết Nhận Xét & Danh Sách Yêu Thích (Wishlist) | 🔴 P0 | Frontend Team | ⚪ Ready | [Xem FE_10](./frontend/FE_10_REVIEWS_RATINGS_UI_WISHLIST.md) |
-| **FE-11** | Trung Tâm Nhiệm Vụ Ngày, Nhận Quà Điểm Danh & Vòng Quay May Mắn 3D | 🟠 P1 | Frontend Team | ⚪ Ready | [Xem FE_11](./frontend/FE_11_DAILY_QUESTS_LUCKY_WHEEL_UI.md) |
-| **FE-12** | Giao Diện Cổng Phụ Huynh, Biểu Đồ Radar Năng Lực & Đặt Giới Hạn Giờ Chơi | 🟠 P1 | Frontend Team | ⚪ Ready | [Xem FE_12](./frontend/FE_12_PARENT_PORTAL_CHILD_ANALYTICS_UI.md) |
-| **FE-13** | Hoàn Thiện Dynamic Form Cho Toàn Bộ 12 Game Engines Trong Creator Studio | 🟠 P1 | Frontend Team | ⚪ Ready | [Xem FE_13](./frontend/FE_13_STUDIO_CMS_FULL_12_ENGINES_EDITOR.md) |
-| **FE-14** | Màn Hình Đấu Trường Trí Tuệ 1v1 Thời Gian Thực (PvP Battle Arena UI) | 🟡 P2 | Frontend Team | ⚪ Ready | [Xem FE_14](./frontend/FE_14_REALTIME_PVP_ARENA_BATTLE_UI.md) |
-| **FE-15** | Tìm Kiếm Thông Minh, Tự Động Điền Từ Khóa & Gợi Ý Game Cá Nhân Hóa | 🟡 P2 | Frontend Team | ⚪ Ready | [Xem FE_15](./frontend/FE_15_SMART_SEARCH_AI_RECOMMENDATIONS.md) |
-| **FE-16** | Tối Ưu Tốc Độ Tải Trang (Code-Splitting), Accessibility & Đa Ngôn Ngữ i18n | 🟡 P2 | Frontend Team | ⚪ Ready | [Xem FE_16](./frontend/FE_16_I18N_PERFORMANCE_ACCESSIBILITY.md) |
+| Mã Task | Mảng | Tên Tính Năng & Trọng Tâm Phát Triển | Phụ Trách | Link Chi Tiết |
+| :--- | :---: | :--- | :---: | :--- |
+| **FE-11** | Frontend | Trung Tâm Nhiệm Vụ Ngày, Nhận Quà Điểm Danh & Vòng Quay May Mắn 3D | Frontend Dev | [Xem FE_11](./frontend/FE_11_DAILY_QUESTS_LUCKY_WHEEL_UI.md) |
+| **FE-15** | Frontend | Tìm Kiếm Thông Minh, Tự Động Điền Từ Khóa & Gợi Ý Game Cá Nhân Hóa | Frontend Dev | [Xem FE_15](./frontend/FE_15_SMART_SEARCH_AI_RECOMMENDATIONS.md) |
+| **BE-11** | Backend | Động Cơ Nhiệm Vụ Hàng Ngày, Điểm Danh 7 Ngày & Vòng Quay May Mắn | Backend Dev | [Xem BE_11](./backend/BE_11_DAILY_QUESTS_LOGIN_REWARDS.md) |
+| **BE-09** | Backend | Quản Lý Đơn Nạp Tiền & Sinh Mã QR Local (Không Dùng Third-Party API) | Backend Dev | [Xem BE_09](./backend/BE_09_VIETQR_PAYMENT_ORDER_MANAGEMENT.md) |
+| **BE-13** | Backend | Question Bank Caching & Bộ Kiểm Chuẩn Chất Lượng Câu Hỏi Tự Động | Backend Dev | [Xem BE_13](./backend/BE_13_AI_PIPELINE_CACHING_CURRICULUM_VALIDATION.md) |
 
 ---
 
-## 🚫 2. QUY TẮC BẤT DI BẤT DỊCH VỀ GIT & BRANCHING
+### 🟡 NHÓM P2: ĐẤU TRƯỜNG THỜI GIAN THỰC & TỐI ƯU HẠ TẦNG NỘI BỘ
+
+| Mã Task | Mảng | Tên Tính Năng & Trọng Tâm Phát Triển | Phụ Trách | Link Chi Tiết |
+| :--- | :---: | :--- | :---: | :--- |
+| **FE-14** | Frontend | Màn Hình Đấu Trường Trí Tuệ 1v1 Đối Kháng Thời Gian Thực (PvP Battle UI) | Frontend Dev | [Xem FE_14](./frontend/FE_14_REALTIME_PVP_ARENA_BATTLE_UI.md) |
+| **FE-16** | Frontend | Tối Ưu Tốc Độ Tải Trang (Code-Splitting), Accessibility & Đa Ngôn Ngữ i18n | Frontend Dev | [Xem FE_16](./frontend/FE_16_I18N_PERFORMANCE_ACCESSIBILITY.md) |
+| **BE-14** | Backend | Máy Chủ WebSocket Đấu Trường 1v1 Ghép Cặp & Phòng Thi Đấu Nội Bộ | Backend Dev | [Xem BE_14](./backend/BE_14_REALTIME_MULTIPLAYER_PVP_ROOMS.md) |
+| **BE-15** | Backend | Bộ Nhớ Đệm Nhẹ In-Memory & Giới Hạn Tần Suất Truy Cập (Không Dùng Redis) | Backend Dev | [Xem BE_15](./backend/BE_15_LIGHTWEIGHT_CACHING_RATE_LIMITING.md) |
+| **BE-16** | Backend | Hệ Thống Ghi Log Cấu Trúc Nội Bộ & Docker Local (Không Dùng Sentry) | DevOps / Lead | [Xem BE_16](./backend/BE_16_STRUCTURED_LOGGING_MONITORING_DEVOPS.md) |
+
+---
+
+## 🚫 2. NGUYÊN TẮC PHÁT TRIỂN & QUY ƯỚC GIT
 
 > [!CAUTION]
 > **TUYỆT ĐỐI KHÔNG COMMIT HOẶC PUSH TRỰC TIẾP VÀO BRANCH `main`!**
@@ -45,24 +54,23 @@
 
 ### 2.1. Quy ước đặt tên Branch Phase 2 (Branch Naming)
 Khi nhận task, thành viên checkout từ branch `main` mới nhất:
-- **Backend Task**: `feature/be-<mã-task>-<tên-ngắn-gọn>`
-  - *Ví dụ*: `git checkout -b feature/be-09-vietqr-orders`
-  - *Ví dụ*: `git checkout -b feature/be-10-reviews-ratings`
 - **Frontend Task**: `feature/fe-<mã-task>-<tên-ngắn-gọn>`
-  - *Ví dụ*: `git checkout -b feature/fe-09-hq-sound-bgm`
+  - *Ví dụ*: `git checkout -b feature/fe-09-ui-polish-sound`
+  - *Ví dụ*: `git checkout -b feature/fe-10-reviews-wishlist`
   - *Ví dụ*: `git checkout -b feature/fe-12-parent-portal`
+- **Backend Task**: `feature/be-<mã-task>-<tên-ngắn-gọn>`
+  - *Ví dụ*: `git checkout -b feature/be-10-reviews-ratings`
+  - *Ví dụ*: `git checkout -b feature/be-12-parent-portal`
 - **Bugfix**: `fix/be-<mã-task>-<mô-tả>` hoặc `fix/fe-<mã-task>-<mô-tả>`
 
 ---
 
-## 🧪 3. CHECKLIST KIỂM THỬ BẮT BUỘC TRƯỚC KHI TẠO PR
+## 🧪 3. CHECKLIST NGHIỆM THU BẮT BUỘC TRƯỚC KHI TẠO PR
 
-- [ ] **1. Kiểm tra biên dịch & Linting**:
-  - Frontend: `npx tsc --noEmit` & `npm run build` không được có lỗi type nào.
+- [ ] **1. Kiểm tra biên dịch & Không phát sinh lỗi**:
+  - Frontend: `npx tsc --noEmit` & `npm run build` đạt 0 lỗi type.
   - Backend: `pytest -v` phải pass 100% toàn bộ test suite.
-- [ ] **2. Kiểm tra tính toàn vẹn (No Regression)**:
-  - Tất cả 12 Game Engine vẫn hoạt động trơn tru trên `QuestionRenderer.tsx`.
-  - Luồng Mua Game, Nộp điểm, và Đăng nhập Demo vẫn hoạt động ổn định.
-- [ ] **3. Bảo mật & Xử lý ngoại lệ**:
-  - Không hardcode các secret keys, PIN hoặc mật khẩu trong mã nguồn.
-  - Xử lý đầy đủ trường hợp timeout, rớt mạng, lỗi token hết hạn.
+- [ ] **2. Thẩm mỹ & Trải nghiệm (UI/UX)**:
+  - Màu sắc tươi sáng, nút bấm nảy hạt 3D, âm thanh tương tác rõ ràng, không giật lag.
+- [ ] **3. Tính độc lập (Zero Third-Party)**:
+  - Không sử dụng thêm bất kỳ thư viện hoặc dịch vụ cloud trả phí nào từ bên ngoài.
