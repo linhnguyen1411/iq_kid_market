@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..auth_utils import require_roles
+from ..daily_quests import update_quest_progress
 
 router = APIRouter(tags=["scratch"])
 
@@ -228,6 +229,7 @@ def submit_scratch_lesson(body: schemas.ScratchSubmitIn, db: Session = Depends(g
         .filter_by(user_id=body.userId, course_id=body.courseId, lesson_num=body.lessonNum)
         .first()
     )
+    was_already_completed = bool(progress and progress.completed)
     if not progress:
         progress = models.UserScratchProgress(
             id=f"usp_{body.userId}_{body.courseId}_{body.lessonNum}_{int(time.time()*1000)}",
@@ -246,6 +248,9 @@ def submit_scratch_lesson(body: schemas.ScratchSubmitIn, db: Session = Depends(g
         progress.stars_earned = 3
         progress.submitted_sequence = ",".join(user_seq)
         progress.completed_at = now_dt
+
+    if not was_already_completed:
+        update_quest_progress(db, body.userId, "scratch_complete")
 
     # Thưởng XP cho học sinh
     xp_gain = lesson.xp_reward or 30

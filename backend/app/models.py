@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON
+    Column, String, Integer, Float, Boolean, ForeignKey, DateTime, Text, JSON,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
@@ -186,3 +187,65 @@ class UserScratchProgress(Base):
     user = relationship("User", backref="scratch_progress")
     course = relationship("ScratchCourse")
     lesson = relationship("ScratchLesson")
+
+
+class DailyQuest(Base):
+    __tablename__ = "daily_quests"
+
+    id = Column(String(50), primary_key=True)
+    title = Column(String(150), nullable=False)
+    description = Column(String(255), nullable=False)
+    type = Column(String(40), nullable=False, unique=True, index=True)
+    target_count = Column(Integer, nullable=False)
+    xp_reward = Column(Integer, default=0)
+    coin_reward = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True, nullable=False)
+
+
+class UserDailyQuest(Base):
+    __tablename__ = "user_daily_quests"
+    __table_args__ = (
+        UniqueConstraint("user_id", "quest_id", "quest_date", name="uq_user_daily_quest_day"),
+    )
+
+    id = Column(String(80), primary_key=True)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    quest_id = Column(String(50), ForeignKey("daily_quests.id", ondelete="CASCADE"), nullable=False, index=True)
+    current_progress = Column(Integer, default=0, nullable=False)
+    status = Column(String(20), default="IN_PROGRESS", nullable=False, index=True)
+    quest_date = Column(DateTime, nullable=False, index=True)
+
+    quest = relationship("DailyQuest")
+    user = relationship("User")
+
+
+class UserDailySpin(Base):
+    __tablename__ = "user_daily_spins"
+    __table_args__ = (
+        UniqueConstraint("user_id", "spin_date", name="uq_user_daily_spin_day"),
+    )
+
+    id = Column(String(80), primary_key=True)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    spin_date = Column(DateTime, nullable=False, index=True)
+    eligible = Column(Boolean, default=False, nullable=False)
+    spun = Column(Boolean, default=False, nullable=False)
+    reward_code = Column(String(40), nullable=True)
+    reward_amount = Column(Integer, default=0, nullable=False)
+
+    user = relationship("User")
+
+
+class LoginRewardClaim(Base):
+    __tablename__ = "login_reward_claims"
+    __table_args__ = (
+        UniqueConstraint("user_id", "claim_date", name="uq_login_reward_user_day"),
+    )
+
+    id = Column(String(80), primary_key=True)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    claim_date = Column(DateTime, nullable=False, index=True)
+    day_number = Column(Integer, nullable=False)
+    coin_reward = Column(Integer, nullable=False)
+
+    user = relationship("User")

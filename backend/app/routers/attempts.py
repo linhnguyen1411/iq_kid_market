@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..daily_quests import unlock_daily_spin, update_quest_progress
 
 router = APIRouter(tags=["attempts"])
 
@@ -130,6 +131,14 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     )
     db.add(attempt)
     db.flush()
+
+    if body.completed:
+        update_quest_progress(db, body.userId, "play_count")
+        if body.score >= 100:
+            game = db.get(models.Game, body.gameId)
+            if game and (game.category or "iq").lower() in {"iq", "math", "toán", "toan"}:
+                update_quest_progress(db, body.userId, "score_reach")
+        unlock_daily_spin(db, body.userId)
 
     # 2. Tính toán điểm kinh nghiệm XP & Level
     if body.completed:
