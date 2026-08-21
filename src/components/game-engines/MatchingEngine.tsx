@@ -1,12 +1,18 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { Check, Sparkles, AlertCircle, HelpCircle } from "lucide-react";
+import { motion } from "motion/react";
+import { Check, Sparkles } from "lucide-react";
 import { playSynthSound, shuffleArray } from "./soundUtils";
 import type { GameEngineProps } from "./types";
 
 interface PairItem {
   left: string;
   right: string;
+}
+
+interface MatchingCard {
+  uid: string;
+  text: string;
+  pairIndex: number;
 }
 
 export default function MatchingEngine({ question, onComplete }: GameEngineProps) {
@@ -30,44 +36,65 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
       .filter((p: PairItem) => p.left && p.right);
   }, [question]);
 
-  const [matchingLefts, setMatchingLefts] = useState<string[]>([]);
-  const [matchingRights, setMatchingRights] = useState<string[]>([]);
-  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
-  const [selectedRight, setSelectedRight] = useState<string | null>(null);
-  const [matchedPairs, setMatchedPairs] = useState<Record<string, string>>({});
-  const [wrongMatch, setWrongMatch] = useState<{ left: string; right: string } | null>(null);
+  const [shuffledLefts, setShuffledLefts] = useState<MatchingCard[]>([]);
+  const [shuffledRights, setShuffledRights] = useState<MatchingCard[]>([]);
+  const [selectedLeftCard, setSelectedLeftCard] = useState<MatchingCard | null>(null);
+  const [selectedRightCard, setSelectedRightCard] = useState<MatchingCard | null>(null);
+  const [matchedLeftUids, setMatchedLeftUids] = useState<Set<string>>(new Set());
+  const [matchedRightUids, setMatchedRightUids] = useState<Set<string>>(new Set());
+  const [wrongMatch, setWrongMatch] = useState<{ leftUid: string; rightUid: string } | null>(null);
 
-  // Xáo trộn các thẻ khi chuyển câu hỏi
+  // Xáo trộn các thẻ với định danh duy nhất (UID) khi đổi câu hỏi
   useEffect(() => {
     if (rawPairs.length > 0) {
-      setMatchingLefts(shuffleArray(rawPairs.map((p) => p.left)));
-      setMatchingRights(shuffleArray(rawPairs.map((p) => p.right)));
+      const lefts: MatchingCard[] = rawPairs.map((p, idx) => ({
+        uid: `L-${idx}-${p.left}`,
+        text: p.left,
+        pairIndex: idx,
+      }));
+      const rights: MatchingCard[] = rawPairs.map((p, idx) => ({
+        uid: `R-${idx}-${p.right}`,
+        text: p.right,
+        pairIndex: idx,
+      }));
+      setShuffledLefts(shuffleArray(lefts));
+      setShuffledRights(shuffleArray(rights));
     } else {
-      setMatchingLefts([]);
-      setMatchingRights([]);
+      setShuffledLefts([]);
+      setShuffledRights([]);
     }
-    setSelectedLeft(null);
-    setSelectedRight(null);
-    setMatchedPairs({});
+    setSelectedLeftCard(null);
+    setSelectedRightCard(null);
+    setMatchedLeftUids(new Set());
+    setMatchedRightUids(new Set());
     setWrongMatch(null);
   }, [rawPairs]);
 
-  // Kiểm tra cặp ghép khi có cả selectedLeft và selectedRight
+  // Kiểm tra ghép cặp khi đã chọn cả 2 bên
   useEffect(() => {
-    if (!selectedLeft || !selectedRight) return;
+    if (!selectedLeftCard || !selectedRightCard) return;
 
-    const targetPair = rawPairs.find((p) => p.left === selectedLeft);
-    const isCorrect = targetPair && targetPair.right === selectedRight;
+    // So khớp theo pairIndex hoặc theo giá trị hợp lệ trong rawPairs
+    const isCorrect =
+      selectedLeftCard.pairIndex === selectedRightCard.pairIndex ||
+      rawPairs.some(
+        (p) => p.left === selectedLeftCard.text && p.right === selectedRightCard.text
+      );
 
     if (isCorrect) {
       playSynthSound('correct');
-      const updated = { ...matchedPairs, [selectedLeft]: selectedRight };
-      setMatchedPairs(updated);
-      setSelectedLeft(null);
-      setSelectedRight(null);
+      const nextMatchedLefts = new Set(matchedLeftUids);
+      const nextMatchedRights = new Set(matchedRightUids);
+      nextMatchedLefts.add(selectedLeftCard.uid);
+      nextMatchedRights.add(selectedRightCard.uid);
 
-      // Nếu đã ghép hết tất cả các cặp
-      if (Object.keys(updated).length === rawPairs.length) {
+      setMatchedLeftUids(nextMatchedLefts);
+      setMatchedRightUids(nextMatchedRights);
+      setSelectedLeftCard(null);
+      setSelectedRightCard(null);
+
+      // Nếu đã hoàn thành tất cả các cặp
+      if (nextMatchedLefts.size === rawPairs.length) {
         playSynthSound('victory');
         setTimeout(() => {
           onComplete(question.points || 25);
@@ -75,28 +102,29 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
       }
     } else {
       playSynthSound('incorrect');
-      setWrongMatch({ left: selectedLeft, right: selectedRight });
+      setWrongMatch({
+        leftUid: selectedLeftCard.uid,
+        rightUid: selectedRightCard.uid,
+      });
       const timer = setTimeout(() => {
         setWrongMatch(null);
-        setSelectedLeft(null);
-        setSelectedRight(null);
+        setSelectedLeftCard(null);
+        setSelectedRightCard(null);
       }, 700);
       return () => clearTimeout(timer);
     }
-  }, [selectedLeft, selectedRight, rawPairs, matchedPairs, question.points, onComplete]);
+  }, [selectedLeftCard, selectedRightCard, rawPairs, matchedLeftUids, matchedRightUids, question.points, onComplete]);
 
-  const handleLeftClick = (leftVal: string) => {
-    if (matchedPairs[leftVal]) return; // Đã ghép rồi
+  const handleLeftClick = (card: MatchingCard) => {
+    if (matchedLeftUids.has(card.uid)) return; // Đã ghép rồi
     playSynthSound('click');
-    setSelectedLeft(selectedLeft === leftVal ? null : leftVal);
+    setSelectedLeftCard(selectedLeftCard?.uid === card.uid ? null : card);
   };
 
-  const handleRightClick = (rightVal: string) => {
-    // Kiểm tra xem rightVal đã được ghép chưa
-    const isAlreadyMatched = Object.values(matchedPairs).includes(rightVal);
-    if (isAlreadyMatched) return;
+  const handleRightClick = (card: MatchingCard) => {
+    if (matchedRightUids.has(card.uid)) return; // Đã ghép rồi
     playSynthSound('click');
-    setSelectedRight(selectedRight === rightVal ? null : rightVal);
+    setSelectedRightCard(selectedRightCard?.uid === card.uid ? null : card);
   };
 
   if (rawPairs.length === 0) {
@@ -107,7 +135,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
     );
   }
 
-  const completedCount = Object.keys(matchedPairs).length;
+  const completedCount = matchedLeftUids.size;
   const totalCount = rawPairs.length;
 
   return (
@@ -131,17 +159,17 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
             CỘT A
           </div>
 
-          {matchingLefts.map((leftItem, idx) => {
-            const isMatched = !!matchedPairs[leftItem];
-            const isSelected = selectedLeft === leftItem;
-            const isWrong = wrongMatch?.left === leftItem;
+          {shuffledLefts.map((leftCard) => {
+            const isMatched = matchedLeftUids.has(leftCard.uid);
+            const isSelected = selectedLeftCard?.uid === leftCard.uid;
+            const isWrong = wrongMatch?.leftUid === leftCard.uid;
 
             return (
               <motion.button
-                key={`left-${idx}-${leftItem}`}
+                key={leftCard.uid}
                 type="button"
                 whileTap={{ scale: isMatched ? 1 : 0.96 }}
-                onClick={() => handleLeftClick(leftItem)}
+                onClick={() => handleLeftClick(leftCard)}
                 disabled={isMatched}
                 className={`p-4 text-xs md:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
                   isMatched
@@ -153,7 +181,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
                     : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-800 hover:shadow-sm'
                 }`}
               >
-                <span className="line-clamp-2">{leftItem}</span>
+                <span className="line-clamp-2">{leftCard.text}</span>
                 {isMatched ? (
                   <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-2" />
                 ) : isSelected ? (
@@ -170,17 +198,17 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
             CỘT B
           </div>
 
-          {matchingRights.map((rightItem, idx) => {
-            const isMatched = Object.values(matchedPairs).includes(rightItem);
-            const isSelected = selectedRight === rightItem;
-            const isWrong = wrongMatch?.right === rightItem;
+          {shuffledRights.map((rightCard) => {
+            const isMatched = matchedRightUids.has(rightCard.uid);
+            const isSelected = selectedRightCard?.uid === rightCard.uid;
+            const isWrong = wrongMatch?.rightUid === rightCard.uid;
 
             return (
               <motion.button
-                key={`right-${idx}-${rightItem}`}
+                key={rightCard.uid}
                 type="button"
                 whileTap={{ scale: isMatched ? 1 : 0.96 }}
-                onClick={() => handleRightClick(rightItem)}
+                onClick={() => handleRightClick(rightCard)}
                 disabled={isMatched}
                 className={`p-4 text-xs md:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
                   isMatched
@@ -192,7 +220,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
                     : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300 text-slate-800 hover:shadow-sm'
                 }`}
               >
-                <span className="line-clamp-2">{rightItem}</span>
+                <span className="line-clamp-2">{rightCard.text}</span>
                 {isMatched ? (
                   <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-2" />
                 ) : isSelected ? (
