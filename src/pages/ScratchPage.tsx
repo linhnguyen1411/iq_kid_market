@@ -9,7 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export const ScratchPage: React.FC = () => {
-  const { user, updateUserStats, updateUserWallet } = useAuth();
+  const { user, wallet, updateUserStats, updateUserWallet } = useAuth();
 
   const [courses, setCourses] = useState<ScratchCourse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,8 +75,8 @@ export const ScratchPage: React.FC = () => {
 
       if (res.success) {
         updateUserStats(res.xpAwarded, res.newLevel);
-        if (res.coinAwarded > 0) {
-          updateUserWallet((user.xp || 0) + res.coinAwarded);
+        if (res.coinAwarded && res.coinAwarded > 0 && wallet) {
+          updateUserWallet((wallet.balance || 0) + res.coinAwarded);
         }
         // Refresh courses to update progression lock
         await fetchCourses();

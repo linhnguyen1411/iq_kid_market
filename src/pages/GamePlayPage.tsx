@@ -19,7 +19,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
   initialLevelNum = 1,
   onBack,
 }) => {
-  const { user, updateUserStats, updateUserWallet } = useAuth();
+  const { user, wallet, updateUserStats, updateUserWallet } = useAuth();
 
   const [currentLevelNum, setCurrentLevelNum] = useState(initialLevelNum);
   const [levelCompleted, setLevelCompleted] = useState(false);
@@ -57,8 +57,8 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           score,
         });
         updateUserStats(res.xpAwarded, res.newLevel, res.newStreak);
-        if (res.coinReward > 0 && user) {
-          updateUserWallet((user.xp || 0) + res.coinReward);
+        if (res.coinReward > 0 && wallet) {
+          updateUserWallet((wallet.balance || 0) + res.coinReward);
         }
         setLevelCompleted(true);
       }
