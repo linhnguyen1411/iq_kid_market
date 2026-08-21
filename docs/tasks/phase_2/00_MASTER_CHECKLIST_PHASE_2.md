@@ -1,23 +1,23 @@
 # 🌟 IQ KID MARKET — MASTER TASK CHECKLIST & QUY TRÌNH TRIỂN KHAI PHASE 2
 
-> **Giai đoạn**: Phase 2 — Production-Ready, Real Payment, Parent Portal, Real-time PvP, AI Caching & Advanced Gamification.  
-> **Mục tiêu**: Hoàn thiện toàn bộ các điểm còn thiếu sót / hardcode / mock data của Phase 1, nâng cấp hệ thống lên chất lượng Production thương mại hóa thực tế, tích hợp cổng thanh toán thật, cổng giám sát phụ huynh, đấu trường đối kháng thời gian thực, và tối ưu hóa hạ tầng chịu tải.
+> **Giai đoạn**: Phase 2 — Production-Ready, VietQR Order Management, Parent Portal, Real-time PvP, AI Caching & Advanced Gamification.  
+> **Mục tiêu**: Hoàn thiện toàn bộ các điểm còn thiếu sót / hardcode / mock data của Phase 1, nâng cấp hệ thống lên chất lượng Production thương mại hóa thực tế, tinh gọn kiến trúc (VietQR động không phụ thuộc Webhook bên ngoài, In-memory Cache không phụ thuộc Redis), bổ sung cổng giám sát phụ huynh, đấu trường đối kháng thời gian thực, và tối ưu hóa trải nghiệm người dùng.
 
 ---
 
 ## 📌 1. BẢNG TỔNG HỢP TIẾN ĐỘ PHASE 2 (MASTER CHECKLIST)
 
-### ⚙️ A. BACKEND TASKS (FastAPI + SQLAlchemy + PostgreSQL + Redis + WebSocket + Webhooks)
+### ⚙️ A. BACKEND TASKS (FastAPI + SQLAlchemy + PostgreSQL + WebSocket + In-Memory Cache)
 
 | Mã Task | Tên Nhiệm Vụ & Nghiệp Vụ | Độ Ưu Tiên | Phụ Trách | Trạng Thái | Link Chi Tiết |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **BE-09** | Tích Hợp Cổng Thanh Toán Tự Động Thật & Webhook Verification (PayOS/VietQR API) | 🔴 P0 | Backend Team | ⚪ Ready | [Xem BE_09](./backend/BE_09_REAL_PAYMENT_GATEWAY_WEBHOOKS.md) |
+| **BE-09** | Hệ Thống Đơn Nạp Tiền VietQR Động & Đối Soát Giao Dịch Nội Bộ | 🔴 P0 | Backend Team | ⚪ Ready | [Xem BE_09](./backend/BE_09_VIETQR_PAYMENT_ORDER_MANAGEMENT.md) |
 | **BE-10** | Hệ Thống Đánh Giá, Xếp Hạng Sao & Kiểm Duyệt Bình Luận (Reviews & Ratings) | 🔴 P0 | Backend Team | ⚪ Ready | [Xem BE_10](./backend/BE_10_REVIEWS_RATINGS_FEEDBACK_SYSTEM.md) |
 | **BE-11** | Động Cơ Nhiệm Vụ Hàng Ngày, Điểm Danh & Vòng Quay May Mắn (Daily Quests Engine) | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_11](./backend/BE_11_DAILY_QUESTS_LOGIN_REWARDS.md) |
 | **BE-12** | Cổng Phụ Huynh, Giới Hạn Giờ Chơi & Báo Cáo Năng Lực (Parent Portal API) | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_12](./backend/BE_12_PARENT_PORTAL_SCREEN_TIME_CONTROLS.md) |
 | **BE-13** | Nâng Cấp AI Generator: Question Caching & Kiểm Chuẩn Đa Engine Tự Động | 🟠 P1 | Backend Team | ⚪ Ready | [Xem BE_13](./backend/BE_13_AI_PIPELINE_CACHING_CURRICULUM_VALIDATION.md) |
 | **BE-14** | Đấu Trường 1v1 Đối Kháng Thời Gian Thực (WebSocket Real-time PvP Rooms) | 🟡 P2 | Backend Team | ⚪ Ready | [Xem BE_14](./backend/BE_14_REALTIME_MULTIPLAYER_PVP_ROOMS.md) |
-| **BE-15** | Tích Hợp Caching Redis & Rate Limiting Phân Tán (Redis Cache & Security) | 🟡 P2 | Backend / DevOps | ⚪ Ready | [Xem BE_15](./backend/BE_15_REDIS_CACHING_DISTRIBUTED_RATE_LIMITING.md) |
+| **BE-15** | Bộ Nhớ Đệm Nhẹ In-Memory & Giới Hạn Tần Suất Truy Cập (Lightweight Caching) | 🟡 P2 | Backend Team | ⚪ Ready | [Xem BE_15](./backend/BE_15_LIGHTWEIGHT_CACHING_RATE_LIMITING.md) |
 | **BE-16** | Giám Sát Lỗi Sentry, Logging Cấu Trúc & Docker Production Architecture | 🟡 P2 | DevOps Team | ⚪ Ready | [Xem BE_16](./backend/BE_16_STRUCTURED_LOGGING_MONITORING_DEVOPS.md) |
 
 ---
@@ -46,7 +46,7 @@
 ### 2.1. Quy ước đặt tên Branch Phase 2 (Branch Naming)
 Khi nhận task, thành viên checkout từ branch `main` mới nhất:
 - **Backend Task**: `feature/be-<mã-task>-<tên-ngắn-gọn>`
-  - *Ví dụ*: `git checkout -b feature/be-09-payment-webhooks`
+  - *Ví dụ*: `git checkout -b feature/be-09-vietqr-orders`
   - *Ví dụ*: `git checkout -b feature/be-10-reviews-ratings`
 - **Frontend Task**: `feature/fe-<mã-task>-<tên-ngắn-gọn>`
   - *Ví dụ*: `git checkout -b feature/fe-09-hq-sound-bgm`

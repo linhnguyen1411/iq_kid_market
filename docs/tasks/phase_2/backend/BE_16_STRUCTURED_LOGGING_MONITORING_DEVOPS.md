@@ -1,12 +1,12 @@
 # [BE-16] Giám Sát Lỗi Sentry, Logging Cấu Trúc & Docker Production Architecture (DevOps & Reliability)
 
-> **Mô tả nghiệp vụ**: Chuẩn hóa toàn bộ hạ tầng vận hành Production của dự án IQ Kid Market. Bao gồm: Hệ thống ghi log có cấu trúc (Structured Logging với Loguru), bắt lỗi và cảnh báo thời gian thực với **Sentry SDK**, tối ưu hóa **Dockerfile Multi-Stage** cho cả Frontend và Backend, cấu hình Nginx Reverse Proxy kèm chứng chỉ SSL/TLS, và thiết lập Health Check / Prometheus Metrics.
+> **Mô tả nghiệp vụ**: Chuẩn hóa toàn bộ hạ tầng vận hành Production của dự án IQ Kid Market theo kiến trúc tinh gọn, độc lập. Bao gồm: Hệ thống ghi log có cấu trúc (Structured Logging với Loguru), bắt lỗi và cảnh báo thời gian thực với **Sentry SDK**, tối ưu hóa **Dockerfile Multi-Stage** cho cả Frontend và Backend, cấu hình Nginx Reverse Proxy kèm chứng chỉ SSL/TLS, và thiết lập Health Check kiểm tra tình trạng dịch vụ.
 
 ---
 
 ## 📌 1. THÔNG TIN TASK
 - **Mã Task**: `BE-16`
-- **Mảng phụ trách**: Backend & DevOps (Loguru + Sentry + Docker + Nginx + Prometheus)
+- **Mảng phụ trách**: Backend & DevOps (Loguru + Sentry + Docker + Nginx)
 - **Độ ưu tiên**: 🟡 P2 (Ổn định hệ thống & Chuẩn hóa triển khai Production)
 - **Người thực hiện**: DevOps / Tech Lead
 - **Trạng thái**: ⚪ Ready (Sẵn sàng triển khai)
@@ -16,10 +16,10 @@
 
 ## 📖 2. ĐIỂM LƯU Ý VỀ CÔNG NGHỆ & THUẬT NGỮ CẦN NẮM
 
-1. **Structured JSON Logging (Loguru / structlog)**:
-   - Toàn bộ log của backend (Request URL, Client IP, User ID, Processing Time, Exception Traceback) được định dạng theo chuỗi JSON chuẩn có trường rõ ràng, dễ dàng đẩy lên Grafana Loki hoặc CloudWatch.
+1. **Structured JSON Logging (Loguru)**:
+   - Toàn bộ log của backend (Request URL, Client IP, User ID, Processing Time, Exception Traceback) được định dạng theo chuỗi JSON chuẩn có trường rõ ràng, dễ dàng đẩy lên các công cụ xem log tập trung.
 2. **Sentry Error Tracking**:
-   - Tự động bắt mọi ngoại lệ Unhandled Exceptions (HTTP 500), ghi nhận ngữ cảnh (Request body, headers, database query lỗi) và gửi thông báo tức thì tới Telegram / Slack của đội ngũ kỹ thuật.
+   - Tự động bắt mọi ngoại lệ Unhandled Exceptions (HTTP 500), ghi nhận ngữ cảnh (Request body, headers, database query lỗi) và gửi thông báo tức thì tới Telegram / Slack / Email của đội ngũ kỹ thuật.
 3. **Multi-Stage Docker Build**:
    - Frontend: Stage 1 build Node 20 ➔ Stage 2 chỉ giữ artifact HTML/CSS/JS chạy trên Nginx Alpine siêu nhẹ (< 25MB).
    - Backend: Stage 1 cài dependencies ➔ Stage 2 chạy Python 3.10-slim không chứa công cụ build thừa (< 150MB).
@@ -36,10 +36,9 @@
    - Đọc `SENTRY_DSN` từ biến môi trường.
    - Bắt các lỗi exception và trace request timeline.
 3. **Endpoint Metrics & Health Check Mở Rộng**:
-   - `GET /api/health`: Kiểm tra tình trạng kết nối PostgreSQL, Redis và Disk Space.
-   - `GET /metrics`: Đo lường số lượng request/giây và thời gian phản hồi cho Prometheus.
-4. **Docker Production Compose (`docker-compose.prod.yml`)**:
-   - Bao gồm các container: `frontend` (Nginx), `backend` (FastAPI Gunicorn 4 workers), `postgres` (PostgreSQL 16), `redis` (Redis 7), `certbot` (Let's Encrypt SSL).
+   - `GET /api/health`: Kiểm tra tình trạng kết nối PostgreSQL và Disk Space.
+4. **Docker Production Compose Tinh Gọn (`docker-compose.prod.yml`)**:
+   - Bao gồm các container: `frontend` (Nginx), `backend` (FastAPI Gunicorn 4 workers), `postgres` (PostgreSQL 16), `certbot` (Let's Encrypt SSL).
 
 ---
 
