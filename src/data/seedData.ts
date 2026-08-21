@@ -63,8 +63,8 @@ export const SEED_GAMES: Game[] = [
           pairs = [
             { left: "1 + 1", right: "2" },
             { left: "2 + 1", right: "3" },
-            { left: "3 + 2", right: "5" },
-            { left: "4 - 1", right: "3" }
+            { left: "3 + 1", right: "4" },
+            { left: "3 + 2", right: "5" }
           ];
         } else if (levelNum % 3 === 1) {
           prompt = `Tiếng Anh con vật siêu vui (Lớp 1 - Màn ${levelNum})`;
