@@ -4,35 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..daily_quests import unlock_daily_spin, update_quest_progress, update_daily_streak, XP_PER_LEVEL
 
 router = APIRouter(tags=["attempts"])
-
-XP_PER_LEVEL = 250
-
-
-def update_daily_streak(user: models.User, now_dt: datetime) -> int:
-    """
-    Tính toán chuỗi ngày học liên tục (Daily Streak):
-    - Học tiếp ngày hôm sau: streak + 1
-    - Cùng ngày: giữ nguyên streak
-    - Bỏ lỡ từ 2 ngày trở lên: reset về 1
-    """
-    today = now_dt.date()
-
-    if not user.last_active_date:
-        user.streak = 1
-    else:
-        last_date = user.last_active_date.date()
-        diff_days = (today - last_date).days
-
-        if diff_days == 1:
-            user.streak = (user.streak or 0) + 1
-        elif diff_days > 1:
-            user.streak = 1
-        # diff_days == 0: cùng ngày -> giữ nguyên streak
-
-    user.last_active_date = now_dt
-    return user.streak
 
 
 def check_and_unlock_achievements(user: models.User, db: Session) -> list[dict]:
@@ -130,6 +104,14 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     )
     db.add(attempt)
     db.flush()
+
+    if body.completed:
+        update_quest_progress(db, body.userId, "play_count")
+        if body.score >= 100:
+            game = db.get(models.Game, body.gameId)
+            if game and (game.category or "iq").lower() in {"iq", "math", "toán", "toan"}:
+                update_quest_progress(db, body.userId, "score_reach")
+        unlock_daily_spin(db, body.userId)
 
     # 2. Tính toán điểm kinh nghiệm XP & Level
     if body.completed:

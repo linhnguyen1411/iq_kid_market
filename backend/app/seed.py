@@ -153,6 +153,11 @@ def run_seed(db: Session, force: bool = False) -> None:
                 duration_secs=60, created_at=_parse_dt(att["date"]),
             ))
 
+    # ---- Daily Quests mặc định ----
+    from .daily_quests import QUEST_DEFINITIONS
+    for q in QUEST_DEFINITIONS:
+        db.merge(models.DailyQuest(**q))
+
     db.commit()
     print("[seed] Hoàn tất.")
 

@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine, SessionLocal
-from .routers import session, games, wallet, attempts, admin, misc, auth, scratch
+from .routers import session, games, wallet, attempts, admin, misc, auth, scratch, quests
 from . import seed as seed_module
 
 app = FastAPI(title="IQ Kids Market API", version="1.0.0")
@@ -36,6 +36,7 @@ app.include_router(attempts.router)
 app.include_router(admin.router)
 app.include_router(scratch.router)
 app.include_router(misc.router)
+app.include_router(quests.router)
 
 
 @app.on_event("startup")

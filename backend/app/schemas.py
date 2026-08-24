@@ -338,6 +338,32 @@ class UserAchievementItemOut(BaseModel):
     progress_percent: int
 
 
+# ---------- Daily Quests & Gamification ----------
+class DailyQuestOut(BaseModel):
+    id: str
+    title: str
+    description: str
+    type: str
+    target_count: int
+    current_progress: int
+    status: str
+    xp_reward: int
+    coin_reward: int
+    quest_date: str
+
+
+class ClaimQuestIn(BaseModel):
+    userId: str
+
+
+class LuckySpinIn(BaseModel):
+    userId: str
+
+
+class LoginRewardIn(BaseModel):
+    userId: str
+
+
 # ---------- Scratch Courses & Lessons ----------
 class ScratchSubmitIn(BaseModel):
     userId: str
