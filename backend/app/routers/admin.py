@@ -11,6 +11,14 @@ from ..ai_content import (
     generate_game_with_gemini,
     generate_single_question_with_gemini,
     is_content_safe_for_kids,
+    ensure_level_count,
+)
+from ..game_config import (
+    DEFAULT_UNLOCK_PRICE,
+    DEFAULT_LEVEL_COUNT,
+    FREE_LEVEL_COUNT,
+    TEXT_PACK_TEMPLATES,
+    is_text_pack_template,
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -30,22 +38,32 @@ def create_game(
     creator_name = current_user.name if current_user else "Nhà Sáng Tạo Nhí"
 
     ts = int(time.time() * 1000)
+    game_id = f"custom_g_{ts}"
     if body.customFirstLevel:
         # Validate data của câu hỏi trong màn đầu tiên nếu có
         q_data = body.customFirstLevel.get("questions", [{}])[0].get("data")
         if q_data:
             schemas.AddLevelQuestionIn.validate_game_data(body.template_code, q_data)
-        levels = [{**body.customFirstLevel, "id": f"custom_g{ts}_l1"}]
+        seed_levels = [{**body.customFirstLevel, "id": f"{game_id}_l1", "level_num": 1}]
     else:
-        levels = [build_default_level(body.template_code)]
+        seed_levels = [build_default_level(body.template_code)]
+
+    levels = ensure_level_count(
+        seed_levels,
+        topic=body.title,
+        template=body.template_code,
+        base_id=game_id,
+        count=DEFAULT_LEVEL_COUNT,
+    )
+    unlock_price = body.price if body.price and body.price > 0 else DEFAULT_UNLOCK_PRICE
 
     game = models.Game(
-        id=f"custom_g_{ts}",
+        id=game_id,
         title=body.title,
         description=body.description,
         detailed_description=body.detailed_description or body.description,
         thumbnail=default_thumbnail(body.template_code),
-        price=body.price or 0,
+        price=unlock_price,
         grade_from=body.grade_from or 1,
         grade_to=body.grade_to or 9,
         template_code=body.template_code,
@@ -62,7 +80,11 @@ def create_game(
     db.add(game)
     db.commit()
     db.refresh(game)
-    return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
+    return {
+        "success": True,
+        "message": f'Tạo game "{game.title}" với {len(levels)} màn ({FREE_LEVEL_COUNT} free + {len(levels) - FREE_LEVEL_COUNT} mở khóa ví).',
+        "game": schemas.GameOut.model_validate(game).model_dump(),
+    }
 
 
 # ---------- 2. Thống kê tổng quan ----------
@@ -234,7 +256,56 @@ def delete_game(
     return {"success": True, "message": f'Đã xóa trò chơi "{game.title}" thành công!'}
 
 
-# ---------- 6. Upload game/level đóng gói sẵn (JSON) ----------
+# ---------- 6. Export mẫu JSON 20 màn (teacher/creator — không media) ----------
+@router.get("/games/sample-export")
+def export_sample_game_pack(
+    template_code: str = Query(default="quiz"),
+    topic: str = Query(default="Chủ đề bài học mẫu"),
+    grade_from: int = Query(default=1, ge=1, le=9),
+    grade_to: int = Query(default=3, ge=1, le=9),
+    category: str = Query(default="iq"),
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+):
+    """
+    Tải mẫu JSON đủ 20 màn cho thể loại text-only.
+    Giáo viên chỉnh sửa rồi import lại qua POST /games/upload.
+    """
+    code = (template_code or "quiz").strip().lower()
+    if not is_text_pack_template(code):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Template '{code}' không hỗ trợ import pack text. "
+                f"Chỉ áp dụng: {', '.join(sorted(TEXT_PACK_TEMPLATES))}."
+            ),
+        )
+
+    sample = generate_fallback_game(
+        topic=topic.strip() or "Chủ đề bài học mẫu",
+        template=code,
+        grade_from=grade_from,
+        grade_to=max(grade_from, grade_to),
+        category=category or "iq",
+        price=DEFAULT_UNLOCK_PRICE,
+        creator_id=current_user.id,
+        creator_name=current_user.name,
+    )
+    sample["review_status"] = "pending_review"
+    sample["is_published"] = False
+    sample["_meta"] = {
+        "level_count": DEFAULT_LEVEL_COUNT,
+        "free_levels": FREE_LEVEL_COUNT,
+        "paid_levels": DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT,
+        "text_pack_only": True,
+        "instruction": (
+            f"Chỉnh title/description và nội dung từng màn (đủ {DEFAULT_LEVEL_COUNT} màn), "
+            "giữ nguyên schema questions[].data theo template, rồi POST /api/admin/games/upload."
+        ),
+    }
+    return sample
+
+
+# ---------- 6b. Upload game/level đóng gói sẵn (JSON text-pack 20 màn) ----------
 @router.post("/games/upload")
 def upload_games(
     body: schemas.UploadGamesIn,
@@ -245,40 +316,114 @@ def upload_games(
         raise HTTPException(status_code=400, detail="Vui lòng đính kèm cấu hình đóng gói JSON!")
 
     games_to_import = body.gameObject if isinstance(body.gameObject, list) else [body.gameObject]
+    imported = []
 
     try:
         for g in games_to_import:
-            if not g.get("id") or not g.get("title") or not g.get("template_code"):
+            if not isinstance(g, dict):
+                raise HTTPException(status_code=400, detail="Mỗi game trong pack phải là object JSON.")
+
+            title = (g.get("title") or "").strip()
+            template_code = (g.get("template_code") or "").strip().lower()
+            if not title or not template_code:
                 raise HTTPException(
                     status_code=400,
-                    detail="Dấu tích đóng gói không hợp lệ. Phải chứa 'id', 'title' và 'template_code'.",
+                    detail="Pack không hợp lệ. Mỗi game phải có 'title' và 'template_code'.",
                 )
 
-            existing = db.get(models.Game, g["id"])
+            if not is_text_pack_template(template_code):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Template '{template_code}' cần media hoặc không hỗ trợ import nhanh. "
+                        f"Chỉ cho phép: {', '.join(sorted(TEXT_PACK_TEMPLATES))}."
+                    ),
+                )
+
+            game_id = (g.get("id") or "").strip() or f"pack_{current_user.id}_{int(time.time() * 1000)}"
+            existing = db.get(models.Game, game_id)
+            if existing and existing.is_seed:
+                raise HTTPException(status_code=400, detail="Không được ghi đè game seed gốc của hệ thống!")
+            if (
+                existing
+                and existing.creator_id
+                and existing.creator_id != current_user.id
+                and current_user.role != "admin"
+            ):
+                raise HTTPException(status_code=403, detail="Không được ghi đè game của người khác!")
+
+            levels = ensure_level_count(
+                g.get("levels") if isinstance(g.get("levels"), list) else [],
+                topic=title,
+                template=template_code,
+                base_id=game_id,
+                count=DEFAULT_LEVEL_COUNT,
+            )
+
+            # Validate question data theo schema engine
+            for lv in levels:
+                for q in lv.get("questions") or []:
+                    q_type = (q.get("question_type") or template_code).strip().lower()
+                    q_data = q.get("data")
+                    if q_data:
+                        try:
+                            schemas.AddLevelQuestionIn.validate_game_data(q_type, q_data)
+                        except ValueError as val_err:
+                            raise HTTPException(
+                                status_code=400,
+                                detail=f"Màn {lv.get('level_num')}: {val_err}",
+                            ) from val_err
+
+            unlock_price = int(g.get("price") or 0)
+            if unlock_price <= 0:
+                unlock_price = DEFAULT_UNLOCK_PRICE
+
             values = dict(
-                title=g["title"],
-                description=g.get("description") or "Trò chơi đóng gói sẵn",
-                detailed_description=g.get("detailed_description") or g.get("description") or "Trò chơi đóng gói sẵn",
-                thumbnail=g.get("thumbnail") or "🎁",
-                price=int(g.get("price") or 0),
+                title=title,
+                description=g.get("description") or f"Pack {DEFAULT_LEVEL_COUNT} màn — {title}",
+                detailed_description=(
+                    g.get("detailed_description")
+                    or g.get("description")
+                    or (
+                        f"{FREE_LEVEL_COUNT} màn free + "
+                        f"{DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} màn mở khóa ví."
+                    )
+                ),
+                thumbnail=g.get("thumbnail") or "📦",
+                price=unlock_price,
                 grade_from=int(g.get("grade_from") or 1),
                 grade_to=int(g.get("grade_to") or 9),
-                template_code=g["template_code"],
-                is_published=g.get("is_published") if g.get("is_published") is not None else True,
-                rating_avg=float(g.get("rating_avg") or 4.9),
-                plays_count=int(g.get("plays_count") or 120),
+                template_code=template_code,
                 category=g.get("category") or "iq",
-                levels=g.get("levels") if isinstance(g.get("levels"), list) else [],
+                creator_id=current_user.id,
+                creator_name=current_user.name,
+                review_status="pending_review",
+                review_feedback=None,
+                is_published=False,
+                rating_avg=float(g.get("rating_avg") or 5.0),
+                plays_count=int(g.get("plays_count") or 0),
+                levels=levels,
                 is_seed=False,
             )
+
             if existing:
                 for k, v in values.items():
                     setattr(existing, k, v)
+                imported.append(existing.id)
             else:
-                db.add(models.Game(id=g["id"], **values))
+                db.add(models.Game(id=game_id, **values))
+                imported.append(game_id)
 
         db.commit()
-        return {"success": True, "count": len(games_to_import)}
+        return {
+            "success": True,
+            "count": len(imported),
+            "gameIds": imported,
+            "message": (
+                f"Đã import {len(imported)} game ({DEFAULT_LEVEL_COUNT} màn/game) "
+                f"vào hàng đợi kiểm duyệt."
+            ),
+        }
     except HTTPException:
         raise
     except Exception as err:  # noqa: BLE001
@@ -286,11 +431,11 @@ def upload_games(
         raise HTTPException(status_code=500, detail=f"Đóng gói không hợp lệ: {err}")
 
 
-# ---------- 7. Sinh game bằng AI (Gemini Pipeline) ----------
+# ---------- 7. Sinh game bằng AI (Gemini) — CHỈ ADMIN ----------
 @router.post("/games/ai-generate")
 def ai_generate_game(
     body: schemas.AiGenerateIn,
-    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    current_user: models.User = Depends(require_roles(["admin"])),
     db: Session = Depends(get_db),
 ):
     if not body.topic or not body.template_code:
@@ -302,7 +447,7 @@ def ai_generate_game(
         raise HTTPException(status_code=400, detail=msg)
 
     category = body.category or "iq"
-    price = body.price or 0
+    price = body.price if body.price and body.price > 0 else DEFAULT_UNLOCK_PRICE
     grade_from = body.grade_from or 1
     grade_to = body.grade_to or 5
 
@@ -318,13 +463,25 @@ def ai_generate_game(
             category=category,
         )
 
+        game_id = generated.get("id") or f"ai_g_{int(time.time()*1000)}"
+        levels = ensure_level_count(
+            generated.get("levels") or [],
+            topic=body.topic,
+            template=body.template_code,
+            base_id=game_id,
+            count=DEFAULT_LEVEL_COUNT,
+        )
+        unlock_price = int(generated.get("price") or price or DEFAULT_UNLOCK_PRICE)
+        if unlock_price <= 0:
+            unlock_price = DEFAULT_UNLOCK_PRICE
+
         game = models.Game(
-            id=generated.get("id") or f"ai_g_{int(time.time()*1000)}",
+            id=game_id,
             title=generated.get("title") or f"AI: {body.topic}",
             description=generated.get("description") or f"Game bài học về {body.topic}",
             detailed_description=generated.get("detailed_description") or generated.get("description"),
             thumbnail=generated.get("thumbnail") or "🤖",
-            price=price,
+            price=unlock_price,
             grade_from=grade_from,
             grade_to=grade_to,
             template_code=body.template_code,
@@ -335,7 +492,7 @@ def ai_generate_game(
             is_published=False,
             rating_avg=5.0,
             plays_count=0,
-            levels=generated.get("levels") or [],
+            levels=levels,
             is_seed=False,
         )
         db.add(game)
@@ -343,7 +500,11 @@ def ai_generate_game(
         db.refresh(game)
         return {
             "success": True,
-            "message": "Trò chơi AI đã được khởi tạo thành công và chuyển vào hàng đợi kiểm duyệt!",
+            "message": (
+                f'Trò chơi AI "{game.title}" đã tạo {len(levels)} màn '
+                f'({FREE_LEVEL_COUNT} free + {len(levels) - FREE_LEVEL_COUNT} mở khóa ví) '
+                f'và đưa vào hàng đợi kiểm duyệt!'
+            ),
             "game": schemas.GameOut.model_validate(game).model_dump(),
         }
     except ValueError as val_err:
@@ -353,16 +514,14 @@ def ai_generate_game(
         raise HTTPException(status_code=500, detail=f"Lỗi thiết kế từ hệ thống trí tuệ nhân tạo Gemini: {err}")
 
 
-# ---------- 8. Sinh 1 câu hỏi / màn chơi đơn lẻ bằng AI ----------
+# ---------- 8. Sinh 1 câu hỏi / màn chơi đơn lẻ bằng AI — CHỈ ADMIN ----------
 @router.post("/ai/generate-question")
 def generate_ai_question(
     body: schemas.AiGenerateQuestionIn,
-    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    current_user: models.User = Depends(require_roles(["admin"])),
     db: Session = Depends(get_db),
 ):
-    """
-    Dành cho Giáo viên / Creator khi soạn bài: Gợi ý nhanh 1 câu hỏi đơn lẻ theo Game Template.
-    """
+    """Chỉ Admin được dùng Gemini để gợi ý câu hỏi đơn lẻ."""
     if not body.topic or not body.template_code:
         raise HTTPException(status_code=400, detail="Vui lòng cung cấp chủ đề và mã template!")
 
@@ -402,15 +561,17 @@ def reset_custom_games(
 # ---------- 9. Hàng đợi kiểm duyệt giáo án ----------
 @router.get("/review/queue")
 def get_review_queue(
-    status: str | None = None,
+    status: str | None = "pending_review",
     current_user: models.User = Depends(require_roles(["admin", "teacher"])),
     db: Session = Depends(get_db),
 ):
-    """Chỉ Admin hoặc Teacher mới có quyền xem hàng đợi kiểm duyệt."""
+    """Hàng đợi kiểm duyệt: mặc định chỉ game đang chờ duyệt (pending_review)."""
     q = db.query(models.Game).filter(models.Game.is_seed == False)  # noqa: E712
-    if status and status != "all":
-        q = q.filter(models.Game.review_status == status)
-    games = q.all()
+    # Default pending_review so approved/rejected games leave the review queue.
+    effective = (status or "pending_review").strip()
+    if effective != "all":
+        q = q.filter(models.Game.review_status == effective)
+    games = q.order_by(models.Game.id.desc()).all()
     return [schemas.GameOut.model_validate(g).model_dump() for g in games]
 
 
@@ -440,4 +601,82 @@ def decide_review(
 
     db.commit()
     db.refresh(game)
-    return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
+    action_label = "duyệt" if body.action == "approve" else "từ chối"
+    return {
+        "success": True,
+        "message": f'Đã {action_label} trò chơi "{game.title}" thành công!',
+        "game": schemas.GameOut.model_validate(game).model_dump(),
+    }
+
+
+# ---------- 10. Admin CMS: Quản trị người dùng & kho game ----------
+@router.get("/users")
+def list_users(
+    role: str | None = None,
+    search: str | None = None,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    q = db.query(models.User)
+    if role and role != "all":
+        q = q.filter(models.User.role == role)
+    if search:
+        like = f"%{search.strip()}%"
+        q = q.filter(
+            (models.User.username.ilike(like))
+            | (models.User.name.ilike(like))
+            | (models.User.id.ilike(like))
+        )
+    users = q.order_by(models.User.created_at.desc()).all()
+    result = []
+    for u in users:
+        payload = schemas.UserOut.model_validate(u).model_dump()
+        payload["created_at"] = u.created_at.isoformat() if u.created_at else None
+        payload["wallet_balance"] = u.wallet.balance if u.wallet else 0
+        result.append(payload)
+    return result
+
+
+@router.patch("/users/{user_id}/role")
+def update_user_role(
+    user_id: str,
+    body: schemas.UpdateUserRoleIn,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    role = (body.role or "").strip().lower()
+    if role not in schemas.ALLOWED_ROLES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Role không hợp lệ. Cho phép: {', '.join(schemas.ALLOWED_ROLES)}",
+        )
+
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
+
+    if user.id == current_user.id and role != "admin":
+        raise HTTPException(status_code=400, detail="Không thể tự hạ quyền tài khoản admin đang đăng nhập!")
+
+    user.role = role
+    db.commit()
+    db.refresh(user)
+    return {
+        "success": True,
+        "user": schemas.UserOut.model_validate(user).model_dump(),
+        "message": f"Đã cập nhật quyền của @{user.username} thành {role}.",
+    }
+
+
+@router.get("/games/inventory")
+def list_game_inventory(
+    status: str | None = None,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    """Danh sách toàn bộ kho game (kể cả chưa publish) cho CMS Admin."""
+    q = db.query(models.Game)
+    if status and status != "all":
+        q = q.filter(models.Game.review_status == status)
+    games = q.order_by(models.Game.id.asc()).all()
+    return [schemas.GameOut.model_validate(g).model_dump() for g in games]

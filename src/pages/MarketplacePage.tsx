@@ -309,7 +309,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
           {/* Games Card Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredAndSortedGames.map((game) => {
-              const isBought = purchases.includes(game.id) || game.price === 0;
+              const isBought = purchases.includes(game.id);
 
               return (
                 <GameCard
@@ -347,7 +347,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       {detailGame && (
         <GameDetailModal
           game={detailGame}
-          isPurchased={purchases.includes(detailGame.id) || detailGame.price === 0}
+          isPurchased={purchases.includes(detailGame.id)}
           onClose={() => setDetailGame(null)}
           onPlayGame={(g, lvl) => {
             setDetailGame(null);

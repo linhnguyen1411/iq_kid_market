@@ -27,8 +27,20 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
       window.dispatchEvent(new CustomEvent('iqkids_auth_unauthorized'));
     }
     const errorData = await response.json().catch(() => ({ detail: 'Đã xảy ra lỗi máy chủ!' }));
-    const message = errorData.detail || `Lỗi HTTP ${response.status}: ${response.statusText}`;
-    throw new Error(message);
+    const raw = errorData.detail ?? errorData.message;
+    let message: string;
+    if (typeof raw === 'string') {
+      message = raw;
+    } else if (Array.isArray(raw)) {
+      message = raw
+        .map((item) => (typeof item === 'string' ? item : item?.msg || JSON.stringify(item)))
+        .join('; ');
+    } else if (raw && typeof raw === 'object') {
+      message = (raw as { msg?: string }).msg || JSON.stringify(raw);
+    } else {
+      message = `Lỗi HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new Error(message || `Lỗi HTTP ${response.status}`);
   }
 
   return response.json();
@@ -55,7 +67,15 @@ export const api = {
         body: JSON.stringify({ refresh_token: refreshToken }),
       }),
 
-    getMe: () => apiRequest<any>('/auth/me'),
+    getMe: () =>
+      apiRequest<{
+        access_token?: string;
+        refresh_token?: string;
+        token_type?: string;
+        user: any;
+        wallet: { balance: number; transactions: any[] };
+        purchases: string[];
+      }>('/auth/me'),
 
     resetPassword: (data: { username: string; parent_pin: string; new_password: string }) =>
       apiRequest<{ success: boolean; message: string }>('/auth/reset-password', {
@@ -78,7 +98,7 @@ export const api = {
 
   // ---------- SESSION ----------
   session: {
-    getUserSession: (userId: string) => apiRequest<UserSession>(`/session?userId=${encodeURIComponent(userId)}`),
+    getUserSession: () => apiRequest<UserSession>('/session'),
   },
 
   // ---------- GAMES MARKETPLACE ----------
@@ -233,7 +253,7 @@ export const api = {
       creatorId?: string;
       customFirstLevel?: any;
     }) =>
-      apiRequest<{ success: boolean; game: Game }>('/admin/games', {
+      apiRequest<{ success: boolean; game: Game; message?: string }>('/admin/games', {
         method: 'POST',
         body: JSON.stringify(data),
       }),
@@ -268,7 +288,10 @@ export const api = {
         method: 'POST',
       }),
 
-    getReviewQueue: () => apiRequest<Game[]>('/admin/review/queue'),
+    getReviewQueue: (status: string = 'pending_review') => {
+      const qs = status ? `?status=${encodeURIComponent(status)}` : '';
+      return apiRequest<Game[]>(`/admin/review/queue${qs}`);
+    },
 
     decideReview: (data: { gameId: string; action: 'approve' | 'reject'; feedback?: string }) =>
       apiRequest<{ success: boolean; game: Game; message: string }>('/admin/review/decide', {
@@ -288,5 +311,49 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    exportSamplePack: (params: {
+      template_code: string;
+      topic?: string;
+      grade_from?: number;
+      grade_to?: number;
+      category?: string;
+    }) => {
+      const q = new URLSearchParams();
+      q.set('template_code', params.template_code);
+      if (params.topic) q.set('topic', params.topic);
+      if (params.grade_from != null) q.set('grade_from', String(params.grade_from));
+      if (params.grade_to != null) q.set('grade_to', String(params.grade_to));
+      if (params.category) q.set('category', params.category);
+      return apiRequest<any>(`/admin/games/sample-export?${q.toString()}`);
+    },
+
+    uploadGamePack: (gameObject: any) =>
+      apiRequest<{ success: boolean; count: number; gameIds?: string[]; message?: string }>(
+        '/admin/games/upload',
+        {
+          method: 'POST',
+          body: JSON.stringify({ gameObject }),
+        },
+      ),
+
+    listUsers: (params?: { role?: string; search?: string }) => {
+      const q = new URLSearchParams();
+      if (params?.role && params.role !== 'all') q.set('role', params.role);
+      if (params?.search) q.set('search', params.search);
+      const qs = q.toString();
+      return apiRequest<Array<any>>(`/admin/users${qs ? `?${qs}` : ''}`);
+    },
+
+    updateUserRole: (userId: string, role: string) =>
+      apiRequest<{ success: boolean; user: any; message: string }>(`/admin/users/${userId}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      }),
+
+    getGameInventory: (status?: string) => {
+      const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+      return apiRequest<Game[]>(`/admin/games/inventory${qs}`);
+    },
   },
 };

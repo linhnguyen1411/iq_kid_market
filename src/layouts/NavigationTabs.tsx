@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Compass, Gamepad2, Code, Trophy, 
-  CreditCard, Settings, UserCheck, ShieldCheck 
+  CreditCard, Settings 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +12,6 @@ export type TabType =
   | 'leaderboard' 
   | 'wallet' 
   | 'admin' 
-  | 'tech_arch'
   | 'profile';
 
 interface NavigationTabsProps {
@@ -21,23 +20,30 @@ interface NavigationTabsProps {
 }
 
 export const NavigationTabs: React.FC<NavigationTabsProps> = ({ activeTab, setActiveTab }) => {
-  const { user } = useAuth();
-  const isAdminOrTeacher = user?.role === 'admin' || user?.role === 'teacher' || user?.role === 'creator';
+  const { user, authToken } = useAuth();
+  const isLoggedIn = Boolean(authToken && user);
+  const isTeacherStudio = isLoggedIn && ['admin', 'teacher', 'creator'].includes(user!.role);
+  const isParent = isLoggedIn && user!.role === 'parent';
 
   const tabs: Array<{ id: TabType; label: string; icon: React.ReactNode; badge?: string }> = [
     { id: 'landing', label: 'Khám Phá', icon: <Compass className="w-4 h-4" /> },
     { id: 'marketplace', label: 'Chợ Game Trí Tuệ', icon: <Gamepad2 className="w-4 h-4" /> },
     { id: 'scratch', label: 'Lập Trình Scratch', icon: <Code className="w-4 h-4" />, badge: 'Hot' },
     { id: 'leaderboard', label: 'Bảng Vàng', icon: <Trophy className="w-4 h-4" /> },
-    { id: 'wallet', label: 'Ví Xu', icon: <CreditCard className="w-4 h-4" /> },
-    { 
-      id: 'admin', 
-      label: isAdminOrTeacher ? 'Studio Sáng Tạo' : 'Góc Giáo Viên', 
-      icon: <Settings className="w-4 h-4" />,
-      badge: isAdminOrTeacher ? 'Studio' : undefined 
-    },
-    { id: 'tech_arch', label: 'Kiến Trúc Kỹ Thuật', icon: <ShieldCheck className="w-4 h-4" /> },
   ];
+
+  if (isParent) {
+    tabs.push({ id: 'wallet', label: 'Ví Xu', icon: <CreditCard className="w-4 h-4" /> });
+  }
+
+  if (isTeacherStudio) {
+    tabs.push({
+      id: 'admin',
+      label: 'Studio Sáng Tạo',
+      icon: <Settings className="w-4 h-4" />,
+      badge: 'Studio',
+    });
+  }
 
   return (
     <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-18 z-30 shadow-2xs">

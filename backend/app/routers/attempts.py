@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..daily_quests import unlock_daily_spin, update_quest_progress, update_daily_streak, XP_PER_LEVEL
+from ..game_config import can_access_level, FREE_LEVEL_COUNT
 
 router = APIRouter(tags=["attempts"])
 
@@ -87,6 +88,23 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     user = db.get(models.User, body.userId)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
+
+    game = db.get(models.Game, body.gameId)
+    if game:
+        owned = (
+            db.query(models.Purchase)
+            .filter_by(user_id=body.userId, game_id=body.gameId)
+            .first()
+            is not None
+        )
+        if not can_access_level(body.levelNum, owned):
+            raise HTTPException(
+                status_code=403,
+                detail=(
+                    f"Màn {body.levelNum} cần mở khóa bằng ví xu. "
+                    f"Chỉ {FREE_LEVEL_COUNT} màn đầu miễn phí."
+                ),
+            )
 
     now_dt = datetime.utcnow()
     now_ts = int(time.time() * 1000)

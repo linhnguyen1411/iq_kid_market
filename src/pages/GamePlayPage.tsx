@@ -1,28 +1,34 @@
 import React, { useState } from 'react';
-import { 
-  ArrowLeft, Trophy, Sparkles, Coins, 
-  CheckCircle2, RefreshCw, ChevronRight 
+import {
+  ArrowLeft, Sparkles, Coins,
+  CheckCircle2, RefreshCw, ChevronRight, Lock,
 } from 'lucide-react';
 import { Game, Level } from '../types';
 import QuestionRenderer from '../components/QuestionRenderer';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { canAccessLevel, FREE_LEVEL_COUNT } from '../lib/gameAccess';
 
 interface GamePlayPageProps {
   game: Game;
   initialLevelNum?: number;
   onBack: () => void;
+  onRequestUnlock?: (game: Game) => void;
 }
 
 export const GamePlayPage: React.FC<GamePlayPageProps> = ({
   game,
   initialLevelNum = 1,
   onBack,
+  onRequestUnlock,
 }) => {
-  const { user, wallet, updateUserStats, updateUserWallet } = useAuth();
+  const { user, wallet, purchases, updateUserStats, updateUserWallet } = useAuth();
+  const isPurchased = purchases.includes(game.id);
 
-  const [currentLevelNum, setCurrentLevelNum] = useState(initialLevelNum);
+  const safeInitial = canAccessLevel(initialLevelNum, isPurchased) ? initialLevelNum : 1;
+  const [currentLevelNum, setCurrentLevelNum] = useState(safeInitial);
   const [levelCompleted, setLevelCompleted] = useState(false);
+  const [lockNotice, setLockNotice] = useState<string | null>(null);
   const [attemptResult, setAttemptResult] = useState<{
     xpAwarded: number;
     coinReward: number;
@@ -62,34 +68,46 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
         }
         setLevelCompleted(true);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi nộp điểm màn chơi:', err);
-      setLevelCompleted(true);
+      if (err?.message?.includes('mở khóa')) {
+        setLockNotice(err.message);
+      } else {
+        setLevelCompleted(true);
+      }
     }
   };
 
   const handleNextLevel = () => {
     const nextNum = currentLevelNum + 1;
     const hasNext = levels.some((l) => l.level_num === nextNum);
-    if (hasNext) {
-      setCurrentLevelNum(nextNum);
-      setLevelCompleted(false);
-      setAttemptResult(null);
-    } else {
+    if (!hasNext) {
       onBack();
+      return;
     }
+    if (!canAccessLevel(nextNum, isPurchased)) {
+      setLockNotice(
+        `Màn ${nextNum}+ cần mở khóa bằng ví. Chỉ ${FREE_LEVEL_COUNT} màn đầu miễn phí.`,
+      );
+      return;
+    }
+    setCurrentLevelNum(nextNum);
+    setLevelCompleted(false);
+    setAttemptResult(null);
+    setLockNotice(null);
   };
 
   const handleReplay = () => {
     setLevelCompleted(false);
     setAttemptResult(null);
+    setLockNotice(null);
   };
 
   const hasNextLevel = levels.some((l) => l.level_num === currentLevelNum + 1);
+  const nextIsLocked = hasNextLevel && !canAccessLevel(currentLevelNum + 1, isPurchased);
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
-      {/* Top Navigation Bar */}
       <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs">
         <button
           onClick={onBack}
@@ -103,6 +121,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           <h2 className="text-sm font-black text-slate-800 line-clamp-1">{game.title}</h2>
           <span className="text-[10px] font-mono font-bold text-indigo-600">
             Màn {currentLevelNum} / {levels.length} • {currentLevel?.title || 'Màn chơi'}
+            {currentLevelNum <= FREE_LEVEL_COUNT ? ' • Free' : ''}
           </span>
         </div>
 
@@ -112,7 +131,24 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
         </div>
       </div>
 
-      {/* Main Game Playing Arena */}
+      {lockNotice && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+          <div className="flex items-start gap-2 text-sm text-amber-900 font-bold">
+            <Lock className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{lockNotice}</span>
+          </div>
+          {onRequestUnlock && game.price > 0 && (
+            <button
+              type="button"
+              onClick={() => onRequestUnlock(game)}
+              className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-black"
+            >
+              Mở khóa {game.price.toLocaleString('vi-VN')} xu
+            </button>
+          )}
+        </div>
+      )}
+
       {!levelCompleted ? (
         <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200/80 shadow-md">
           {currentLevel?.questions?.[0] ? (
@@ -134,7 +170,6 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           )}
         </div>
       ) : (
-        /* Victory Modal */
         <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl text-center animate-in zoom-in-95 duration-150">
           <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 flex items-center justify-center text-4xl shadow-lg mb-4 animate-bounce">
             🏆
@@ -151,7 +186,6 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
             Bạn đã rèn luyện phản xạ tư duy logic tuyệt vời. Hãy giữ vững phong độ!
           </p>
 
-          {/* Reward Badges */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto mb-8">
             <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
               <Sparkles className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
@@ -172,7 +206,6 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto">
             <button
               onClick={handleReplay}
@@ -183,13 +216,28 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
             </button>
 
             {hasNextLevel ? (
-              <button
-                onClick={handleNextLevel}
-                className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <span>Sang Màn {currentLevelNum + 1}</span>
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              nextIsLocked ? (
+                <button
+                  onClick={() => {
+                    setLockNotice(
+                      `Màn ${currentLevelNum + 1}+ cần mở khóa bằng ví. Chỉ ${FREE_LEVEL_COUNT} màn đầu miễn phí.`,
+                    );
+                    onRequestUnlock?.(game);
+                  }}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Mở khóa màn tiếp</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleNextLevel}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span>Sang Màn {currentLevelNum + 1}</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              )
             ) : (
               <button
                 onClick={onBack}

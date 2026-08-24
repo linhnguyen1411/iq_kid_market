@@ -74,7 +74,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
         {!isPurchasedSuccess ? (
           <>
             <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">
-              XÁC NHẬN MUA BẢN QUYỀN GAME
+              MỞ KHÓA 15 MÀN CÒN LẠI BẰNG VÍ
             </span>
 
             {/* Game Info Preview */}
@@ -84,6 +84,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-black text-slate-800 line-clamp-1">{game.title}</h4>
+                <span className="text-xs text-slate-500 block">5 màn đầu miễn phí · mở khóa phần còn lại</span>
                 <span className="text-xs font-mono font-black text-pink-600">
                   {game.price.toLocaleString('vi-VN')} xu
                 </span>
@@ -98,7 +99,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
               </div>
 
               <div className="flex items-center justify-between text-slate-600">
-                <span>Giá bản quyền game:</span>
+                <span>Giá mở khóa màn còn lại:</span>
                 <span className="font-mono font-bold text-pink-600">-{game.price.toLocaleString('vi-VN')} xu</span>
               </div>
 
@@ -130,7 +131,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-98"
               >
                 <Coins className="w-4 h-4 text-amber-300" />
-                <span>{loading ? 'Đang xử lý mua game...' : `MUA NGAY BẰNG ${game.price.toLocaleString('vi-VN')} XU 🪙`}</span>
+                <span>{loading ? 'Đang mở khóa...' : `MỞ KHÓA BẰNG ${game.price.toLocaleString('vi-VN')} XU 🪙`}</span>
               </button>
             ) : (
               <div className="space-y-2">
@@ -160,10 +161,10 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
 
             <div>
               <h3 className="text-lg font-black text-slate-800">
-                Chúc Mừng Bạn Đã Mua Game Thành Công!
+                Đã mở khóa toàn bộ màn chơi!
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Bản quyền trò chơi "{game.title}" đã được thêm vĩnh viễn vào kho game của bạn.
+                "{game.title}" — bạn có thể chơi tiếp các màn sau màn free.
               </p>
             </div>
 

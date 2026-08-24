@@ -20,7 +20,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   onPlayGame,
   onNavigateToWallet,
 }) => {
-  const { user, wallet, purchases, refreshSession } = useAuth();
+  const { user, wallet, purchases, refreshSession, authToken, openAuthModal } = useAuth();
 
   const [name, setName] = useState(user?.name || '');
   const [grade, setGrade] = useState<number>(user?.grade || 2);
@@ -57,6 +57,25 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         .finally(() => setLoadingHistory(false));
     }
   }, [user?.id]);
+
+  if (!authToken || !user) {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-indigo-100 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl">👤</div>
+        <h2 className="mb-2 text-xl font-black text-slate-800">Đăng nhập để xem hồ sơ</h2>
+        <p className="mb-5 text-sm text-slate-500">
+          Hồ sơ cá nhân chỉ hiển thị khi bạn đã xác thực JWT.
+        </p>
+        <button
+          type="button"
+          onClick={() => openAuthModal('login')}
+          className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-bold text-white"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   // Password Strength Meter
   const getPasswordStrength = () => {

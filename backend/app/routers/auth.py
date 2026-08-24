@@ -11,7 +11,6 @@ from ..auth_utils import (
     create_access_token,
     create_refresh_token,
     decode_refresh_token,
-    get_current_user_optional,
     get_current_user_required,
     check_rate_limit,
     record_failed_login,
@@ -133,18 +132,13 @@ def login(body: schemas.LoginIn, db: Session = Depends(get_db)):
             detail="Tên đăng nhập hoặc mật khẩu không chính xác!",
         )
 
-    # 3. Kiểm tra mật khẩu
-    if user.password_hash:
-        if not verify_password(body.password, user.password_hash):
-            record_failed_login(username_clean)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Tên đăng nhập hoặc mật khẩu không chính xác!",
-            )
-    else:
-        # Nếu tài khoản cũ chưa có password_hash (seed user ban đầu), chấp nhận pass 123456 hoặc bất kỳ pass nào và tự băm lại
-        user.password_hash = hash_password(body.password or "123456")
-        db.commit()
+    # 3. Kiểm tra mật khẩu (bắt buộc JWT login, không cho bypass tài khoản demo)
+    if not user.password_hash or not verify_password(body.password, user.password_hash):
+        record_failed_login(username_clean)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Tên đăng nhập hoặc mật khẩu không chính xác!",
+        )
 
     # 4. Đăng nhập thành công -> Xóa lịch sử thất bại
     clear_failed_login(username_clean)
@@ -208,31 +202,19 @@ def reset_password(body: schemas.ResetPasswordIn, db: Session = Depends(get_db))
 
 @router.get("/me")
 def get_current_user_profile(
-    userId: str | None = None,
-    user_from_token: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    # Ưu tiên lấy từ Token, nếu không có Token thì fallback qua userId query param (để tương thích ngược)
-    user = user_from_token
-    if not user and userId:
-        user = db.get(models.User, userId)
-
-    if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy phiên đăng nhập người dùng")
-
-    return _build_auth_response(user, db)
+    return _build_auth_response(current_user, db)
 
 
 @router.post("/change-password")
 def change_password(
     body: schemas.ChangePasswordIn,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    # Lấy user từ Token hoặc từ body.userId
-    user = current_user or db.get(models.User, body.userId)
-    if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    user = current_user
 
     if user.password_hash and not verify_password(body.old_password, user.password_hash):
         raise HTTPException(status_code=400, detail="Mật khẩu cũ không chính xác!")
@@ -250,12 +232,10 @@ def change_password(
 @router.post("/profile")
 def update_profile_auth(
     body: schemas.UpdateProfileIn,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
-    user = current_user or db.get(models.User, body.userId)
-    if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+    user = current_user
 
     if body.name:
         user.name = body.name

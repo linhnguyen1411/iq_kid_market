@@ -12,13 +12,13 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import ProfilePage from './pages/ProfilePage';
 import WalletPage from './pages/WalletPage';
 import AdminPage from './pages/AdminPage';
-import TechArchPage from './pages/TechArchPage';
 import { AuthModal } from './components/AuthModal';
+import { PurchaseModal } from './components/PurchaseModal';
 import { Game, LeaderboardItem } from './types';
 import { api } from './services/api';
 
 function MainLayout() {
-  const { isAuthModalOpen, authModalMode, closeAuthModal, login } = useAuth();
+  const { isAuthModalOpen, authModalMode, closeAuthModal, login, user, authToken } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabType>('landing');
   const [games, setGames] = useState<Game[]>([]);
@@ -26,6 +26,7 @@ function MainLayout() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [activePlayGame, setActivePlayGame] = useState<Game | null>(null);
   const [activePlayLevelNum, setActivePlayLevelNum] = useState<number>(1);
+  const [unlockGame, setUnlockGame] = useState<Game | null>(null);
 
   const fetchInitialData = useCallback(async () => {
     try {
@@ -44,6 +45,21 @@ function MainLayout() {
     fetchInitialData();
   }, [fetchInitialData]);
 
+  // Chặn tab không còn trong menu / không đúng vai trò
+  useEffect(() => {
+    const isTeacherStudio = Boolean(
+      authToken && user && ['admin', 'teacher', 'creator'].includes(user.role)
+    );
+    const isParent = Boolean(authToken && user?.role === 'parent');
+
+    if (activeTab === 'wallet' && !isParent) {
+      setActiveTab('landing');
+    }
+    if (activeTab === 'admin' && !isTeacherStudio) {
+      setActiveTab('landing');
+    }
+  }, [activeTab, authToken, user]);
+
   const handleStartPlayGame = (game: Game, levelNum = 1) => {
     setActivePlayGame(game);
     setActivePlayLevelNum(levelNum);
@@ -52,6 +68,12 @@ function MainLayout() {
   const handleBackToMarketplace = () => {
     setActivePlayGame(null);
     setActiveTab('marketplace');
+  };
+
+  const goToWalletIfParent = () => {
+    if (user?.role === 'parent') {
+      setActiveTab('wallet');
+    }
   };
 
   return (
@@ -71,6 +93,7 @@ function MainLayout() {
             game={activePlayGame}
             initialLevelNum={activePlayLevelNum}
             onBack={handleBackToMarketplace}
+            onRequestUnlock={(g) => setUnlockGame(g)}
           />
         ) : (
           <>
@@ -94,7 +117,7 @@ function MainLayout() {
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
                 onPlayGame={handleStartPlayGame}
-                onNavigateToWallet={() => setActiveTab('wallet')}
+                onNavigateToWallet={goToWalletIfParent}
               />
             )}
 
@@ -102,13 +125,13 @@ function MainLayout() {
 
             {activeTab === 'leaderboard' && <LeaderboardPage />}
 
-            {activeTab === 'wallet' && <WalletPage />}
+            {activeTab === 'wallet' && user?.role === 'parent' && <WalletPage />}
 
             {activeTab === 'profile' && (
               <ProfilePage
                 games={games}
                 onPlayGame={handleStartPlayGame}
-                onNavigateToWallet={() => setActiveTab('wallet')}
+                onNavigateToWallet={goToWalletIfParent}
               />
             )}
 
@@ -118,8 +141,6 @@ function MainLayout() {
                 onRefreshGames={fetchInitialData}
               />
             )}
-
-            {activeTab === 'tech_arch' && <TechArchPage />}
           </>
         )}
       </main>
@@ -138,16 +159,23 @@ function MainLayout() {
           }}
         />
       )}
+
+      {/* 6. Unlock paid levels while playing */}
+      {unlockGame && (
+        <PurchaseModal
+          game={unlockGame}
+          onClose={() => setUnlockGame(null)}
+          onSuccess={() => setUnlockGame(null)}
+          onNavigateToWallet={() => {
+            setUnlockGame(null);
+            goToWalletIfParent();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 export default function App() {
-  return (
-    <AuthProvider>
-      <SoundProvider>
-        <MainLayout />
-      </SoundProvider>
-    </AuthProvider>
-  );
+  return <MainLayout />;
 }

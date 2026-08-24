@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   X, Sparkles, User, Lock, Eye, EyeOff, CheckCircle2, AlertCircle, 
-  GraduationCap, BookOpen, ShieldCheck, Heart, Zap, ArrowRight
+  GraduationCap, BookOpen, Heart, ArrowRight
 } from 'lucide-react';
 import { playSynthSound } from './game-engines/soundUtils';
 
@@ -69,6 +69,9 @@ const ROLES = [
   },
 ];
 
+const fieldClass =
+  'block w-full min-w-0 max-w-full box-border rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100';
+
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
@@ -81,7 +84,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Form states
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -89,23 +91,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [grade, setGrade] = useState('2');
   const [avatar, setAvatar] = useState('smile_tiger');
 
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [isOpen, initialMode]);
+
   if (!isOpen) return null;
 
-  // Tính độ mạnh mật khẩu vui nhộn
   const getPasswordStrength = () => {
     if (!password) return { text: '', color: 'bg-transparent', width: '0%' };
     if (password.length < 4) return { text: 'Quá ngắn (ít nhất 4 ký tự) ❌', color: 'bg-rose-500', width: '25%' };
     if (password.length < 6) return { text: 'Tạm được ⚠️', color: 'bg-amber-500', width: '50%' };
     if (password.length < 8) return { text: 'Khá mạnh 👍', color: 'bg-blue-500', width: '75%' };
     return { text: 'Siêu cấp bảo mật! 🔥', color: 'bg-emerald-500', width: '100%' };
-  };
-
-  const handleQuickDemoLogin = (demoUsername: string) => {
-    playSynthSound('click');
-    setUsername(demoUsername);
-    setPassword('123456');
-    setMode('login');
-    setErrorMsg('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,7 +120,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         const res = await fetch('/api/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username: username.trim(), password }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -132,14 +133,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           onClose();
         }, 600);
       } else {
-        // Register mode
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            username,
+            username: username.trim(),
             password,
-            name: name.trim() || username,
+            name: name.trim() || username.trim(),
             role,
             grade: role === 'student' ? Number(grade) : undefined,
             avatar,
@@ -165,50 +165,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const strength = getPasswordStrength();
+  const modalWidth = mode === 'register' ? 'max-w-xl' : 'max-w-md';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
-      <div 
-        className="relative w-full max-w-xl bg-white/95 rounded-3xl shadow-2xl border border-white/80 overflow-hidden flex flex-col max-h-[92vh]"
-        style={{
-          boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.25)',
-        }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+      <div
+        className={`relative flex w-full ${modalWidth} max-h-[92vh] flex-col overflow-hidden rounded-3xl border border-white/80 bg-white shadow-2xl`}
+        style={{ boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.25)' }}
       >
-        {/* Nút đóng */}
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 text-slate-400 hover:text-slate-700 bg-white/80 hover:bg-slate-100 rounded-full transition-all shadow-xs"
+          className="absolute top-4 right-4 z-10 rounded-full bg-white/90 p-2 text-slate-400 shadow-sm transition-all hover:bg-slate-100 hover:text-slate-700"
         >
-          <X className="w-5 h-5" />
+          <X className="h-5 w-5" />
         </button>
 
-        {/* Header Lung Linh */}
-        <div className="relative px-6 pt-6 pb-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-center overflow-hidden">
-          {/* Decorative Sparkles */}
-          <div className="absolute -top-6 -left-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-          <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-yellow-400/20 rounded-full blur-xl pointer-events-none" />
+        <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 pt-6 pb-4 text-center text-white">
+          <div className="pointer-events-none absolute -top-6 -left-6 h-24 w-24 rounded-full bg-white/10 blur-xl" />
+          <div className="pointer-events-none absolute -right-6 -bottom-6 h-32 w-32 rounded-full bg-yellow-400/20 blur-xl" />
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-yellow-300 mb-2 border border-white/20">
-            <Sparkles className="w-3.5 h-3.5 animate-spin" /> IQ KID MARKET • EDTECH
+          <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-bold text-yellow-300 backdrop-blur-md">
+            <Sparkles className="h-3.5 w-3.5" /> SMART KIDS
           </div>
 
-          <h2 className="text-xl md:text-2xl font-display font-black tracking-wide text-white drop-shadow-sm">
+          <h2 className="font-display text-xl font-black tracking-wide text-white drop-shadow-sm md:text-2xl">
             {mode === 'login' ? 'ĐĂNG NHẬP THẾ GIỚI TRÍ TUỆ 🚀' : 'GIA NHẬP THẾ HỆ THÔNG THÁI ✨'}
           </h2>
-          <p className="text-xs md:text-sm text-blue-100 font-sans mt-0.5 opacity-90">
-            {mode === 'login' 
-              ? 'Tiếp tục chuỗi ngày học tập và rèn luyện tư duy vượt trội' 
+          <p className="mt-1 text-xs text-blue-100 opacity-90 md:text-sm">
+            {mode === 'login'
+              ? 'Đăng nhập bằng tài khoản thật — xác thực JWT bảo mật'
               : 'Tạo tài khoản để nhận quà tặng ví và bộ game khởi đầu'}
           </p>
 
-          {/* Tab Switcher */}
-          <div className="flex bg-black/20 p-1 rounded-2xl mt-4 max-w-xs mx-auto border border-white/10">
+          <div className="mx-auto mt-4 flex max-w-xs rounded-2xl border border-white/10 bg-black/20 p-1">
             <button
               type="button"
               onClick={() => { setMode('login'); setErrorMsg(''); setSuccessMsg(''); playSynthSound('click'); }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all ${
-                mode === 'login' 
-                  ? 'bg-white text-slate-800 shadow-md font-extrabold' 
+              className={`flex-1 rounded-xl py-1.5 text-xs font-bold transition-all ${
+                mode === 'login'
+                  ? 'bg-white font-extrabold text-slate-800 shadow-md'
                   : 'text-white/80 hover:text-white'
               }`}
             >
@@ -217,9 +213,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="button"
               onClick={() => { setMode('register'); setErrorMsg(''); setSuccessMsg(''); playSynthSound('click'); }}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-xl transition-all ${
-                mode === 'register' 
-                  ? 'bg-white text-slate-800 shadow-md font-extrabold' 
+              className={`flex-1 rounded-xl py-1.5 text-xs font-bold transition-all ${
+                mode === 'register'
+                  ? 'bg-white font-extrabold text-slate-800 shadow-md'
                   : 'text-white/80 hover:text-white'
               }`}
             >
@@ -228,36 +224,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         </div>
 
-        {/* Body scrollable */}
-        <div className="p-6 overflow-y-auto flex-1 text-left space-y-4">
-          
-          {/* Thông báo lỗi / thành công */}
+        <div className="flex-1 space-y-4 overflow-y-auto p-5 text-left sm:p-6">
           {errorMsg && (
-            <div className="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs font-bold animate-shake">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{errorMsg}</span>
+            <div className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs font-bold text-rose-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="min-w-0 break-words">{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl text-xs font-bold animate-bounce">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-              <span>{successMsg}</span>
+            <div className="flex items-start gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-bold text-emerald-700">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="min-w-0 break-words">{successMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-
-            {/* PHẦN ĐẶC BIỆT KHI ĐĂNG KÝ */}
+          <form onSubmit={handleSubmit} className="w-full min-w-0 space-y-4">
             {mode === 'register' && (
               <>
-                {/* 1. Chọn Linh Vật Đại Diện */}
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1.5 flex items-center gap-1">
+                <div className="min-w-0">
+                  <div className="mb-1.5 flex items-center gap-2 text-xs font-extrabold uppercase text-slate-600">
                     <span>1. Chọn Linh Vật Của Bạn</span>
-                    <span className="text-xxs font-normal text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">Avatar 3D</span>
-                  </label>
-                  <div className="grid grid-cols-6 gap-2">
+                    <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-normal normal-case text-purple-600">
+                      Avatar 3D
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                     {AVATARS.map((av) => {
                       const isSelected = avatar === av.id;
                       return (
@@ -268,14 +260,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             setAvatar(av.id);
                             playSynthSound('click');
                           }}
-                          className={`flex flex-col items-center p-2 rounded-2xl border-2 transition-all transform ${
-                            isSelected 
-                              ? `${av.bg} scale-110 shadow-md ring-2 ring-purple-400` 
-                              : 'border-slate-100 bg-slate-50 hover:bg-slate-100 opacity-70 hover:opacity-100'
+                          className={`flex min-w-0 flex-col items-center rounded-2xl border-2 p-2 transition-all ${
+                            isSelected
+                              ? `${av.bg} scale-105 shadow-md ring-2 ring-purple-400`
+                              : 'border-slate-100 bg-slate-50 opacity-70 hover:bg-slate-100 hover:opacity-100'
                           }`}
                         >
                           <span className="text-2xl">{av.emoji}</span>
-                          <span className="text-[10px] font-bold mt-1 text-slate-700 truncate w-full text-center">
+                          <span className="mt-1 w-full truncate text-center text-[10px] font-bold text-slate-700">
                             {av.label.split(' ')[0]}
                           </span>
                         </button>
@@ -284,12 +276,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                 </div>
 
-                {/* 2. Chọn Vai Trò (Role Cards) */}
-                <div>
-                  <label className="block text-xs font-extrabold uppercase text-slate-600 mb-1.5">
+                <div className="min-w-0">
+                  <div className="mb-1.5 text-xs font-extrabold uppercase text-slate-600">
                     2. Bạn Là Ai? (Chọn Vai Trò)
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  </div>
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
                     {ROLES.map((r) => {
                       const isSelected = role === r.id;
                       const IconComponent = r.icon;
@@ -298,23 +289,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           key={r.id}
                           type="button"
                           onClick={() => {
-                            setRole(r.id as any);
+                            setRole(r.id as 'student' | 'teacher' | 'parent');
                             playSynthSound('click');
                           }}
-                          className={`p-3 rounded-2xl border-2 text-left transition-all relative flex flex-col justify-between ${
-                            isSelected 
-                              ? `${r.activeBorder} shadow-sm ring-2 ring-offset-1 ring-blue-300 scale-[1.02]` 
-                              : 'border-slate-200 bg-white hover:border-slate-300 text-slate-600'
+                          className={`relative flex min-w-0 flex-col justify-between rounded-2xl border-2 p-3 text-left transition-all ${
+                            isSelected
+                              ? `${r.activeBorder} scale-[1.02] shadow-sm ring-2 ring-blue-300 ring-offset-1`
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
                           }`}
                         >
                           <div>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-extrabold text-xs">{r.title}</span>
-                              <IconComponent className="w-4 h-4 opacity-80" />
+                            <div className="mb-1 flex items-center justify-between gap-1">
+                              <span className="text-xs font-extrabold">{r.title}</span>
+                              <IconComponent className="h-4 w-4 shrink-0 opacity-80" />
                             </div>
-                            <p className="text-[10px] opacity-75 line-clamp-2">{r.desc}</p>
+                            <p className="line-clamp-2 text-[10px] opacity-75">{r.desc}</p>
                           </div>
-                          <span className="text-[9px] font-bold mt-2 text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded-md inline-block">
+                          <span className="mt-2 inline-block rounded-md bg-purple-50 px-1.5 py-0.5 text-[9px] font-bold text-purple-600">
                             {r.badge}
                           </span>
                         </button>
@@ -323,146 +314,107 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </div>
                 </div>
 
-                {/* Nếu là Học Sinh -> Chọn Lớp */}
                 {role === 'student' && (
-                  <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-2xl flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+                  <div className="flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span className="text-xs font-bold text-blue-900">
                       🎒 Chọn khối lớp học tập của bé:
                     </span>
                     <select
                       value={grade}
                       onChange={(e) => setGrade(e.target.value)}
-                      className="bg-white border border-blue-200 text-xs font-extrabold text-blue-700 rounded-xl px-3 py-1.5 shadow-xs outline-none cursor-pointer"
+                      className="w-full rounded-xl border border-blue-200 bg-white px-3 py-1.5 text-xs font-extrabold text-blue-700 shadow-sm outline-none sm:w-auto"
                     >
                       {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
-                        <option key={g} value={g}>Lớp {g} (Tiểu học & THCS)</option>
+                        <option key={g} value={g}>Lớp {g}</option>
                       ))}
                     </select>
                   </div>
                 )}
 
-                {/* Họ và tên */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                <div className="min-w-0">
+                  <label className="mb-1 block text-xs font-bold text-slate-700">
                     Họ và Tên Hiển Thị
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="VD: Bé Thế Bình 🌟 hoặc Cô Lan Anh 👩‍🏫"
+                    placeholder="VD: Bé Minh Anh hoặc Cô Lan Anh"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                    className={fieldClass}
                   />
                 </div>
               </>
             )}
 
-            {/* FORM ĐĂNG NHẬP / CHUNG */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-                <User className="w-3.5 h-3.5 text-slate-400" /> Tên Đăng Nhập (Username)
+            <div className="min-w-0">
+              <label className="mb-1 flex items-center gap-1 text-xs font-bold text-slate-700">
+                <User className="h-3.5 w-3.5 text-slate-400" /> Tên Đăng Nhập
               </label>
               <input
                 type="text"
                 required
+                autoComplete="username"
                 placeholder="VD: kid_binh, teacher_lan..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                className={fieldClass}
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-slate-400" /> Mật Khẩu
+            <div className="min-w-0">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <label className="flex items-center gap-1 text-xs font-bold text-slate-700">
+                  <Lock className="h-3.5 w-3.5 text-slate-400" /> Mật Khẩu
                 </label>
                 {mode === 'register' && strength.text && (
                   <span className="text-[10px] font-bold text-slate-500">{strength.text}</span>
                 )}
               </div>
-              <div className="relative">
+              <div className="relative min-w-0">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   placeholder="Nhập mật khẩu..."
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-3.5 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                  className={`${fieldClass} pr-11`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
 
-              {/* Thanh đo mật khẩu khi đăng ký */}
               {mode === 'register' && password && (
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5">
-                  <div 
-                    className={`h-full transition-all duration-300 ${strength.color}`} 
-                    style={{ width: strength.width }} 
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div
+                    className={`h-full transition-all duration-300 ${strength.color}`}
+                    style={{ width: strength.width }}
                   />
                 </div>
               )}
             </div>
 
-            {/* NÚT SUBMIT CHÍNH */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-display font-extrabold text-sm rounded-2xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-4 py-3.5 text-sm font-extrabold text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
               ) : (
                 <>
                   <span>{mode === 'login' ? 'ĐĂNG NHẬP NGAY' : 'HOÀN TẤT ĐĂNG KÝ'}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
-
-          {/* PHẦN ĐĂNG NHẬP NHANH (DEMO 1-CLICK LOGIN) */}
-          <div className="pt-3 border-t border-slate-100">
-            <span className="text-[11px] font-bold text-slate-400 block text-center mb-2 flex items-center justify-center gap-1">
-              <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" /> Trải nghiệm nhanh với tài khoản mẫu (1-Click):
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('kid_binh')}
-                className="py-1.5 px-2 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl text-[11px] font-bold text-slate-700 hover:text-blue-700 transition-all flex items-center justify-center gap-1"
-              >
-                <span>🐯 Bé Bình</span>
-                <span className="text-[9px] text-slate-400">(Lớp 2)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('giao_vien_lan')}
-                className="py-1.5 px-2 bg-slate-50 hover:bg-purple-50 border border-slate-200 hover:border-purple-300 rounded-xl text-[11px] font-bold text-slate-700 hover:text-purple-700 transition-all flex items-center justify-center gap-1"
-              >
-                <span>👩‍🏫 Cô Lan</span>
-                <span className="text-[9px] text-slate-400">(Creator)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('phu_huynh_dung')}
-                className="py-1.5 px-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl text-[11px] font-bold text-slate-700 hover:text-emerald-700 transition-all flex items-center justify-center gap-1"
-              >
-                <span>👨‍💼 Bố Dũng</span>
-                <span className="text-[9px] text-slate-400">(Phụ huynh)</span>
-              </button>
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

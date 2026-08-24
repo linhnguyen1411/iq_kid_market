@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export const WalletPage: React.FC = () => {
-  const { user, wallet, updateUserWallet } = useAuth();
+  const { user, wallet, updateUserWallet, authToken, openAuthModal } = useAuth();
 
   const [topupAmount, setTopupAmount] = useState<number>(50000);
   const [loading, setLoading] = useState(false);
@@ -35,6 +35,25 @@ export const WalletPage: React.FC = () => {
         .catch((err) => console.warn('Lỗi tải thu nhập tác giả:', err));
     }
   }, [isCreatorOrTeacher, user?.id]);
+
+  if (!authToken || !user) {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl">🪙</div>
+        <h2 className="mb-2 text-xl font-black text-slate-800">Đăng nhập để mở ví xu</h2>
+        <p className="mb-5 text-sm text-slate-500">
+          Ví và lịch sử giao dịch chỉ khả dụng sau khi xác thực JWT.
+        </p>
+        <button
+          type="button"
+          onClick={() => openAuthModal('login')}
+          className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-2.5 text-sm font-bold text-white"
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
 
   const topupOptions = [
     { amount: 20000, label: '20.000 xu', bonus: '+0%' },

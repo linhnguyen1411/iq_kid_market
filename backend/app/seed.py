@@ -36,12 +36,16 @@ DEFAULT_USERS = [
     {"id": "u3", "username": "phu_huynh_dung", "password_hash": hash_password("123456"),
      "name": "Bố Tiến Dũng 👨‍💼", "role": "parent", "grade": None, "avatar": "cool_fox",
      "xp": 0, "level": 1, "streak": 0},
+    {"id": "u_admin", "username": "admin", "password_hash": hash_password("123456"),
+     "name": "Ban Quản Trị 🛡️", "role": "admin", "grade": None, "avatar": "brave_dragon",
+     "xp": 0, "level": 1, "streak": 0},
 ]
 
 DEFAULT_WALLETS = {
     "u1": {"balance": 90000, "tx": [("tx_1", 90000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
     "u2": {"balance": 500000, "tx": [("tx_2", 500000, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
     "u3": {"balance": 1000000, "tx": [("tx_3", 1000000, "nạp tiền", "Ví ba mẹ liên kết", "2026-06-22T07:15:00Z")]},
+    "u_admin": {"balance": 0, "tx": []},
 }
 
 DEFAULT_PURCHASES = {
@@ -162,8 +166,25 @@ def run_seed(db: Session, force: bool = False) -> None:
     print("[seed] Hoàn tất.")
 
 
+def ensure_admin_user(db: Session) -> None:
+    """Đảm bảo tài khoản admin luôn tồn tại (kể cả khi DB đã seed từ trước)."""
+    admin = db.query(models.User).filter(models.User.username == "admin").first()
+    if admin:
+        if admin.role != "admin":
+            admin.role = "admin"
+            db.commit()
+        return
+
+    admin_data = next(u for u in DEFAULT_USERS if u["username"] == "admin")
+    db.add(models.User(**admin_data))
+    db.add(models.Wallet(user_id="u_admin", balance=0))
+    db.commit()
+    print("[seed] Đã tạo tài khoản admin mặc định (admin / 123456).")
+
+
 if __name__ == "__main__":
     from .database import SessionLocal, engine, Base
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as session:
         run_seed(session, force=True)
+        ensure_admin_user(session)

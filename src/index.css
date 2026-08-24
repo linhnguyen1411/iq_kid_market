@@ -13,6 +13,16 @@
   --color-kids-purple: #8b5cf6;
 }
 
+@layer base {
+  input,
+  select,
+  textarea {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
