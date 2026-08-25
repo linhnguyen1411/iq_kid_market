@@ -3,7 +3,7 @@ import {
   Settings, PlusCircle, Sparkles, CheckCircle2, 
   XCircle, Trash2, Eye, BarChart2, ShieldCheck, 
   BookOpen, Brain, RefreshCw, RotateCcw, TrendingUp, 
-  Play, Plus, ArrowRight, HelpCircle, Layers 
+  Play, Plus, ArrowRight, HelpCircle, Layers, Download, Upload
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Game, AdminStats } from '../types';
@@ -11,18 +11,22 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import QuestionRenderer from '../components/QuestionRenderer';
 import { playSynthSound } from '../components/game-engines/soundUtils';
+import { TEXT_PACK_TEMPLATES, DEFAULT_LEVEL_COUNT, FREE_LEVEL_COUNT } from '../lib/gameAccess';
 
 interface AdminPageProps {
   games: Game[];
   onRefreshGames: () => Promise<void>;
 }
 
+type StudioTab = 'stats' | 'ai_gen' | 'import_pack' | 'create' | 'levels' | 'review' | 'my_games';
+
 export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) => {
-  const { user } = useAuth();
+  const { user, authToken, openAuthModal } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [reviewQueue, setReviewQueue] = useState<Game[]>([]);
-  const [activeSubTab, setActiveSubTab] = useState<'stats' | 'ai_gen' | 'create' | 'levels' | 'review' | 'my_games'>('stats');
+  const [activeSubTab, setActiveSubTab] = useState<StudioTab>('stats');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,13 +39,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   const [gradeMin, setGradeMin] = useState('1');
   const [gradeMax, setGradeMax] = useState('3');
 
-  // AI Generator state
+  // AI Generator state (admin only)
   const [aiTopic, setAiTopic] = useState('Khám phá các hành tinh trong Hệ Mặt Trời 🪐');
   const [aiTemplate, setAiTemplate] = useState('quiz');
   const [aiGradeMin, setAiGradeMin] = useState('2');
   const [aiGradeMax, setAiGradeMax] = useState('4');
   const [aiGeneratedGame, setAiGeneratedGame] = useState<Game | null>(null);
   const [aiPreviewLevelIdx, setAiPreviewLevelIdx] = useState(0);
+
+  // Import pack (teacher/creator)
+  const [packTemplate, setPackTemplate] = useState('quiz');
+  const [packTopic, setPackTopic] = useState('Toán nhanh lớp 1');
+  const [packGradeMin, setPackGradeMin] = useState('1');
+  const [packGradeMax, setPackGradeMax] = useState('1');
+  const [packJson, setPackJson] = useState('');
+  const [packPreview, setPackPreview] = useState<any | null>(null);
 
   // Dynamic Level Builder state
   const [selectedGameId, setSelectedGameId] = useState(games[0]?.id || 'g1');
@@ -78,7 +90,11 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         api.admin.getReviewQueue().catch(() => []),
       ]);
       if (statsData) setStats(statsData);
-      setReviewQueue(queueData);
+      setReviewQueue(
+        (Array.isArray(queueData) ? queueData : []).filter(
+          (g: Game) => g.review_status === 'pending_review',
+        ),
+      );
     } catch (err) {
       console.warn('Lỗi khi tải dữ liệu admin:', err);
     }
@@ -87,6 +103,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'ai_gen' && user && user.role !== 'admin') {
+      setActiveSubTab('import_pack');
+    }
+  }, [activeSubTab, user]);
 
   // Handler: Manual Create Game
   const handleCreateGame = async (e: React.FormEvent) => {
@@ -105,7 +127,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         creatorId: user?.id,
       });
       if (res.success) {
-        setMsg({ type: 'success', text: 'Tạo game mới thành công! Game đã được thêm vào hàng đợi kiểm duyệt.' });
+        setMsg({ type: 'success', text: res.message?.trim() || 'Tạo game mới thành công! Game đã được thêm vào hàng đợi kiểm duyệt.' });
         setTitle('');
         setDesc('');
         playSynthSound('victory');
@@ -120,9 +142,13 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     }
   };
 
-  // Handler: AI Generate Game
+  // Handler: AI Generate Game (admin only)
   const handleAiGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAdmin) {
+      setMsg({ type: 'error', text: 'Chỉ tài khoản admin được dùng Trợ lý AI Gemini.' });
+      return;
+    }
     if (!aiTopic.trim()) {
       setMsg({ type: 'error', text: 'Vui lòng nhập chủ đề bài học cho AI!' });
       return;
@@ -142,19 +168,104 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
       if (res.success && res.game) {
         setAiGeneratedGame(res.game);
         setAiPreviewLevelIdx(0);
-        setMsg({ 
-          type: 'success', 
-          text: `✨ ${res.message} - Game "${res.game.title}" đã được sinh với ${res.game.levels?.length || 1} màn chơi hoàn chỉnh!` 
+        const levelCount = res.game.levels?.length || 0;
+        setMsg({
+          type: 'success',
+          text:
+            res.message?.trim() ||
+            `✨ Đã sinh game "${res.game.title}" với ${levelCount} màn chơi hoàn chỉnh!`,
         });
         playSynthSound('victory');
         await onRefreshGames();
         await fetchData();
+      } else {
+        setMsg({ type: 'error', text: 'AI không trả về game hợp lệ. Vui lòng thử lại.' });
       }
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message || 'Lỗi sinh game tự động bằng AI' });
       playSynthSound('incorrect');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const downloadJson = (data: any, filename: string) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportSamplePack = async () => {
+    setLoading(true);
+    setMsg(null);
+    try {
+      const sample = await api.admin.exportSamplePack({
+        template_code: packTemplate,
+        topic: packTopic,
+        grade_from: parseInt(packGradeMin, 10) || 1,
+        grade_to: parseInt(packGradeMax, 10) || 3,
+        category: 'iq',
+      });
+      const { _meta, ...pack } = sample;
+      setPackPreview(pack);
+      setPackJson(JSON.stringify(pack, null, 2));
+      downloadJson(pack, `iqkids-sample-${packTemplate}-20levels.json`);
+      setMsg({
+        type: 'success',
+        text: `Đã tải mẫu ${DEFAULT_LEVEL_COUNT} màn (${FREE_LEVEL_COUNT} free). Chỉnh JSON rồi Import.`,
+      });
+      playSynthSound('victory');
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message || 'Không tải được mẫu JSON' });
+      playSynthSound('incorrect');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImportPack = async () => {
+    setLoading(true);
+    setMsg(null);
+    try {
+      let parsed: any;
+      try {
+        parsed = JSON.parse(packJson);
+      } catch {
+        throw new Error('JSON không hợp lệ. Kiểm tra lại cú pháp.');
+      }
+      const res = await api.admin.uploadGamePack(parsed);
+      if (res.success) {
+        setMsg({
+          type: 'success',
+          text: res.message || `Đã import ${res.count} game vào hàng đợi kiểm duyệt.`,
+        });
+        playSynthSound('victory');
+        await onRefreshGames();
+        await fetchData();
+        setActiveSubTab('my_games');
+      }
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message || 'Import pack thất bại' });
+      playSynthSound('incorrect');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePackFileUpload = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      JSON.parse(text); // validate
+      setPackJson(text);
+      setPackPreview(JSON.parse(text));
+      setMsg({ type: 'success', text: `Đã nạp file ${file.name}. Bấm Import để gửi lên hệ thống.` });
+    } catch {
+      setMsg({ type: 'error', text: 'File JSON không hợp lệ.' });
     }
   };
 
@@ -220,7 +331,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     try {
       const res = await api.admin.decideReview({ gameId, action });
       if (res.success) {
-        setMsg({ type: 'success', text: res.message });
+        setMsg({
+          type: 'success',
+          text: res.message?.trim() || (action === 'approve' ? 'Đã duyệt game thành công!' : 'Đã từ chối game.'),
+        });
         playSynthSound('victory');
         await onRefreshGames();
         await fetchData();
@@ -281,6 +395,37 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     { name: 'Tháng 8', doanh_thu: 2600000 },
   ];
 
+  if (!authToken || !user) {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-indigo-100 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-3xl">🔐</div>
+        <h2 className="mb-2 text-xl font-black text-slate-800">Cần đăng nhập</h2>
+        <p className="mb-5 text-sm text-slate-500">
+          Studio sáng tạo chỉ mở khi bạn đăng nhập bằng tài khoản giáo viên / admin.
+        </p>
+        <button
+          type="button"
+          onClick={() => openAuthModal('login')}
+          className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2.5 text-sm font-bold text-white"
+        >
+          Đăng nhập để tiếp tục
+        </button>
+      </div>
+    );
+  }
+
+  if (!['admin', 'teacher', 'creator'].includes(user.role)) {
+    return (
+      <div className="mx-auto max-w-lg rounded-3xl border border-rose-100 bg-white p-8 text-center shadow-sm">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-3xl">🚫</div>
+        <h2 className="mb-2 text-xl font-black text-slate-800">Không đủ quyền truy cập</h2>
+        <p className="text-sm text-slate-500">
+          Tài khoản <strong>@{user.username}</strong> ({user.role}) không được phép vào Studio CMS.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 text-left">
       {/* 1. Top Header Banner */}
@@ -294,7 +439,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
             Studio Thiết Kế Trò Chơi Trí Tuệ 🎨
           </h2>
           <p className="text-xs md:text-sm text-slate-300 leading-relaxed max-w-xl">
-            Công cụ dành riêng cho Giáo viên & Quản trị viên: Tự tay thiết kế màn chơi, ứng dụng AI Gemini tự động sinh câu hỏi và kiểm duyệt nội dung học đường.
+            Công cụ dành riêng cho Giáo viên & Quản trị viên: thiết kế màn chơi, import pack JSON 20 màn
+            {isAdmin ? ', trợ lý AI Gemini' : ''} và kiểm duyệt nội dung học đường.
           </p>
         </div>
 
@@ -316,18 +462,21 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
 
       {/* 2. Sub Tabs Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {[
-          { id: 'stats', label: 'Thống Kê Tổng Quan', icon: <BarChart2 className="w-4 h-4 text-emerald-500" /> },
-          { id: 'ai_gen', label: 'Trợ Lý AI Gemini', icon: <Sparkles className="w-4 h-4 text-amber-500" /> },
-          { id: 'create', label: 'Tạo Game Mới', icon: <PlusCircle className="w-4 h-4 text-indigo-500" /> },
-          { id: 'levels', label: 'Soạn Thảo Màn Chơi', icon: <BookOpen className="w-4 h-4 text-purple-500" /> },
-          { id: 'review', label: `Kiểm Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4 text-rose-500" /> },
-          { id: 'my_games', label: `Kho Game (${games.length})`, icon: <Brain className="w-4 h-4 text-cyan-500" /> },
-        ].map((tab) => (
+        {([
+          { id: 'stats' as const, label: 'Thống Kê Tổng Quan', icon: <BarChart2 className="w-4 h-4 text-emerald-500" />, roles: ['admin', 'teacher', 'creator'] },
+          { id: 'ai_gen' as const, label: 'Trợ Lý AI Gemini', icon: <Sparkles className="w-4 h-4 text-amber-500" />, roles: ['admin'] },
+          { id: 'import_pack' as const, label: 'Export / Import Pack', icon: <Upload className="w-4 h-4 text-teal-500" />, roles: ['admin', 'teacher', 'creator'] },
+          { id: 'create' as const, label: 'Tạo Game Mới', icon: <PlusCircle className="w-4 h-4 text-indigo-500" />, roles: ['admin', 'teacher', 'creator'] },
+          { id: 'levels' as const, label: 'Soạn Thảo Màn Chơi', icon: <BookOpen className="w-4 h-4 text-purple-500" />, roles: ['admin', 'teacher', 'creator'] },
+          { id: 'review' as const, label: `Kiểm Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4 text-rose-500" />, roles: ['admin', 'teacher'] },
+          { id: 'my_games' as const, label: `Kho Game (${games.length})`, icon: <Brain className="w-4 h-4 text-cyan-500" />, roles: ['admin', 'teacher', 'creator'] },
+        ] as const)
+          .filter((tab) => tab.roles.includes((user?.role || '') as any))
+          .map((tab) => (
           <button
             key={tab.id}
             onClick={() => {
-              setActiveSubTab(tab.id as any);
+              setActiveSubTab(tab.id);
               playSynthSound('click');
             }}
             className={`px-4 py-2.5 rounded-2xl text-xs font-black flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
@@ -342,18 +491,26 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         ))}
       </div>
 
-      {/* Message Banner */}
+      {/* Message Banner — fixed toast so luôn nhìn thấy nội dung */}
       {msg && (
         <div
-          className={`p-4 rounded-2xl border text-xs font-bold flex items-center justify-between animate-in fade-in ${
+          role="status"
+          className={`fixed top-20 left-1/2 -translate-x-1/2 z-[80] max-w-lg w-[calc(100%-2rem)] p-4 rounded-2xl border text-sm font-bold flex items-start gap-3 shadow-xl ${
             msg.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
+              ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
+              : 'bg-rose-50 border-rose-300 text-rose-900'
           }`}
         >
-          <span>{msg.text}</span>
-          <button onClick={() => setMsg(null)} className="text-slate-400 hover:text-slate-600">
-            <XCircle className="w-4 h-4" />
+          <span className="flex-1 leading-relaxed whitespace-pre-wrap">
+            {msg.text?.trim() || (msg.type === 'success' ? 'Thao tác thành công!' : 'Có lỗi xảy ra.')}
+          </span>
+          <button
+            type="button"
+            onClick={() => setMsg(null)}
+            className="text-slate-400 hover:text-slate-700 shrink-0"
+            aria-label="Đóng thông báo"
+          >
+            <XCircle className="w-5 h-5" />
           </button>
         </div>
       )}
@@ -419,8 +576,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         </div>
       )}
 
-      {/* Tab 2: AI Game Studio */}
-      {activeSubTab === 'ai_gen' && (
+      {/* Tab 2: AI Game Studio — admin only */}
+      {activeSubTab === 'ai_gen' && isAdmin && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
@@ -546,6 +703,119 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab: Export / Import JSON pack (teacher & creator) */}
+      {activeSubTab === 'import_pack' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+            <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+              <Download className="w-5 h-5 text-teal-600" />
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
+                Tạo nhanh: Export mẫu → chỉnh 20 màn → Import
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Dành cho giáo viên / creator. Chỉ áp dụng thể loại text/emoji (không cần upload hình/video).
+              Mỗi pack mặc định {DEFAULT_LEVEL_COUNT} màn: {FREE_LEVEL_COUNT} free + {DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} mở khóa ví.
+              Game import vào hàng đợi kiểm duyệt.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Thể loại text-pack:</label>
+                <select
+                  value={packTemplate}
+                  onChange={(e) => setPackTemplate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                >
+                  {TEXT_PACK_TEMPLATES.map((t) => (
+                    <option key={t.code} value={t.code}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Chủ đề mẫu:</label>
+                <input
+                  type="text"
+                  value={packTopic}
+                  onChange={(e) => setPackTopic(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-800 outline-hidden focus:border-teal-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Từ lớp:</label>
+                <select
+                  value={packGradeMin}
+                  onChange={(e) => setPackGradeMin(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>Lớp {g}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Đến lớp:</label>
+                <select
+                  value={packGradeMax}
+                  onChange={(e) => setPackGradeMax(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5].map((g) => <option key={g} value={g}>Lớp {g}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={handleExportSamplePack}
+                className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black flex items-center gap-2 disabled:opacity-50"
+              >
+                <Download className="w-4 h-4" />
+                Tải JSON mẫu 20 màn
+              </button>
+              <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center gap-2 cursor-pointer">
+                <Upload className="w-4 h-4" />
+                Chọn file JSON…
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => handlePackFileUpload(e.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
+
+            <label className="text-xs font-bold text-slate-600 block mb-1">
+              JSON pack (dán hoặc chỉnh sau khi export):
+            </label>
+            <textarea
+              value={packJson}
+              onChange={(e) => setPackJson(e.target.value)}
+              rows={14}
+              spellCheck={false}
+              placeholder='{"id":"...","title":"...","template_code":"quiz","levels":[...20 màn...]}'
+              className="w-full font-mono text-[11px] bg-slate-950 text-emerald-300 border border-slate-700 rounded-2xl p-4 outline-hidden focus:border-teal-400"
+            />
+
+            {packPreview?.levels && (
+              <p className="mt-2 text-[11px] text-slate-500 font-bold">
+                Preview: {packPreview.title || '(chưa có title)'} · {packPreview.levels?.length || 0} màn · template {packPreview.template_code}
+              </p>
+            )}
+
+            <button
+              type="button"
+              disabled={loading || !packJson.trim()}
+              onClick={handleImportPack}
+              className="mt-4 w-full md:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" />
+              {loading ? 'Đang import…' : 'Import pack vào hàng đợi kiểm duyệt'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -926,20 +1196,28 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleDecideReview(item.id, 'approve')}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Duyệt Thông Qua</span>
-                    </button>
-                    <button
-                      onClick={() => handleDecideReview(item.id, 'reject')}
-                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
-                    >
-                      <XCircle className="w-4 h-4" />
-                      <span>Yêu Cầu Sửa</span>
-                    </button>
+                    {item.review_status === 'pending_review' ? (
+                      <>
+                        <button
+                          onClick={() => handleDecideReview(item.id, 'approve')}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Duyệt Thông Qua</span>
+                        </button>
+                        <button
+                          onClick={() => handleDecideReview(item.id, 'reject')}
+                          className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <XCircle className="w-4 h-4" />
+                          <span>Yêu Cầu Sửa</span>
+                        </button>
+                      </>
+                    ) : (
+                      <span className="text-xs font-bold text-slate-500 px-3 py-2 rounded-xl bg-white border border-slate-200">
+                        {item.review_status}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}

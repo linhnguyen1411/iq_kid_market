@@ -46,6 +46,7 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
     with SessionLocal() as db:
         seed_module.run_seed(db)
+        seed_module.ensure_admin_user(db)
 
 
 @app.get("/api/health")

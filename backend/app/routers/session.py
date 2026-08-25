@@ -1,44 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..auth_utils import get_current_user_required
 
 router = APIRouter(tags=["session"])
 
 
-@router.get("/api/session")
-@router.get("/api/session/user/{userId}")
-@router.get("/api/session/{userId}")
-def get_session(userId: str = "u1", db: Session = Depends(get_db)):
-    user = db.get(models.User, userId)
-    if not user:
-        user = models.User(
-            id=userId,
-            username=userId,
-            name="Học Sinh Khách",
-            role="student",
-            grade=2,
-            avatar="smile_tiger",
-            xp=0,
-            level=1,
-            streak=1,
-        )
-        db.add(user)
-        db.flush()
-        wallet = models.Wallet(user_id=user.id, balance=90000)
-        db.add(wallet)
-        db.commit()
-        db.refresh(user)
-
+def build_session_payload(user: models.User) -> dict:
     wallet = user.wallet
     balance = wallet.balance if wallet else 0
     transactions = [
-        {"id": t.id, "amount": t.amount, "type": t.type, "detail": t.detail,
-         "date": t.created_at.isoformat()}
+        {
+            "id": t.id,
+            "amount": t.amount,
+            "type": t.type,
+            "detail": t.detail,
+            "date": t.created_at.isoformat(),
+        }
         for t in (wallet.transactions if wallet else [])
     ]
     purchases = [p.game_id for p in user.purchases]
-
     return {
         "user": schemas.UserOut.model_validate(user).model_dump(),
         "wallet": {"balance": balance, "transactions": transactions},
@@ -46,19 +28,33 @@ def get_session(userId: str = "u1", db: Session = Depends(get_db)):
     }
 
 
-@router.post("/api/user/profile")
-def update_profile(body: schemas.UpdateProfileIn, db: Session = Depends(get_db)):
-    user = db.get(models.User, body.userId)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+@router.get("/api/session")
+@router.get("/api/session/user/{userId}")
+@router.get("/api/session/{userId}")
+def get_session(
+    userId: str | None = None,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    """Phiên hiện tại luôn lấy từ JWT, không cho impersonate userId demo."""
+    _ = userId
+    _ = db
+    return build_session_payload(current_user)
 
+
+@router.post("/api/user/profile")
+def update_profile(
+    body: schemas.UpdateProfileIn,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
     if body.name:
-        user.name = body.name
+        current_user.name = body.name
     if body.avatar:
-        user.avatar = body.avatar
+        current_user.avatar = body.avatar
     if body.grade:
-        user.grade = int(body.grade)
+        current_user.grade = int(body.grade)
 
     db.commit()
-    db.refresh(user)
-    return {"success": True, "user": schemas.UserOut.model_validate(user).model_dump()}
+    db.refresh(current_user)
+    return {"success": True, "user": schemas.UserOut.model_validate(current_user).model_dump()}

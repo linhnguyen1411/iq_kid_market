@@ -17,7 +17,6 @@ interface AuthContextType {
   login: (token: string, user: User) => Promise<void>;
   register: (token: string, user: User) => Promise<void>;
   logout: () => void;
-  switchUser: (newUserId: string) => Promise<void>;
   refreshSession: () => Promise<void>;
   updateUserWallet: (newBalance: number) => void;
   addPurchase: (gameId: string) => void;
@@ -28,9 +27,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('iqkids_auth_token'));
-  const [currentUserId, setCurrentUserId] = useState<string>(() => localStorage.getItem('iqkids_current_user_id') || 'u1');
   const [session, setSession] = useState<UserSession | null>(null);
-  const [loadingSession, setLoadingSession] = useState(true);
+  const [loadingSession, setLoadingSession] = useState(!!localStorage.getItem('iqkids_auth_token'));
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
 
@@ -43,38 +41,59 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsAuthModalOpen(false);
   }, []);
 
-  const fetchSession = useCallback(async (uid: string) => {
+  const clearAuth = useCallback(() => {
+    setAuthToken(null);
+    setSession(null);
+    localStorage.removeItem('iqkids_auth_token');
+    localStorage.removeItem('iqkids_current_user_id');
+  }, []);
+
+  const fetchSession = useCallback(async () => {
+    const token = localStorage.getItem('iqkids_auth_token');
+    if (!token) {
+      setSession(null);
+      setLoadingSession(false);
+      return;
+    }
+
     setLoadingSession(true);
     try {
-      const data = await api.session.getUserSession(uid);
-      setSession(data);
+      const data = await api.auth.getMe();
+      setSession({
+        user: data.user,
+        wallet: data.wallet,
+        purchases: data.purchases || [],
+      });
+      if (data.user?.id) {
+        localStorage.setItem('iqkids_current_user_id', data.user.id);
+      }
     } catch (err) {
-      console.warn('Lỗi khi tải phiên người dùng:', err);
+      console.warn('Phiên JWT không hợp lệ, yêu cầu đăng nhập lại:', err);
+      clearAuth();
     } finally {
       setLoadingSession(false);
     }
-  }, []);
+  }, [clearAuth]);
 
   useEffect(() => {
-    fetchSession(currentUserId);
-  }, [currentUserId, fetchSession]);
+    fetchSession();
+  }, [authToken, fetchSession]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      setAuthToken(null);
+      clearAuth();
       openAuthModal('login');
     };
     window.addEventListener('iqkids_auth_unauthorized', handleUnauthorized);
     return () => window.removeEventListener('iqkids_auth_unauthorized', handleUnauthorized);
-  }, [openAuthModal]);
+  }, [clearAuth, openAuthModal]);
 
   const login = async (token: string, loggedUser: User) => {
-    setAuthToken(token);
-    setCurrentUserId(loggedUser.id);
     localStorage.setItem('iqkids_auth_token', token);
     localStorage.setItem('iqkids_current_user_id', loggedUser.id);
-    await fetchSession(loggedUser.id);
+    setAuthToken(token);
     setIsAuthModalOpen(false);
+    await fetchSession();
   };
 
   const register = async (token: string, registeredUser: User) => {
@@ -82,22 +101,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    setAuthToken(null);
-    localStorage.removeItem('iqkids_auth_token');
-    // Fallback về tài khoản mặc định học sinh u1 để trải nghiệm demo
-    setCurrentUserId('u1');
-    localStorage.setItem('iqkids_current_user_id', 'u1');
-    fetchSession('u1');
-  };
-
-  const switchUser = async (newUserId: string) => {
-    setCurrentUserId(newUserId);
-    localStorage.setItem('iqkids_current_user_id', newUserId);
-    await fetchSession(newUserId);
+    clearAuth();
+    setLoadingSession(false);
   };
 
   const refreshSession = async () => {
-    await fetchSession(currentUserId);
+    await fetchSession();
   };
 
   const updateUserWallet = (newBalance: number) => {
@@ -141,6 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const user = session?.user || null;
   const wallet = session?.wallet || null;
   const purchases = session?.purchases || [];
+  const currentUserId = user?.id || '';
 
   return (
     <AuthContext.Provider
@@ -159,7 +169,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         login,
         register,
         logout,
-        switchUser,
         refreshSession,
         updateUserWallet,
         addPurchase,

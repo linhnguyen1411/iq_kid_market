@@ -128,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {games.slice(0, 4).map((game) => {
-              const isBought = purchases.includes(game.id) || game.price === 0;
+              const isBought = purchases.includes(game.id);
 
               return (
                 <div
@@ -152,15 +152,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                         🔥 Lớp {game.grade_from}-{game.grade_to}
                       </span>
                       <span className="font-bold">
-                        {game.price === 0 ? (
-                          <span className="text-emerald-600 font-extrabold">MIỄN PHÍ</span>
-                        ) : isBought ? (
+                        {isBought ? (
                           <span className="text-indigo-600 text-[10px] bg-indigo-50 px-2 py-0.5 rounded-md font-bold border border-indigo-100">
-                            ĐÃ SỞ HỮU
+                            ĐÃ MỞ KHÓA
                           </span>
                         ) : (
-                          <span className="text-pink-600 font-mono font-black">
-                            {game.price.toLocaleString('vi-VN')} xu
+                          <span className="text-emerald-600 text-[10px] font-extrabold">
+                            5 màn free
+                            {game.price > 0 ? ` · ${game.price.toLocaleString('vi-VN')} xu` : ''}
                           </span>
                         )}
                       </span>

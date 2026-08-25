@@ -11,6 +11,8 @@ import json
 import time
 from typing import Optional
 
+from .game_config import DEFAULT_LEVEL_COUNT, FREE_LEVEL_COUNT, DEFAULT_UNLOCK_PRICE
+
 # Danh sách từ khóa cấm/nhạy cảm không phù hợp với lứa tuổi học sinh
 UNSAFE_KEYWORDS = [
     "bạo lực", "đánh nhau", "vũ khí", "súng", "dao", "cờ bạc", "ma túy", "rượu", "thuốc lá",
@@ -172,70 +174,102 @@ def get_fallback_template_data(template: str, topic: str, level_num: int) -> dic
     }
 
 
+def _level_title(level_num: int, topic: str) -> str:
+    if level_num <= FREE_LEVEL_COUNT:
+        return f"Màn {level_num}: Làm quen — {topic} 🌱"
+    if level_num <= 12:
+        return f"Màn {level_num}: Thử thách — {topic} ⚡"
+    if level_num <= 18:
+        return f"Màn {level_num}: Nâng cao — {topic} 🚀"
+    return f"Màn {level_num}: Chinh phục — {topic} 🏆"
+
+
+def build_level(base_id: str, template: str, topic: str, level_num: int) -> dict:
+    """Tạo 1 màn chơi hoàn chỉnh (1 câu hỏi) theo độ khó tăng dần."""
+    xp = 60 + level_num * 8
+    coins = 10 + level_num * 2
+    points = 15 + level_num
+    return {
+        "level_num": level_num,
+        "title": _level_title(level_num, topic),
+        "xp_reward": xp,
+        "coin_reward": coins,
+        "is_free": level_num <= FREE_LEVEL_COUNT,
+        "questions": [{
+            "id": f"{base_id}_q{level_num}",
+            "question_type": template,
+            "prompt": f'Màn {level_num}: Khám phá "{topic}" (độ khó {level_num}/{DEFAULT_LEVEL_COUNT}):',
+            "points": points,
+            "data": get_fallback_template_data(template, topic, level_num),
+        }],
+    }
+
+
+def ensure_level_count(
+    levels: list | None,
+    topic: str,
+    template: str,
+    base_id: str,
+    count: int = DEFAULT_LEVEL_COUNT,
+) -> list:
+    """Chuẩn hoá đúng `count` màn: cắt bớt nếu thừa, pad fallback nếu thiếu."""
+    normalized: list = []
+    seen = set()
+    for raw in levels or []:
+        if not isinstance(raw, dict):
+            continue
+        try:
+            num = int(raw.get("level_num") or 0)
+        except (TypeError, ValueError):
+            continue
+        if num < 1 or num > count or num in seen:
+            continue
+        seen.add(num)
+        item = dict(raw)
+        item["level_num"] = num
+        item["is_free"] = num <= FREE_LEVEL_COUNT
+        if not item.get("title"):
+            item["title"] = _level_title(num, topic)
+        if not item.get("questions"):
+            item["questions"] = build_level(base_id, template, topic, num)["questions"]
+        normalized.append(item)
+
+    by_num = {int(lv["level_num"]): lv for lv in normalized}
+    result = []
+    for n in range(1, count + 1):
+        result.append(by_num.get(n) or build_level(base_id, template, topic, n))
+    return result
+
+
 def generate_fallback_game(
     topic: str,
     template: str,
     grade_from: int,
     grade_to: int,
     category: str,
-    price: int = 0,
+    price: int = DEFAULT_UNLOCK_PRICE,
     creator_id: Optional[str] = None,
     creator_name: str = "Hệ Thống Giáo Án EdTech",
 ) -> dict:
-    """Tạo bộ game 3 màn chơi hoàn chỉnh khi không có kết nối Gemini AI."""
+    """Tạo bộ game đủ DEFAULT_LEVEL_COUNT màn khi không có Gemini."""
     base_id = f"ai_fallback_{int(time.time() * 1000)}"
-    levels = [
-        {
-            "level_num": 1,
-            "title": f"Màn 1: Làm quen với {topic} 🌱",
-            "xp_reward": 80,
-            "coin_reward": 15,
-            "questions": [{
-                "id": f"{base_id}_q1",
-                "question_type": template,
-                "prompt": f'Hãy cùng khám phá mức độ 1 về chủ đề "{topic}":',
-                "points": 20,
-                "data": get_fallback_template_data(template, topic, 1),
-            }],
-        },
-        {
-            "level_num": 2,
-            "title": f"Màn 2: Thử thách tư duy {topic} ⚡",
-            "xp_reward": 100,
-            "coin_reward": 20,
-            "questions": [{
-                "id": f"{base_id}_q2",
-                "question_type": template,
-                "prompt": f'Nâng cấp độ khó với câu đố mức 2 về "{topic}":',
-                "points": 25,
-                "data": get_fallback_template_data(template, topic, 2),
-            }],
-        },
-        {
-            "level_num": 3,
-            "title": f"Màn 3: Bậc thầy chinh phục {topic} 🏆",
-            "xp_reward": 150,
-            "coin_reward": 35,
-            "questions": [{
-                "id": f"{base_id}_q3",
-                "question_type": template,
-                "prompt": f'Thử thách chung kết đỉnh cao về "{topic}":',
-                "points": 40,
-                "data": get_fallback_template_data(template, topic, 3),
-            }],
-        },
-    ]
+    levels = [build_level(base_id, template, topic, n) for n in range(1, DEFAULT_LEVEL_COUNT + 1)]
 
     return {
         "id": base_id,
         "title": f"{topic} Kỳ Thú 🤖",
-        "description": f'Bộ trò chơi phát triển tư duy tương tác về "{topic}" dành cho học sinh.',
+        "description": (
+            f'Bộ {DEFAULT_LEVEL_COUNT} màn chơi về "{topic}" '
+            f'({FREE_LEVEL_COUNT} màn miễn phí, {DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} màn mở khóa bằng ví).'
+        ),
         "detailed_description": (
             f'Rèn luyện toàn diện năng lực phản xạ, tư duy logic và kiến thức bài bản xung quanh '
-            f'nội dung "{topic}". Trò chơi được thiết kế tối ưu cho học sinh Lớp {grade_from} - Lớp {grade_to}.'
+            f'nội dung "{topic}". Gồm {DEFAULT_LEVEL_COUNT} màn hoàn chỉnh cho học sinh '
+            f'Lớp {grade_from} - Lớp {grade_to}. {FREE_LEVEL_COUNT} màn đầu miễn phí; '
+            f'{DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} màn còn lại mở khóa bằng ví xu.'
         ),
         "thumbnail": "🤖",
-        "price": price,
+        "price": price if price and price > 0 else DEFAULT_UNLOCK_PRICE,
         "grade_from": grade_from,
         "grade_to": grade_to,
         "template_code": template,
@@ -316,20 +350,28 @@ QUY TẮC CẤU TRÚC THUỘC TÍNH "data" CHO TỪNG LOẠI GAME ENGINE:
 
 def build_gemini_prompt(topic: str, template_code: str, grade_from: int, grade_to: int, category: str) -> str:
     ts = int(time.time() * 1000)
-    return f"""Bạn là một Chuyên Gia Thiết Kế Giáo Án EdTech hàng đầu Việt Nam. Hãy tạo 1 trò chơi học tập 3 màn hoàn chỉnh cho học sinh.
-Chủ đề học tập: "{topic}"
-Loại mẫu trò chơi (template_code): "{template_code}"
-Độ tuổi mục tiêu: Học sinh Lớp {grade_from} đến Lớp {grade_to}
+    paid = DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT
+    return f"""Bạn là Chuyên Gia Thiết Kế Giáo Án EdTech Việt Nam. Hãy tạo 1 trò chơi học tập ĐỦ {DEFAULT_LEVEL_COUNT} MÀN hoàn chỉnh.
+Chủ đề: "{topic}"
+template_code: "{template_code}"
+Đối tượng: Lớp {grade_from} đến Lớp {grade_to}
 Thể loại: {category}
 
-YÊU CẦU: Trả về DUY NHẤT một chuỗi JSON hợp lệ theo đúng schema sau (không thêm bất kỳ lời chào hay giải thích ngoài JSON):
+QUY TẮC MÀN CHƠI:
+- Đúng {DEFAULT_LEVEL_COUNT} phần tử trong "levels", level_num từ 1 đến {DEFAULT_LEVEL_COUNT}.
+- Màn 1–{FREE_LEVEL_COUNT}: miễn phí (is_free=true), độ khó nhẹ.
+- Màn {FREE_LEVEL_COUNT + 1}–{DEFAULT_LEVEL_COUNT}: trả phí mở khóa ví (is_free=false), độ khó tăng dần.
+- Mỗi màn có đúng 1 câu hỏi trong "questions", data đúng schema của "{template_code}".
+- Nội dung tiếng Việt, phù hợp học sinh tiểu học, không trùng lặp đáp án giữa các màn.
+
+Trả về DUY NHẤT JSON hợp lệ (không markdown, không giải thích):
 {{
   "id": "ai_g_{ts}",
-  "title": "Tên trò chơi lôi cuốn bằng Tiếng Việt (kèm 1 biểu tượng emoji)",
-  "description": "Tóm tắt ngắn gọn mục tiêu bài học (Tiếng Việt)",
-  "detailed_description": "Mô tả chi tiết giá trị sư phạm và kỹ năng rèn luyện (Tiếng Việt)",
-  "thumbnail": "1 emoji phù hợp",
-  "price": 0,
+  "title": "Tên trò chơi Tiếng Việt + 1 emoji",
+  "description": "Tóm tắt mục tiêu bài học",
+  "detailed_description": "Giá trị sư phạm; nêu rõ {FREE_LEVEL_COUNT} màn free + {paid} màn mở khóa ví",
+  "thumbnail": "1 emoji",
+  "price": {DEFAULT_UNLOCK_PRICE},
   "grade_from": {grade_from},
   "grade_to": {grade_to},
   "template_code": "{template_code}",
@@ -337,51 +379,21 @@ YÊU CẦU: Trả về DUY NHẤT một chuỗi JSON hợp lệ theo đúng sche
   "levels": [
     {{
       "level_num": 1,
-      "title": "Màn 1: Khởi động kiến thức 🌱",
+      "title": "Màn 1: ...",
       "xp_reward": 80,
       "coin_reward": 15,
-      "questions": [
-        {{
-          "id": "ai_q_{ts}_1",
-          "question_type": "{template_code}",
-          "prompt": "Hướng dẫn bài tập màn 1 cho học sinh",
-          "points": 20,
-          "data": {{ ... đối tượng data chuẩn theo thể loại {template_code} ... }}
-        }}
-      ]
-    }},
-    {{
-      "level_num": 2,
-      "title": "Màn 2: Thử thách tư duy ⚡",
-      "xp_reward": 100,
-      "coin_reward": 20,
-      "questions": [
-        {{
-          "id": "ai_q_{ts}_2",
-          "question_type": "{template_code}",
-          "prompt": "Hướng dẫn câu hỏi màn 2 nâng cao",
-          "points": 25,
-          "data": {{ ... đối tượng data chuẩn theo thể loại {template_code} ... }}
-        }}
-      ]
-    }},
-    {{
-      "level_num": 3,
-      "title": "Màn 3: Bậc thầy chinh phục 🏆",
-      "xp_reward": 150,
-      "coin_reward": 35,
-      "questions": [
-        {{
-          "id": "ai_q_{ts}_3",
-          "question_type": "{template_code}",
-          "prompt": "Thử thách tổng kết màn 3",
-          "points": 40,
-          "data": {{ ... đối tượng data chuẩn theo thể loại {template_code} ... }}
-        }}
-      ]
+      "is_free": true,
+      "questions": [{{
+        "id": "ai_q_{ts}_1",
+        "question_type": "{template_code}",
+        "prompt": "Hướng dẫn màn 1",
+        "points": 20,
+        "data": {{ }}
+      }}]
     }}
   ]
 }}
+(Lặp cấu trúc level đủ {DEFAULT_LEVEL_COUNT} màn; chỉ minh họa màn 1 ở trên.)
 
 {GEMINI_DATA_SCHEMA_RULES}
 """
@@ -394,8 +406,7 @@ def generate_game_with_gemini(
     grade_to: int = 5,
     category: str = "iq",
 ) -> dict:
-    """Gọi Gemini sinh game trọn gói 3 màn. Tự động chuyển fallback nếu không có API key."""
-    # 1. Kiểm tra an toàn nội dung
+    """Gọi Gemini sinh game đủ DEFAULT_LEVEL_COUNT màn. Fallback nếu không có API key."""
     safe, msg = is_content_safe_for_kids(topic)
     if not safe:
         raise ValueError(msg)
@@ -411,7 +422,6 @@ def generate_game_with_gemini(
         client = genai.Client(api_key=api_key)
         prompt = build_gemini_prompt(topic, template_code, grade_from, grade_to, category)
 
-        # Thử gọi model Gemini
         response = client.models.generate_content(
             model="gemini-2.0-flash",
             contents=prompt,
@@ -427,6 +437,17 @@ def generate_game_with_gemini(
         if not game_data.get("title") or not game_data.get("levels"):
             raise ValueError("Phản hồi Gemini thiếu trường title hoặc levels.")
 
+        game_id = game_data.get("id") or f"ai_g_{int(time.time() * 1000)}"
+        game_data["id"] = game_id
+        game_data["levels"] = ensure_level_count(
+            game_data.get("levels"),
+            topic=topic,
+            template=template_code,
+            base_id=game_id,
+            count=DEFAULT_LEVEL_COUNT,
+        )
+        if not game_data.get("price") or int(game_data.get("price") or 0) <= 0:
+            game_data["price"] = DEFAULT_UNLOCK_PRICE
         return game_data
     except Exception as e:
         print(f"⚠️ [Gemini AI Warning] Không thể kết nối Gemini API: {e} -> Tự động chuyển Fallback Mode an toàn.")

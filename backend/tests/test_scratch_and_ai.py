@@ -26,7 +26,7 @@ def test_scratch_courses_and_submission(client, student_auth, teacher_auth):
     assert res_submit.json()["nextLessonNum"] == 2
 
 
-def test_ai_pipeline_safety_and_fallback(client, teacher_auth):
+def test_ai_pipeline_safety_and_fallback(client, teacher_auth, admin_auth):
     # 1. Kiểm tra filter an toàn
     safe_ok, _ = is_content_safe_for_kids("Toán học vũ trụ 🚀")
     assert safe_ok is True
@@ -40,12 +40,52 @@ def test_ai_pipeline_safety_and_fallback(client, teacher_auth):
     assert "```" not in cleaned
     assert '\"name\": \"Test AI\"' in cleaned
 
-    # 3. Test API Admin sinh game AI
-    res_ai = client.post("/api/admin/games/ai-generate", json={
+    # 3. Teacher không được dùng AI generate
+    res_teacher = client.post("/api/admin/games/ai-generate", json={
         "topic": "Hệ Mặt Trời",
         "template_code": "quiz",
         "grade_from": 1,
         "grade_to": 3,
     }, headers=teacher_auth["headers"])
+    assert res_teacher.status_code == 403
+
+    # 4. Admin được sinh game AI
+    res_ai = client.post("/api/admin/games/ai-generate", json={
+        "topic": "Hệ Mặt Trời",
+        "template_code": "quiz",
+        "grade_from": 1,
+        "grade_to": 3,
+    }, headers=admin_auth["headers"])
     assert res_ai.status_code == 200
-    assert len(res_ai.json()["game"]["levels"]) == 3
+    assert len(res_ai.json()["game"]["levels"]) == 20
+
+
+def test_teacher_sample_export_and_import(client, teacher_auth):
+    headers = teacher_auth["headers"]
+    res_sample = client.get(
+        "/api/admin/games/sample-export?template_code=quiz&topic=Toán%20lớp%201",
+        headers=headers,
+    )
+    assert res_sample.status_code == 200
+    sample = res_sample.json()
+    assert sample["template_code"] == "quiz"
+    assert len(sample["levels"]) == 20
+
+    sample["id"] = f"pack_teacher_{teacher_auth['user_id']}"
+    sample["title"] = "Pack Toán lớp 1 Import"
+    res_import = client.post(
+        "/api/admin/games/upload",
+        json={"gameObject": sample},
+        headers=headers,
+    )
+    assert res_import.status_code == 200, res_import.text
+    body = res_import.json()
+    assert body["success"] is True
+    assert body["count"] == 1
+
+    # Scratch (media/scene) không cho import text-pack
+    res_bad = client.get(
+        "/api/admin/games/sample-export?template_code=scratch",
+        headers=headers,
+    )
+    assert res_bad.status_code == 400

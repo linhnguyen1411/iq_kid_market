@@ -56,12 +56,22 @@ export default function SequenceEngine({ question, onComplete }: GameEngineProps
     }
   };
 
+  const bubbleFontSize = (value: string) => {
+    const len = String(value).length;
+    if (len <= 1) return "1.75rem";
+    if (len <= 2) return "1.35rem";
+    if (len <= 4) return "1rem";
+    if (len <= 6) return "0.85rem";
+    return "0.7rem";
+  };
+
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col items-center">
       {/* Visual Sequence Balloons */}
-      <div id="sequence_display" className="flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-10">
+      <div id="sequence_display" className="mb-8 flex flex-wrap items-start justify-center gap-3 px-1 md:gap-4">
         {(question.data?.sequence || []).map((item: string, idx: number) => {
           const isUnknown = item === "?";
+          const label = String(item);
           return (
             <motion.div
               id={`seq_bubble_${idx}`}
@@ -69,14 +79,23 @@ export default function SequenceEngine({ question, onComplete }: GameEngineProps
               initial={{ scale: 0.8, y: 15 }}
               animate={{ scale: 1, y: 0 }}
               transition={{ type: "spring", delay: idx * 0.1 }}
-              className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center font-display text-xl md:text-2xl font-bold shadow-lg relative ${
-                isUnknown
-                ? "bg-kids-yellow text-slate-800 border-4 border-slate-800 animate-pulse"
-                : "bg-white text-slate-700 border-4 border-slate-100"
-              }`}
+              className="flex w-[5.25rem] shrink-0 flex-col items-center"
             >
-              {item}
-              <div className="absolute left-1/2 -bottom-6 w-0.5 h-6 bg-slate-300 transform -translate-x-1/2" />
+              <div
+                className={`box-border grid h-[5.25rem] w-[5.25rem] place-items-center rounded-full border-4 font-display font-extrabold shadow-lg ${
+                  isUnknown
+                    ? "animate-pulse border-slate-800 bg-kids-yellow text-slate-800"
+                    : "border-slate-200 bg-white text-slate-700"
+                }`}
+              >
+                <span
+                  className="max-w-[4.5rem] px-1.5 text-center leading-none tracking-tight whitespace-nowrap"
+                  style={{ fontSize: bubbleFontSize(label) }}
+                >
+                  {label}
+                </span>
+              </div>
+              <div className="h-5 w-0.5 bg-slate-300" aria-hidden />
             </motion.div>
           );
         })}
@@ -93,12 +112,12 @@ export default function SequenceEngine({ question, onComplete }: GameEngineProps
               id={`seq_choice_${choice}`}
               key={choice}
               onClick={() => handleChoice(choice)}
-              className={`p-4 text-base font-display text-lg font-bold rounded-2xl border-3 transition-all transform active:scale-95 ${
+              className={`rounded-2xl border-2 p-4 font-display text-base font-bold transition-all transform active:scale-95 md:text-lg ${
                 isSelected && solved
-                ? "bg-emerald-500 border-emerald-600 text-white shadow-none"
+                ? "border-emerald-600 bg-emerald-500 text-white shadow-none"
                 : isWrong
-                ? "bg-rose-500 border-rose-600 text-white animate-shake"
-                : "bg-white border-slate-200 text-slate-700 hover:border-kids-blue shadow-md hover:-translate-y-0.5"
+                ? "animate-shake border-rose-600 bg-rose-500 text-white"
+                : "border-slate-200 bg-white text-slate-700 shadow-md hover:-translate-y-0.5 hover:border-kids-blue"
               }`}
             >
               {choice}

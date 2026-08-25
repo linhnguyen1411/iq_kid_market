@@ -84,7 +84,7 @@ def test_be04_ai_pipeline_scenarios():
     )
     assert "title" in game_result
     assert "levels" in game_result
-    assert len(game_result["levels"]) == 3
+    assert len(game_result["levels"]) == 20
     # Validate cấu trúc câu hỏi
     for lvl in game_result["levels"]:
         assert "questions" in lvl
@@ -106,17 +106,36 @@ def test_be04_ai_pipeline_scenarios():
     assert "expression" in single_q["data"]
     print("   ✅ Sinh câu hỏi đơn lẻ thành công.")
 
-    # 5. TEST API POST /api/admin/games/ai-generate
+    # 5. TEST API POST /api/admin/games/ai-generate (admin only)
     print("5️⃣ [Test API Sinh Game Trọn Gói]: POST /api/admin/games/ai-generate...")
-    # Đăng ký tài khoản giáo viên
+    res_admin = client.post("/api/auth/register", json={
+        "username": "admin_ai",
+        "password": "password123",
+        "name": "Admin AI",
+        "role": "admin",
+    })
+    # Nếu register không cho role admin, login seed admin
+    if res_admin.status_code == 200:
+        headers = {"Authorization": f"Bearer {res_admin.json()['access_token']}"}
+    else:
+        res_login = client.post("/api/auth/login", json={"username": "admin", "password": "123456"})
+        assert res_login.status_code == 200, res_login.text
+        headers = {"Authorization": f"Bearer {res_login.json()['access_token']}"}
+
+    # Teacher bị từ chối
     res_teacher = client.post("/api/auth/register", json={
-        "username": "teacher_ai",
+        "username": "teacher_ai_denied",
         "password": "password123",
         "name": "Cô Lan AI",
         "role": "teacher",
     })
-    teacher_token = res_teacher.json()["access_token"]
-    headers = {"Authorization": f"Bearer {teacher_token}"}
+    teacher_headers = {"Authorization": f"Bearer {res_teacher.json()['access_token']}"}
+    res_denied = client.post(
+        "/api/admin/games/ai-generate",
+        json={"topic": "Động Vật", "template_code": "matching"},
+        headers=teacher_headers,
+    )
+    assert res_denied.status_code == 403
 
     res_api_game = client.post(
         "/api/admin/games/ai-generate",
@@ -132,7 +151,7 @@ def test_be04_ai_pipeline_scenarios():
     assert res_api_game.status_code == 200
     created_game = res_api_game.json()["game"]
     assert created_game["review_status"] == "pending_review"
-    assert len(created_game["levels"]) == 3
+    assert len(created_game["levels"]) == 20
     print("   ✅ API Sinh Game lưu CSDL thành công và chuyển vào hàng đợi kiểm duyệt.")
 
     # Thử chủ đề không an toàn -> Bị chặn 400
