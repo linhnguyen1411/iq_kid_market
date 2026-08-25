@@ -345,12 +345,6 @@ export const api = {
       return apiRequest<Array<any>>(`/admin/users${qs ? `?${qs}` : ''}`);
     },
 
-    updateUserRole: (userId: string, role: string) =>
-      apiRequest<{ success: boolean; user: any; message: string }>(`/admin/users/${userId}/role`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-      }),
-
     getGameInventory: (status?: string) => {
       const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
       return apiRequest<Game[]>(`/admin/games/inventory${qs}`);

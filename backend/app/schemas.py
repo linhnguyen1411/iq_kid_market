@@ -406,29 +406,3 @@ class UpdateScratchLessonIn(BaseModel):
     start_scene_json: Optional[str] = None
     xp_reward: Optional[int] = None
 
-
-# ---------- Admin CMS ----------
-ALLOWED_ROLES = ("student", "teacher", "parent", "creator", "admin", "member")
-
-
-class UpdateUserRoleIn(BaseModel):
-    role: str
-
-
-class AdminUserOut(BaseModel):
-    id: str
-    username: str
-    name: str
-    role: str
-    grade: Optional[int] = None
-    avatar: str
-    xp: int
-    level: int
-    streak: int
-    created_at: Optional[str] = None
-    wallet_balance: int = 0
-
-    class Config:
-        from_attributes = True
-
-

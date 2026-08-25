@@ -69,7 +69,9 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     assert res_sample.status_code == 200
     sample = res_sample.json()
     assert sample["template_code"] == "quiz"
-    assert len(sample["levels"]) == 20
+    assert len(sample["levels"]) == 1
+    assert sample.get("level_template") is not None
+    assert sample.get("target_level_count") == 20
 
     sample["id"] = f"pack_teacher_{teacher_auth['user_id']}"
     sample["title"] = "Pack Toán lớp 1 Import"
@@ -82,6 +84,13 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     body = res_import.json()
     assert body["success"] is True
     assert body["count"] == 1
+
+    # Import 1 câu → lưu DB đủ 20 màn (kiểm qua hàng đợi duyệt của teacher)
+    res_queue = client.get("/api/admin/review/queue?status=pending_review", headers=headers)
+    assert res_queue.status_code == 200
+    imported = next((g for g in res_queue.json() if g["id"] == sample["id"]), None)
+    assert imported is not None
+    assert len(imported["levels"]) == 20
 
     # Scratch (media/scene) không cho import text-pack
     res_bad = client.get(

@@ -12,6 +12,7 @@ from ..ai_content import (
     generate_single_question_with_gemini,
     is_content_safe_for_kids,
     ensure_level_count,
+    build_compact_sample_pack,
 )
 from ..game_config import (
     DEFAULT_UNLOCK_PRICE,
@@ -256,7 +257,7 @@ def delete_game(
     return {"success": True, "message": f'Đã xóa trò chơi "{game.title}" thành công!'}
 
 
-# ---------- 6. Export mẫu JSON 20 màn (teacher/creator — không media) ----------
+# ---------- 6. Export mẫu JSON gọn (1 câu) — import sẽ nhân 20 màn ----------
 @router.get("/games/sample-export")
 def export_sample_game_pack(
     template_code: str = Query(default="quiz"),
@@ -267,8 +268,8 @@ def export_sample_game_pack(
     current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
 ):
     """
-    Tải mẫu JSON đủ 20 màn cho thể loại text-only.
-    Giáo viên chỉnh sửa rồi import lại qua POST /games/upload.
+    Tải mẫu JSON gọn: chỉ 1 câu hỏi (level_template).
+    Khi POST /games/upload, hệ thống nhân bản đủ 20 màn cùng schema.
     """
     code = (template_code or "quiz").strip().lower()
     if not is_text_pack_template(code):
@@ -280,32 +281,30 @@ def export_sample_game_pack(
             ),
         )
 
-    sample = generate_fallback_game(
+    sample = build_compact_sample_pack(
         topic=topic.strip() or "Chủ đề bài học mẫu",
         template=code,
         grade_from=grade_from,
         grade_to=max(grade_from, grade_to),
         category=category or "iq",
-        price=DEFAULT_UNLOCK_PRICE,
         creator_id=current_user.id,
         creator_name=current_user.name,
     )
-    sample["review_status"] = "pending_review"
-    sample["is_published"] = False
     sample["_meta"] = {
-        "level_count": DEFAULT_LEVEL_COUNT,
+        "sample_levels": 1,
+        "expand_on_import_to": DEFAULT_LEVEL_COUNT,
         "free_levels": FREE_LEVEL_COUNT,
         "paid_levels": DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT,
         "text_pack_only": True,
         "instruction": (
-            f"Chỉnh title/description và nội dung từng màn (đủ {DEFAULT_LEVEL_COUNT} màn), "
-            "giữ nguyên schema questions[].data theo template, rồi POST /api/admin/games/upload."
+            "Chỉ cần chỉnh 1 câu trong level_template (hoặc levels[0]). "
+            f"Khi import, hệ thống nhân bản đủ {DEFAULT_LEVEL_COUNT} màn cùng cấu trúc."
         ),
     }
     return sample
 
 
-# ---------- 6b. Upload game/level đóng gói sẵn (JSON text-pack 20 màn) ----------
+# ---------- 6b. Upload text-pack (1 câu mẫu hoặc đủ màn — thiếu thì nhân bản) ----------
 @router.post("/games/upload")
 def upload_games(
     body: schemas.UploadGamesIn,
@@ -352,12 +351,23 @@ def upload_games(
             ):
                 raise HTTPException(status_code=403, detail="Không được ghi đè game của người khác!")
 
+            raw_levels = g.get("levels") if isinstance(g.get("levels"), list) else []
+            level_template = g.get("level_template") if isinstance(g.get("level_template"), dict) else None
+            # Cho phép pack chỉ có level_template / 1 màn — nhân bản đủ 20 khi import
+            if not raw_levels and level_template:
+                raw_levels = [level_template]
+
+            target_count = int(g.get("target_level_count") or DEFAULT_LEVEL_COUNT)
+            if target_count < 1 or target_count > 50:
+                target_count = DEFAULT_LEVEL_COUNT
+
             levels = ensure_level_count(
-                g.get("levels") if isinstance(g.get("levels"), list) else [],
+                raw_levels,
                 topic=title,
                 template=template_code,
                 base_id=game_id,
-                count=DEFAULT_LEVEL_COUNT,
+                count=target_count,
+                level_template=level_template,
             )
 
             # Validate question data theo schema engine
@@ -420,8 +430,9 @@ def upload_games(
             "count": len(imported),
             "gameIds": imported,
             "message": (
-                f"Đã import {len(imported)} game ({DEFAULT_LEVEL_COUNT} màn/game) "
-                f"vào hàng đợi kiểm duyệt."
+                f"Đã import {len(imported)} game — mỗi game được chuẩn hoá "
+                f"{DEFAULT_LEVEL_COUNT} màn (nhân bản từ mẫu nếu chỉ gửi 1 câu) "
+                f"và đưa vào hàng đợi kiểm duyệt."
             ),
         }
     except HTTPException:
@@ -635,37 +646,6 @@ def list_users(
         payload["wallet_balance"] = u.wallet.balance if u.wallet else 0
         result.append(payload)
     return result
-
-
-@router.patch("/users/{user_id}/role")
-def update_user_role(
-    user_id: str,
-    body: schemas.UpdateUserRoleIn,
-    current_user: models.User = Depends(require_roles(["admin"])),
-    db: Session = Depends(get_db),
-):
-    role = (body.role or "").strip().lower()
-    if role not in schemas.ALLOWED_ROLES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Role không hợp lệ. Cho phép: {', '.join(schemas.ALLOWED_ROLES)}",
-        )
-
-    user = db.get(models.User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
-
-    if user.id == current_user.id and role != "admin":
-        raise HTTPException(status_code=400, detail="Không thể tự hạ quyền tài khoản admin đang đăng nhập!")
-
-    user.role = role
-    db.commit()
-    db.refresh(user)
-    return {
-        "success": True,
-        "user": schemas.UserOut.model_validate(user).model_dump(),
-        "message": f"Đã cập nhật quyền của @{user.username} thành {role}.",
-    }
 
 
 @router.get("/games/inventory")
