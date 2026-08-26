@@ -496,18 +496,19 @@ export default function AdminCmsPage() {
                     </div>
                     <div className="p-4 bg-slate-50/80">
                       {selectedGame.levels[previewLevelIdx]?.questions?.[0] ? (
-                        <QuestionRenderer
-                          key={`${selectedGame.id}-${previewLevelIdx}-${selectedGame.levels[previewLevelIdx].questions[0].id}`}
-                          question={selectedGame.levels[previewLevelIdx].questions[0]}
-                          levelNum={selectedGame.levels[previewLevelIdx].level_num || previewLevelIdx + 1}
-                          xpReward={selectedGame.levels[previewLevelIdx].xp_reward || 80}
-                          coinReward={selectedGame.levels[previewLevelIdx].coin_reward || 20}
-                          onSuccess={() => undefined}
-                          onBack={() => {
-                            setSelectedGameId(null);
-                            setPreviewLevelIdx(0);
-                          }}
-                        />
+                        <div key={`${selectedGame.id}-${previewLevelIdx}-${selectedGame.levels[previewLevelIdx].questions[0].id}`}>
+                          <QuestionRenderer
+                            question={selectedGame.levels[previewLevelIdx].questions[0] as any}
+                            levelNum={selectedGame.levels[previewLevelIdx].level_num || previewLevelIdx + 1}
+                            xpReward={selectedGame.levels[previewLevelIdx].xp_reward || 80}
+                            coinReward={selectedGame.levels[previewLevelIdx].coin_reward || 20}
+                            onSuccess={() => undefined}
+                            onBack={() => {
+                              setSelectedGameId(null);
+                              setPreviewLevelIdx(0);
+                            }}
+                          />
+                        </div>
                       ) : (
                         <p className="text-sm text-slate-400 text-center py-8">Màn này chưa có câu hỏi.</p>
                       )}
