@@ -213,10 +213,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
       const { _meta, ...pack } = sample;
       setPackPreview(pack);
       setPackJson(JSON.stringify(pack, null, 2));
-      downloadJson(pack, `iqkids-sample-${packTemplate}-20levels.json`);
+      downloadJson(pack, `iqkids-sample-${packTemplate}-1cau.json`);
       setMsg({
         type: 'success',
-        text: `Đã tải mẫu ${DEFAULT_LEVEL_COUNT} màn (${FREE_LEVEL_COUNT} free). Chỉnh JSON rồi Import.`,
+        text: `Đã tải mẫu 1 câu hỏi. Khi import sẽ nhân bản đủ ${DEFAULT_LEVEL_COUNT} màn (${FREE_LEVEL_COUNT} free).`,
       });
       playSynthSound('victory');
     } catch (err: any) {
@@ -713,13 +713,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
               <Download className="w-5 h-5 text-teal-600" />
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-                Tạo nhanh: Export mẫu → chỉnh 20 màn → Import
+                Tạo nhanh: Export 1 câu mẫu → Import (tự nhân {DEFAULT_LEVEL_COUNT} màn)
               </h3>
             </div>
             <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-              Dành cho giáo viên / creator. Chỉ áp dụng thể loại text/emoji (không cần upload hình/video).
-              Mỗi pack mặc định {DEFAULT_LEVEL_COUNT} màn: {FREE_LEVEL_COUNT} free + {DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} mở khóa ví.
-              Game import vào hàng đợi kiểm duyệt.
+              Export chỉ 1 câu hỏi mẫu (text/emoji). Khi import, hệ thống nhân bản đủ{' '}
+              {DEFAULT_LEVEL_COUNT} màn cùng cấu trúc ({FREE_LEVEL_COUNT} free +{' '}
+              {DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} mở khóa ví) và đưa vào hàng đợi kiểm duyệt.
+              Bạn có thể sửa riêng từng màn trong JSON nếu muốn nội dung khác nhau.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -774,7 +775,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
                 className="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-black flex items-center gap-2 disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                Tải JSON mẫu 20 màn
+                Tải JSON mẫu (1 câu)
               </button>
               <label className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-black flex items-center gap-2 cursor-pointer">
                 <Upload className="w-4 h-4" />
@@ -796,13 +797,15 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               onChange={(e) => setPackJson(e.target.value)}
               rows={14}
               spellCheck={false}
-              placeholder='{"id":"...","title":"...","template_code":"quiz","levels":[...20 màn...]}'
+              placeholder='{"title":"...","template_code":"quiz","level_template":{...1 câu...}}'
               className="w-full font-mono text-[11px] bg-slate-950 text-emerald-300 border border-slate-700 rounded-2xl p-4 outline-hidden focus:border-teal-400"
             />
 
-            {packPreview?.levels && (
+            {packPreview && (
               <p className="mt-2 text-[11px] text-slate-500 font-bold">
-                Preview: {packPreview.title || '(chưa có title)'} · {packPreview.levels?.length || 0} màn · template {packPreview.template_code}
+                Preview: {packPreview.title || '(chưa có title)'} · mẫu{' '}
+                {packPreview.levels?.length || (packPreview.level_template ? 1 : 0)} câu · template{' '}
+                {packPreview.template_code} → import ra {packPreview.target_level_count || DEFAULT_LEVEL_COUNT} màn
               </p>
             )}
 

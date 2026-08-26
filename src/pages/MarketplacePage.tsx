@@ -83,13 +83,16 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       return true;
     });
 
-    // Sort logic
+    // Sort logic — popular: game mới (0 lượt, vừa duyệt) lên đầu để dễ thấy trên chợ
     return list.sort((a, b) => {
       if (sortBy === 'newest') return (b.id || '').localeCompare(a.id || '');
       if (sortBy === 'rating') return (b.rating_avg || 5) - (a.rating_avg || 5);
       if (sortBy === 'price_asc') return a.price - b.price;
       if (sortBy === 'price_desc') return b.price - a.price;
-      return (b.plays_count || 0) - (a.plays_count || 0); // popular default
+      const aNew = (a.plays_count || 0) === 0 ? 1 : 0;
+      const bNew = (b.plays_count || 0) === 0 ? 1 : 0;
+      if (aNew !== bNew) return bNew - aNew;
+      return (b.plays_count || 0) - (a.plays_count || 0);
     });
   }, [games, debouncedSearch, selectedCategory, selectedGrade, selectedType, sortBy]);
 

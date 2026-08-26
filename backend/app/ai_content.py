@@ -205,14 +205,52 @@ def build_level(base_id: str, template: str, topic: str, level_num: int) -> dict
     }
 
 
+def clone_level_from_template(
+    template_level: dict,
+    base_id: str,
+    topic: str,
+    level_num: int,
+    template: str,
+) -> dict:
+    """Nhân bản 1 màn mẫu → màn `level_num` (cùng câu hỏi/schema, đổi số màn & id)."""
+    import copy
+
+    lv = copy.deepcopy(template_level)
+    lv["level_num"] = level_num
+    lv["title"] = _level_title(level_num, topic)
+    lv["is_free"] = level_num <= FREE_LEVEL_COUNT
+    lv["xp_reward"] = int(lv.get("xp_reward") or (60 + level_num * 8))
+    lv["coin_reward"] = int(lv.get("coin_reward") or (10 + level_num * 2))
+
+    questions = []
+    raw_qs = lv.get("questions") if isinstance(lv.get("questions"), list) else []
+    if not raw_qs:
+        return build_level(base_id, template, topic, level_num)
+
+    for i, q in enumerate(raw_qs):
+        if not isinstance(q, dict):
+            continue
+        nq = copy.deepcopy(q)
+        nq["id"] = f"{base_id}_q{level_num}_{i + 1}"
+        nq["question_type"] = nq.get("question_type") or template
+        questions.append(nq)
+
+    lv["questions"] = questions or build_level(base_id, template, topic, level_num)["questions"]
+    return lv
+
+
 def ensure_level_count(
     levels: list | None,
     topic: str,
     template: str,
     base_id: str,
     count: int = DEFAULT_LEVEL_COUNT,
+    level_template: dict | None = None,
 ) -> list:
-    """Chuẩn hoá đúng `count` màn: cắt bớt nếu thừa, pad fallback nếu thiếu."""
+    """
+    Chuẩn hoá đúng `count` màn.
+    Thiếu màn → nhân bản từ level_template / màn đầu tiên đã có (không sinh 20 câu khác nhau).
+    """
     normalized: list = []
     seen = set()
     for raw in levels or []:
@@ -234,12 +272,65 @@ def ensure_level_count(
             item["questions"] = build_level(base_id, template, topic, num)["questions"]
         normalized.append(item)
 
+    # Mẫu để clone: ưu tiên level_template → màn 1 → màn bất kỳ đã có
+    seed = None
+    if isinstance(level_template, dict) and (
+        level_template.get("questions") or level_template.get("data")
+    ):
+        seed = level_template
+    if seed is None and normalized:
+        seed = sorted(normalized, key=lambda x: int(x["level_num"]))[0]
+
     by_num = {int(lv["level_num"]): lv for lv in normalized}
     result = []
     for n in range(1, count + 1):
-        result.append(by_num.get(n) or build_level(base_id, template, topic, n))
+        if n in by_num:
+            result.append(by_num[n])
+        elif seed is not None:
+            result.append(clone_level_from_template(seed, base_id, topic, n, template))
+        else:
+            result.append(build_level(base_id, template, topic, n))
     return result
 
+
+def build_compact_sample_pack(
+    topic: str,
+    template: str,
+    grade_from: int,
+    grade_to: int,
+    category: str = "iq",
+    creator_id: Optional[str] = None,
+    creator_name: str = "Giáo viên",
+) -> dict:
+    """Mẫu export gọn: chỉ 1 câu hỏi mẫu; import sẽ nhân đủ DEFAULT_LEVEL_COUNT màn."""
+    base_id = f"pack_sample_{int(time.time() * 1000)}"
+    level_template = build_level(base_id, template, topic, 1)
+    return {
+        "id": base_id,
+        "title": f"{topic} Kỳ Thú 📦",
+        "description": (
+            f'Mẫu 1 câu hỏi ({template}). Khi import hệ thống nhân bản đủ '
+            f'{DEFAULT_LEVEL_COUNT} màn ({FREE_LEVEL_COUNT} free + '
+            f'{DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} mở khóa ví).'
+        ),
+        "detailed_description": (
+            "Chỉnh title và nội dung câu hỏi trong level_template / levels[0], "
+            f"rồi import — không cần viết đủ {DEFAULT_LEVEL_COUNT} màn."
+        ),
+        "thumbnail": "📦",
+        "price": DEFAULT_UNLOCK_PRICE,
+        "grade_from": grade_from,
+        "grade_to": grade_to,
+        "template_code": template,
+        "category": category,
+        "creator_id": creator_id or "system",
+        "creator_name": creator_name,
+        "review_status": "pending_review",
+        "is_published": False,
+        "target_level_count": DEFAULT_LEVEL_COUNT,
+        "level_template": level_template,
+        "levels": [level_template],
+    }
 
 def generate_fallback_game(
     topic: str,
