@@ -103,7 +103,11 @@ export const GameCard: React.FC<GameCardProps> = ({
           className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
         >
           <Play className="w-3.5 h-3.5 fill-white" />
-          <span>CHƠI THỬ ({FREE_LEVEL_COUNT} MÀN FREE) 🚀</span>
+          <span>
+            {isPurchased
+              ? 'CHƠI NGAY (TẤT CẢ MÀN) 🚀'
+              : `CHƠI THỬ (${FREE_LEVEL_COUNT} MÀN FREE) 🚀`}
+          </span>
         </button>
 
         {needsUnlock && (

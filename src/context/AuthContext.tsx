@@ -110,13 +110,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateUserWallet = (newBalance: number) => {
+    const bal = Number(newBalance);
+    if (!Number.isFinite(bal) || bal < 0) {
+      console.warn('Bỏ qua cập nhật ví: số dư không hợp lệ', newBalance);
+      return;
+    }
     setSession((prev) => {
       if (!prev) return prev;
       return {
         ...prev,
         wallet: {
           ...prev.wallet,
-          balance: newBalance,
+          balance: Math.floor(bal),
+          transactions: prev.wallet?.transactions || [],
         },
       };
     });

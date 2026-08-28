@@ -14,15 +14,14 @@ import { useAppData } from '../../layouts/AppShell';
 
 type CmsTab = 'dashboard' | 'users' | 'games';
 
-const ROLE_OPTIONS = ['admin', 'teacher', 'creator', 'parent', 'student', 'member'] as const;
+const ROLE_OPTIONS = ['admin', 'teacher', 'creator', 'student', 'member'] as const;
 
 const ROLE_LABEL: Record<string, string> = {
   admin: 'Quản trị',
   teacher: 'Giáo viên',
   creator: 'Creator',
-  parent: 'Phụ huynh',
   student: 'Học sinh',
-  member: 'Thành viên (con)',
+  member: 'Thành viên',
 };
 
 function tabFromPath(pathname: string): CmsTab {
@@ -186,7 +185,7 @@ export default function AdminCmsPage() {
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6 text-left">
-      {/* Hero — cùng ngôn ngữ UI phụ huynh / ví xu */}
+      {/* Hero */}
       <div className="rounded-3xl border border-indigo-100 bg-gradient-to-tr from-slate-900 via-indigo-950 to-purple-900 text-white p-6 md:p-8 shadow-xl relative overflow-hidden">
         <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-pink-500/20 blur-2xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">

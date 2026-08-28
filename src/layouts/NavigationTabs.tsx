@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Compass, Gamepad2, Code, Trophy,
-  CreditCard, Settings, ShieldCheck,
+  CreditCard, Settings,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { paths } from '../routes/paths';
@@ -11,8 +11,7 @@ export const NavigationTabs: React.FC = () => {
   const { user, authToken } = useAuth();
   const isLoggedIn = Boolean(authToken && user);
   const isTeacherStudio = isLoggedIn && ['admin', 'teacher', 'creator'].includes(user!.role);
-  const isParent = isLoggedIn && user!.role === 'parent';
-  const isAdmin = isLoggedIn && user!.role === 'admin';
+  const isStudent = isLoggedIn && user!.role === 'student';
 
   const tabs: Array<{ to: string; label: string; icon: React.ReactNode; badge?: string; end?: boolean }> = [
     { to: paths.home, label: 'Khám Phá', icon: <Compass className="w-4 h-4" />, end: true },
@@ -21,7 +20,7 @@ export const NavigationTabs: React.FC = () => {
     { to: paths.leaderboard, label: 'Bảng Vàng', icon: <Trophy className="w-4 h-4" /> },
   ];
 
-  if (isParent) {
+  if (isStudent) {
     tabs.push({ to: paths.wallet, label: 'Ví Xu', icon: <CreditCard className="w-4 h-4" /> });
   }
 

@@ -12,6 +12,8 @@ import time
 from typing import Optional
 
 from .game_config import DEFAULT_LEVEL_COUNT, FREE_LEVEL_COUNT, DEFAULT_UNLOCK_PRICE
+import copy
+import random
 
 # Danh sách từ khóa cấm/nhạy cảm không phù hợp với lứa tuổi học sinh
 UNSAFE_KEYWORDS = [
@@ -27,6 +29,110 @@ def is_content_safe_for_kids(text: str) -> tuple[bool, str]:
         if kw in lower_text:
             return False, f"Chủ đề chứa nội dung không phù hợp với trẻ em ({kw}). Vui lòng chọn chủ đề mang tính giáo dục!"
     return True, ""
+
+
+def _resolve_correct_option(options: list, answer) -> str | None:
+    """Tìm option đúng từ answer (full text, chứa chuỗi, hoặc chỉ số A/B/C/D)."""
+    if not options:
+        return None
+    ans = str(answer if answer is not None else "").strip()
+    if not ans:
+        return None
+    opts = [str(o) for o in options]
+    for opt in opts:
+        if opt.strip() == ans:
+            return opt
+    ans_l = ans.lower()
+    for opt in opts:
+        if opt.strip().lower() == ans_l:
+            return opt
+    if len(ans) == 1 and ans.upper() in "ABCDEFGH":
+        idx = ord(ans.upper()) - ord("A")
+        if 0 <= idx < len(opts):
+            return opts[idx]
+    for opt in opts:
+        o = opt.strip().lower()
+        if ans_l and (ans_l in o or o in ans_l):
+            return opt
+    return None
+
+
+def shuffle_question_data(data: dict | None) -> dict | None:
+    """
+    Xáo thứ tự đáp án / lựa chọn trong data câu hỏi (giữ nguyên đáp án đúng).
+    Áp dụng: options (quiz/language/coding/math), pairs (matching), items (memory), cards (flashcard).
+    """
+    if not isinstance(data, dict):
+        return data
+    out = copy.deepcopy(data)
+
+    options = out.get("options")
+    if isinstance(options, list) and len(options) >= 2:
+        correct = _resolve_correct_option(options, out.get("answer"))
+        shuffled = list(options)
+        random.shuffle(shuffled)
+        # Tránh giữ nguyên thứ tự khi shuffle “không đổi” (list ngắn)
+        if shuffled == list(options) and len(shuffled) > 1:
+            shuffled = shuffled[1:] + shuffled[:1]
+        out["options"] = shuffled
+        if correct is not None:
+            # Chuẩn hoá answer = full text option đúng (không phụ thuộc vị trí A/B/C)
+            matched = _resolve_correct_option(shuffled, correct) or correct
+            out["answer"] = matched
+
+    pairs = out.get("pairs") or out.get("matching_pairs")
+    if isinstance(pairs, list) and len(pairs) >= 2:
+        key = "pairs" if "pairs" in out else "matching_pairs"
+        shuffled_pairs = list(pairs)
+        random.shuffle(shuffled_pairs)
+        if shuffled_pairs == list(pairs):
+            shuffled_pairs = shuffled_pairs[1:] + shuffled_pairs[:1]
+        out[key] = shuffled_pairs
+
+    items = out.get("items")
+    if isinstance(items, list) and len(items) >= 2 and "correct_sequence_ids" not in out:
+        # memory / tương tự — sorting giữ order theo correct_sequence_ids nên không xáo items
+        shuffled_items = list(items)
+        random.shuffle(shuffled_items)
+        if shuffled_items == list(items):
+            shuffled_items = shuffled_items[1:] + shuffled_items[:1]
+        out["items"] = shuffled_items
+
+    cards = out.get("cards")
+    if isinstance(cards, list) and len(cards) >= 2:
+        shuffled_cards = list(cards)
+        random.shuffle(shuffled_cards)
+        if shuffled_cards == list(cards):
+            shuffled_cards = shuffled_cards[1:] + shuffled_cards[:1]
+        out["cards"] = shuffled_cards
+
+    return out
+
+
+def shuffle_level_answers(level: dict) -> dict:
+    """Xáo đáp án mọi câu hỏi trong 1 màn."""
+    if not isinstance(level, dict):
+        return level
+    lv = copy.deepcopy(level)
+    qs = lv.get("questions")
+    if not isinstance(qs, list):
+        return lv
+    new_qs = []
+    for q in qs:
+        if not isinstance(q, dict):
+            new_qs.append(q)
+            continue
+        nq = copy.deepcopy(q)
+        if isinstance(nq.get("data"), dict):
+            nq["data"] = shuffle_question_data(nq["data"])
+        new_qs.append(nq)
+    lv["questions"] = new_qs
+    return lv
+
+
+def shuffle_levels_answers(levels: list) -> list:
+    """Xáo đáp án toàn bộ màn (mỗi màn shuffle độc lập)."""
+    return [shuffle_level_answers(lv) if isinstance(lv, dict) else lv for lv in (levels or [])]
 
 
 def clean_json_string(raw_text: str) -> str:
@@ -213,8 +319,6 @@ def clone_level_from_template(
     template: str,
 ) -> dict:
     """Nhân bản 1 màn mẫu → màn `level_num` (cùng câu hỏi/schema, đổi số màn & id)."""
-    import copy
-
     lv = copy.deepcopy(template_level)
     lv["level_num"] = level_num
     lv["title"] = _level_title(level_num, topic)
@@ -233,6 +337,8 @@ def clone_level_from_template(
         nq = copy.deepcopy(q)
         nq["id"] = f"{base_id}_q{level_num}_{i + 1}"
         nq["question_type"] = nq.get("question_type") or template
+        if isinstance(nq.get("data"), dict):
+            nq["data"] = shuffle_question_data(nq["data"])
         questions.append(nq)
 
     lv["questions"] = questions or build_level(base_id, template, topic, level_num)["questions"]

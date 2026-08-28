@@ -102,9 +102,20 @@ def test_rbac_permissions(client, student_auth, teacher_auth, admin_auth):
     res_student = client.get("/api/admin/review/queue", headers=student_auth["headers"])
     assert res_student.status_code == 403
 
-    # Giáo viên gọi endpoint review -> 200 OK
+    # Giáo viên không được duyệt / xem hàng đợi kiểm duyệt -> 403
     res_teacher = client.get("/api/admin/review/queue", headers=teacher_auth["headers"])
-    assert res_teacher.status_code == 200
+    assert res_teacher.status_code == 403
+
+    res_teacher_decide = client.post(
+        "/api/admin/review/decide",
+        json={"gameId": "any", "action": "approve"},
+        headers=teacher_auth["headers"],
+    )
+    assert res_teacher_decide.status_code == 403
+
+    # Admin xem hàng đợi -> 200
+    res_admin_queue = client.get("/api/admin/review/queue", headers=admin_auth["headers"])
+    assert res_admin_queue.status_code == 200
 
     # Học sinh gọi reset custom games -> 403
     res_student_reset = client.post("/api/admin/games/reset", headers=student_auth["headers"])

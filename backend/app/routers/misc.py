@@ -29,6 +29,7 @@ def get_leaderboard(
             db.query(models.Attempt, models.User)
             .join(models.User, models.Attempt.user_id == models.User.id)
             .filter(models.Attempt.game_id == gameId)
+            .filter(models.User.role != "admin")
         )
 
         if grade is not None:

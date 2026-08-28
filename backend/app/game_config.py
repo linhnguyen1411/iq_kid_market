@@ -24,8 +24,10 @@ def is_level_free(level_num: int) -> bool:
     return 1 <= int(level_num) <= FREE_LEVEL_COUNT
 
 
-def can_access_level(level_num: int, is_purchased: bool) -> bool:
-    """Màn 1–5 luôn mở; màn 6+ cần đã mua game bằng ví."""
+def can_access_level(level_num: int, is_purchased: bool, *, is_admin_preview: bool = False) -> bool:
+    """Màn 1–5 luôn mở; màn 6+ cần đã mua. Admin chơi thử mở toàn bộ."""
+    if is_admin_preview:
+        return int(level_num) >= 1
     return is_level_free(level_num) or bool(is_purchased)
 
 

@@ -183,6 +183,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
     return {
         "success": True,
         "balance": wallet.balance,
+        "newBalance": wallet.balance,  # alias tương thích client cũ
         "purchases": purchases,
         "message": f'Chúc mừng bạn đã sở hữu thành công game "{game.title}"! 🎉',
     }

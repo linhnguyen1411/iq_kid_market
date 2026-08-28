@@ -1,6 +1,6 @@
 """
 Nạp dữ liệu khởi tạo vào Postgres:
-  - 3 user demo (u1 học sinh, u2 giáo viên, u3 phụ huynh) + ví + giao dịch, y hệt DEFAULT_STATE cũ của server.ts.
+  - User demo (học sinh, giáo viên, admin) + ví + giao dịch.
   - 5 game thật (100 màn chơi) + achievements + scratch courses, export nguyên vẹn từ seedData.ts -> seed_data.json,
     KHÔNG chép tay để tránh sai lệch nội dung tiếng Việt.
 
@@ -33,9 +33,9 @@ DEFAULT_USERS = [
     {"id": "u2", "username": "giao_vien_lan", "password_hash": hash_password("123456"),
      "name": "Cô Lan Anh 👩‍🏫", "role": "teacher", "grade": None, "avatar": "logic_owl",
      "xp": 450, "level": 5, "streak": 0},
-    {"id": "u3", "username": "phu_huynh_dung", "password_hash": hash_password("123456"),
-     "name": "Bố Tiến Dũng 👨‍💼", "role": "parent", "grade": None, "avatar": "cool_fox",
-     "xp": 0, "level": 1, "streak": 0},
+    {"id": "u3", "username": "kid_dung", "password_hash": hash_password("123456"),
+     "name": "Minh Dũng 🦊", "role": "student", "grade": 3, "avatar": "cool_fox",
+     "xp": 80, "level": 1, "streak": 1},
     {"id": "u_admin", "username": "admin", "password_hash": hash_password("123456"),
      "name": "Ban Quản Trị 🛡️", "role": "admin", "grade": None, "avatar": "brave_dragon",
      "xp": 0, "level": 1, "streak": 0},
@@ -44,7 +44,7 @@ DEFAULT_USERS = [
 DEFAULT_WALLETS = {
     "u1": {"balance": 90000, "tx": [("tx_1", 90000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
     "u2": {"balance": 500000, "tx": [("tx_2", 500000, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
-    "u3": {"balance": 1000000, "tx": [("tx_3", 1000000, "nạp tiền", "Ví ba mẹ liên kết", "2026-06-22T07:15:00Z")]},
+    "u3": {"balance": 1000000, "tx": [("tx_3", 1000000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T07:15:00Z")]},
     "u_admin": {"balance": 0, "tx": []},
 }
 
@@ -173,13 +173,25 @@ def ensure_admin_user(db: Session) -> None:
         if admin.role != "admin":
             admin.role = "admin"
             db.commit()
-        return
+    else:
+        admin_data = next(u for u in DEFAULT_USERS if u["username"] == "admin")
+        db.add(models.User(**admin_data))
+        db.add(models.Wallet(user_id="u_admin", balance=0))
+        db.commit()
+        print("[seed] Đã tạo tài khoản admin mặc định (admin / 123456).")
 
-    admin_data = next(u for u in DEFAULT_USERS if u["username"] == "admin")
-    db.add(models.User(**admin_data))
-    db.add(models.Wallet(user_id="u_admin", balance=0))
-    db.commit()
-    print("[seed] Đã tạo tài khoản admin mặc định (admin / 123456).")
+    # Migrate role phụ huynh → học sinh (ví xu thuộc học sinh)
+    parents = db.query(models.User).filter(models.User.role == "parent").all()
+    if parents:
+        for u in parents:
+            u.role = "student"
+            if u.grade is None:
+                u.grade = 1
+            if u.username == "phu_huynh_dung":
+                u.username = "kid_dung"
+                u.name = "Minh Dũng 🦊"
+        db.commit()
+        print(f"[seed] Đã chuyển {len(parents)} tài khoản phụ huynh → học sinh.")
 
 
 if __name__ == "__main__":

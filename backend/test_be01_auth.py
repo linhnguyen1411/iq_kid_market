@@ -161,17 +161,16 @@ def test_be01_all_scenarios():
         headers={"Authorization": f"Bearer {student_access_token}"}
     )
     assert res_student_forbidden.status_code == 403, f"Expected 403 but got {res_student_forbidden.status_code}"
-    print("   ✅ Học sinh bị chặn 403 khi cố truy cập API duyệt game của Admin/Giáo viên.")
+    print("   ✅ Học sinh bị chặn 403 khi cố truy cập API duyệt game của Admin.")
 
-    # Giáo viên gọi API duyệt game -> Cho phép qua lớp RBAC (nếu không có gameId thì 404, không được bị 403)
-    res_teacher_allowed = client.post(
+    # Giáo viên gọi API duyệt game -> cũng 403 (chỉ Admin được duyệt)
+    res_teacher_forbidden = client.post(
         "/api/admin/review/decide",
         json={"gameId": "non_existent_game", "action": "approve"},
         headers={"Authorization": f"Bearer {teacher_token}"}
     )
-    assert res_teacher_allowed.status_code in [200, 404], f"Expected 200/404 but got {res_teacher_allowed.status_code}"
-    assert res_teacher_allowed.status_code != 403
-    print("   ✅ Giáo viên vượt qua lớp kiểm tra RBAC thành công.")
+    assert res_teacher_forbidden.status_code == 403, f"Expected 403 but got {res_teacher_forbidden.status_code}"
+    print("   ✅ Giáo viên bị chặn 403 khi cố duyệt game.")
 
     # Học sinh cố tình gọi Reset All Games -> BẮT BUỘC 403 Forbidden
     res_student_reset = client.post(

@@ -87,3 +87,33 @@ def test_user_achievements(client, student_auth):
     first_ach = next((a for a in ach_list if a["id"] == "a1" or a["badge_code"] == "first_game"), None)
     assert first_ach is not None
     assert first_ach["unlocked"] is True
+
+
+def test_admin_preview_no_scoring(client, admin_auth, db_session):
+    """Admin chơi thử: mở màn trả phí, không ghi attempt / XP / xu."""
+    uid = admin_auth["user_id"]
+    user = db_session.get(models.User, uid)
+    xp_before = user.xp or 0
+    wallet = db_session.get(models.Wallet, uid)
+    balance_before = wallet.balance if wallet else 0
+    attempts_before = db_session.query(models.Attempt).filter_by(user_id=uid).count()
+
+    res = client.post("/api/attempts/submit", json={
+        "userId": uid,
+        "gameId": "g1",
+        "levelNum": 15,  # màn trả phí
+        "score": 100,
+        "completed": True,
+    }, headers=admin_auth["headers"])
+    assert res.status_code == 200
+    data = res.json()
+    assert data["success"] is True
+    assert data["xpAwarded"] == 0
+    assert data["coinReward"] == 0
+
+    db_session.refresh(user)
+    assert (user.xp or 0) == xp_before
+    if wallet:
+        db_session.refresh(wallet)
+        assert wallet.balance == balance_before
+    assert db_session.query(models.Attempt).filter_by(user_id=uid).count() == attempts_before

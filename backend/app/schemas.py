@@ -45,7 +45,7 @@ class RegisterIn(BaseModel):
     username: str
     password: str
     name: str
-    role: Optional[str] = "student"  # student | teacher | parent | creator | admin
+    role: Optional[str] = "student"  # student | teacher | creator | admin
     grade: Optional[int] = 1
     avatar: Optional[str] = "smile_tiger"
 
@@ -311,6 +311,7 @@ class SubmitAttemptOut(BaseModel):
     newLevel: int
     newStreak: int
     coinReward: int
+    newBalance: Optional[int] = None
     unlockedAchievements: list[dict]
     message: str
 

@@ -89,6 +89,22 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
 
+    # Admin chơi thử: mở mọi màn, không ghi attempt / XP / xu / quest / bảng xếp hạng
+    if user.role == "admin":
+        return {
+            "success": True,
+            "score": body.score,
+            "xpAwarded": 0,
+            "newXp": user.xp or 0,
+            "levelUp": False,
+            "newLevel": user.level or 1,
+            "newStreak": user.streak or 0,
+            "coinReward": 0,
+            "newBalance": user.wallet.balance if user.wallet else 0,
+            "unlockedAchievements": [],
+            "message": "Chế độ chơi thử Admin — không tính XP, xu hay bảng xếp hạng.",
+        }
+
     game = db.get(models.Game, body.gameId)
     if game:
         owned = (
@@ -179,6 +195,7 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
         "newLevel": user.level,
         "newStreak": new_streak,
         "coinReward": coin_reward,
+        "newBalance": wallet.balance if wallet else 0,
         "unlockedAchievements": unlocked_achievements,
         "message": message,
     }

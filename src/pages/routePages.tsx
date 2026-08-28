@@ -65,7 +65,7 @@ export function LeaderboardRoute() {
 
 export function WalletRoute() {
   const { user, authToken } = useAuth();
-  if (!authToken || user?.role !== 'parent') {
+  if (!authToken || user?.role !== 'student') {
     return <Navigate to={paths.home} replace />;
   }
   return <WalletPage />;

@@ -168,7 +168,6 @@ def require_roles(allowed_roles: list[str]) -> Callable:
                 "admin": "Quản Trị Viên",
                 "teacher": "Giáo Viên",
                 "creator": "Tác Giả Sáng Tạo",
-                "parent": "Phụ Huynh",
                 "student": "Học Sinh",
             }
             allowed_names = [role_names_vn.get(r, r) for r in allowed_roles]

@@ -190,23 +190,40 @@ def test_be03_games_cms_scenarios():
     assert res_put_level.status_code == 200
     print("   ✅ Cập nhật thông tin màn chơi thành công.")
 
-    # 6. TEST HÀNG ĐỢI KIỂM DUYỆT (REVIEW QUEUE & DECIDE)
-    print("6️⃣ [Test Hàng Đợi Kiểm Duyệt Giáo Án]...")
-    res_queue = client.get("/api/admin/review/queue", headers=headers_teacher)
+    # 6. TEST HÀNG ĐỢI KIỂM DUYỆT — chỉ Admin
+    print("6️⃣ [Test Hàng Đợi Kiểm Duyệt Giáo Án — chỉ Admin]...")
+    res_queue_teacher = client.get("/api/admin/review/queue", headers=headers_teacher)
+    assert res_queue_teacher.status_code == 403
+
+    res_approve_teacher = client.post(
+        "/api/admin/review/decide",
+        json={"gameId": custom_game_id, "action": "approve", "feedback": "Không được!"},
+        headers=headers_teacher,
+    )
+    assert res_approve_teacher.status_code == 403
+    print("   ✅ Giáo viên bị chặn 403 khi xem/duyệt hàng đợi.")
+
+    res_admin = client.post("/api/auth/login", json={
+        "username": "admin",
+        "password": "123456",
+    })
+    assert res_admin.status_code == 200
+    headers_admin = {"Authorization": f"Bearer {res_admin.json()['access_token']}"}
+
+    res_queue = client.get("/api/admin/review/queue", headers=headers_admin)
     assert res_queue.status_code == 200
     queue_games = res_queue.json()
     assert any(g["id"] == custom_game_id for g in queue_games)
 
-    # Duyệt game (approve)
     res_approve = client.post(
         "/api/admin/review/decide",
         json={"gameId": custom_game_id, "action": "approve", "feedback": "Game rất xuất sắc!"},
-        headers=headers_teacher,
+        headers=headers_admin,
     )
     assert res_approve.status_code == 200
     assert res_approve.json()["game"]["review_status"] == "approved"
     assert res_approve.json()["game"]["is_published"] is True
-    print("   ✅ Phê duyệt game thành công, game đã được kích hoạt xuất bản.")
+    print("   ✅ Admin phê duyệt game thành công, game đã được kích hoạt xuất bản.")
 
     # 7. TEST XÓA GAME (DELETE /api/admin/games/{id})
     print("7️⃣ [Test Xóa Game An Toàn]...")

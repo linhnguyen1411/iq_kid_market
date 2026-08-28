@@ -85,10 +85,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
 
   const fetchData = async () => {
     try {
-      const [statsData, queueData] = await Promise.all([
-        api.admin.getStats().catch(() => null),
-        api.admin.getReviewQueue().catch(() => []),
-      ]);
+      const statsPromise = api.admin.getStats().catch(() => null);
+      const queuePromise =
+        user?.role === 'admin'
+          ? api.admin.getReviewQueue().catch(() => [])
+          : Promise.resolve([]);
+      const [statsData, queueData] = await Promise.all([statsPromise, queuePromise]);
       if (statsData) setStats(statsData);
       setReviewQueue(
         (Array.isArray(queueData) ? queueData : []).filter(
@@ -102,11 +104,14 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     if (activeSubTab === 'ai_gen' && user && user.role !== 'admin') {
       setActiveSubTab('import_pack');
+    }
+    if (activeSubTab === 'review' && user && user.role !== 'admin') {
+      setActiveSubTab('my_games');
     }
   }, [activeSubTab, user]);
 
@@ -468,7 +473,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
           { id: 'import_pack' as const, label: 'Export / Import Pack', icon: <Upload className="w-4 h-4 text-teal-500" />, roles: ['admin', 'teacher', 'creator'] },
           { id: 'create' as const, label: 'Tạo Game Mới', icon: <PlusCircle className="w-4 h-4 text-indigo-500" />, roles: ['admin', 'teacher', 'creator'] },
           { id: 'levels' as const, label: 'Soạn Thảo Màn Chơi', icon: <BookOpen className="w-4 h-4 text-purple-500" />, roles: ['admin', 'teacher', 'creator'] },
-          { id: 'review' as const, label: `Kiểm Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4 text-rose-500" />, roles: ['admin', 'teacher'] },
+          { id: 'review' as const, label: `Kiểm Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4 text-rose-500" />, roles: ['admin'] },
           { id: 'my_games' as const, label: `Kho Game (${games.length})`, icon: <Brain className="w-4 h-4 text-cyan-500" />, roles: ['admin', 'teacher', 'creator'] },
         ] as const)
           .filter((tab) => tab.roles.includes((user?.role || '') as any))

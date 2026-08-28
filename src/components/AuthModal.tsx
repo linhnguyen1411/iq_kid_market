@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { 
   X, Sparkles, User, Lock, Eye, EyeOff, CheckCircle2, AlertCircle, 
-  GraduationCap, BookOpen, Heart, ArrowRight
+  GraduationCap, BookOpen, ArrowRight
 } from 'lucide-react';
 import { playSynthSound } from './game-engines/soundUtils';
 
@@ -47,8 +47,8 @@ const ROLES = [
     id: 'student',
     title: 'Bé Học Sinh',
     icon: GraduationCap,
-    desc: 'Giải Game IQ, học Scratch, leo Bảng Vàng',
-    badge: 'Tặng 90.000đ + 100 XP 🎁',
+    desc: 'Giải Game IQ, học Scratch, ví xu & leo Bảng Vàng',
+    badge: 'Tặng 90.000 xu + 100 XP 🎁',
     activeBorder: 'border-blue-500 bg-blue-50/70 text-blue-700',
   },
   {
@@ -56,16 +56,8 @@ const ROLES = [
     title: 'Thầy Cô / Creator',
     icon: BookOpen,
     desc: 'Sáng tạo Game IQ, khóa học Scratch & kiếm doanh thu',
-    badge: 'Tặng ví 500.000đ 🎨',
+    badge: 'Tặng ví 500.000 xu 🎨',
     activeBorder: 'border-purple-500 bg-purple-50/70 text-purple-700',
-  },
-  {
-    id: 'parent',
-    title: 'Ba Mẹ / Phụ Huynh',
-    icon: Heart,
-    desc: 'Nạp ví cho con, mua mở khóa game giáo dục & theo dõi',
-    badge: 'Tặng ví 1.000.000đ 👨‍👩‍👧',
-    activeBorder: 'border-emerald-500 bg-emerald-50/70 text-emerald-700',
   },
 ];
 
@@ -87,7 +79,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'student' | 'teacher' | 'parent'>('student');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [grade, setGrade] = useState('2');
   const [avatar, setAvatar] = useState('smile_tiger');
 
@@ -289,7 +281,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           key={r.id}
                           type="button"
                           onClick={() => {
-                            setRole(r.id as 'student' | 'teacher' | 'parent');
+                            setRole(r.id as 'student' | 'teacher');
                             playSynthSound('click');
                           }}
                           className={`relative flex min-w-0 flex-col justify-between rounded-2xl border-2 p-3 text-left transition-all ${
