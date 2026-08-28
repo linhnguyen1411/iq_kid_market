@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   ArrowLeft, Sparkles, Coins,
-  CheckCircle2, RefreshCw, ChevronRight, Lock,
+  CheckCircle2, RefreshCw, ChevronRight, Lock, ShieldCheck,
 } from 'lucide-react';
 import { Game, Level } from '../types';
 import QuestionRenderer from '../components/QuestionRenderer';
@@ -23,9 +23,11 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
   onRequestUnlock,
 }) => {
   const { user, wallet, purchases, updateUserStats, updateUserWallet } = useAuth();
-  const isPurchased = purchases.includes(game.id);
+  const isAdminPreview = user?.role === 'admin';
+  const isPurchased = isAdminPreview || purchases.includes(game.id);
+  const accessOpts = { isAdminPreview };
 
-  const safeInitial = canAccessLevel(initialLevelNum, isPurchased) ? initialLevelNum : 1;
+  const safeInitial = canAccessLevel(initialLevelNum, isPurchased, accessOpts) ? initialLevelNum : 1;
   const [currentLevelNum, setCurrentLevelNum] = useState(safeInitial);
   const [levelCompleted, setLevelCompleted] = useState(false);
   const [lockNotice, setLockNotice] = useState<string | null>(null);
@@ -62,9 +64,14 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           newStreak: res.newStreak,
           score,
         });
-        updateUserStats(res.xpAwarded, res.newLevel, res.newStreak);
-        if (res.coinReward > 0 && wallet) {
-          updateUserWallet((wallet.balance || 0) + res.coinReward);
+        if (!isAdminPreview) {
+          updateUserStats(res.xpAwarded, res.newLevel, res.newStreak);
+          const serverBal = Number((res as any).newBalance);
+          if (Number.isFinite(serverBal)) {
+            updateUserWallet(serverBal);
+          } else if (res.coinReward > 0 && wallet && Number.isFinite(Number(wallet.balance))) {
+            updateUserWallet(Number(wallet.balance) + res.coinReward);
+          }
         }
         setLevelCompleted(true);
       }
@@ -85,7 +92,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
       onBack();
       return;
     }
-    if (!canAccessLevel(nextNum, isPurchased)) {
+    if (!canAccessLevel(nextNum, isPurchased, accessOpts)) {
       setLockNotice(
         `Màn ${nextNum}+ cần mở khóa bằng ví. Chỉ ${FREE_LEVEL_COUNT} màn đầu miễn phí.`,
       );
@@ -104,7 +111,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
   };
 
   const hasNextLevel = levels.some((l) => l.level_num === currentLevelNum + 1);
-  const nextIsLocked = hasNextLevel && !canAccessLevel(currentLevelNum + 1, isPurchased);
+  const nextIsLocked = hasNextLevel && !canAccessLevel(currentLevelNum + 1, isPurchased, accessOpts);
 
   return (
     <div className="max-w-4xl mx-auto flex flex-col gap-6">
@@ -121,15 +128,37 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           <h2 className="text-sm font-black text-slate-800 line-clamp-1">{game.title}</h2>
           <span className="text-[10px] font-mono font-bold text-indigo-600">
             Màn {currentLevelNum} / {levels.length} • {currentLevel?.title || 'Màn chơi'}
-            {currentLevelNum <= FREE_LEVEL_COUNT ? ' • Free' : ''}
+            {isAdminPreview
+              ? ' • Admin preview'
+              : currentLevelNum <= FREE_LEVEL_COUNT
+                ? ' • Free'
+                : ''}
           </span>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          <span>+{currentLevel?.xp_reward || 80} XP</span>
+          {isAdminPreview ? (
+            <>
+              <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="text-indigo-700">Không tính điểm</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>+{currentLevel?.xp_reward || 80} XP</span>
+            </>
+          )}
         </div>
       </div>
+
+      {isAdminPreview && (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs font-bold text-indigo-800 flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 shrink-0" />
+          <span>
+            Chế độ chơi thử Admin — mở toàn bộ màn, không trừ xu, không ghi XP / bảng xếp hạng.
+          </span>
+        </div>
+      )}
 
       {lockNotice && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
@@ -137,7 +166,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
             <Lock className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{lockNotice}</span>
           </div>
-          {onRequestUnlock && game.price > 0 && (
+          {onRequestUnlock && game.price > 0 && !isAdminPreview && (
             <button
               type="button"
               onClick={() => onRequestUnlock(game)}
@@ -158,8 +187,8 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
                 points: currentLevel.questions[0].points ?? 25,
               } as any}
               levelNum={currentLevelNum}
-              xpReward={currentLevel.xp_reward || 80}
-              coinReward={currentLevel.coin_reward || 20}
+              xpReward={isAdminPreview ? 0 : currentLevel.xp_reward || 80}
+              coinReward={isAdminPreview ? 0 : currentLevel.coin_reward || 20}
               onSuccess={handleLevelComplete}
               onBack={onBack}
             />
@@ -176,35 +205,41 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
           </div>
 
           <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            HOÀN THÀNH XUẤT SẮC!
+            {isAdminPreview ? 'HOÀN THÀNH (CHƠI THỬ)' : 'HOÀN THÀNH XUẤT SẮC!'}
           </span>
 
           <h3 className="text-2xl font-black text-slate-800 mt-2 mb-1">
-            Chúc mừng bạn đã vượt qua Màn {currentLevelNum}!
+            {isAdminPreview
+              ? `Đã xem thử Màn ${currentLevelNum}`
+              : `Chúc mừng bạn đã vượt qua Màn ${currentLevelNum}!`}
           </h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
-            Bạn đã rèn luyện phản xạ tư duy logic tuyệt vời. Hãy giữ vững phong độ!
+            {isAdminPreview
+              ? 'Không cộng XP / xu / bảng xếp hạng. Có thể sang màn tiếp để kiểm tra nội dung.'
+              : 'Bạn đã rèn luyện phản xạ tư duy logic tuyệt vời. Hãy giữ vững phong độ!'}
           </p>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto mb-8">
-            <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
-              <Sparkles className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Kinh nghiệm</span>
-              <span className="text-sm font-black text-indigo-700">+{attemptResult?.xpAwarded || 80} XP</span>
-            </div>
+          {!isAdminPreview && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto mb-8">
+              <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <Sparkles className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Kinh nghiệm</span>
+                <span className="text-sm font-black text-indigo-700">+{attemptResult?.xpAwarded || 80} XP</span>
+              </div>
 
-            <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
-              <Coins className="w-5 h-5 text-amber-600 mx-auto mb-1" />
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Thưởng ví</span>
-              <span className="text-sm font-black text-amber-700">+{attemptResult?.coinReward || 20} xu</span>
-            </div>
+              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
+                <Coins className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Thưởng ví</span>
+                <span className="text-sm font-black text-amber-700">+{attemptResult?.coinReward || 20} xu</span>
+              </div>
 
-            <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100 col-span-2 sm:col-span-1">
-              <span className="text-lg block mb-0.5">🔥</span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase block">Chuỗi ngày</span>
-              <span className="text-sm font-black text-rose-700">{attemptResult?.newStreak || user?.streak || 1} ngày</span>
+              <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100 col-span-2 sm:col-span-1">
+                <span className="text-lg block mb-0.5">🔥</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Chuỗi ngày</span>
+                <span className="text-sm font-black text-rose-700">{attemptResult?.newStreak || user?.streak || 1} ngày</span>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto">
             <button

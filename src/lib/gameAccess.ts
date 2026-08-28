@@ -21,8 +21,16 @@ export function isLevelFree(levelNum: number): boolean {
   return levelNum >= 1 && levelNum <= FREE_LEVEL_COUNT;
 }
 
-/** Màn 1–5 luôn chơi được; màn 6+ cần đã mua/mở khóa bằng ví. */
-export function canAccessLevel(levelNum: number, isPurchased: boolean): boolean {
+/**
+ * Màn 1–5 luôn chơi được; màn 6+ cần đã mua.
+ * Admin chơi thử: mở toàn bộ màn, không cần nạp xu.
+ */
+export function canAccessLevel(
+  levelNum: number,
+  isPurchased: boolean,
+  options?: { isAdminPreview?: boolean },
+): boolean {
+  if (options?.isAdminPreview) return levelNum >= 1;
   return isLevelFree(levelNum) || isPurchased;
 }
 

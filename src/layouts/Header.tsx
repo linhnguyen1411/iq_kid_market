@@ -17,7 +17,7 @@ export const Header: React.FC = () => {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isLoggedIn = Boolean(authToken && user);
-  const isParent = user?.role === 'parent';
+  const isStudent = user?.role === 'student';
   const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export const Header: React.FC = () => {
   const roleLabel =
     user?.role === 'student' ? 'Học sinh' :
     user?.role === 'teacher' ? 'Giáo viên' :
-    user?.role === 'parent' ? 'Phụ huynh' :
+    user?.role === 'creator' ? 'Creator' :
     user?.role === 'admin' ? 'Quản trị' :
     'Thành viên';
 
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
                 <span className="text-[10px] text-indigo-400 font-normal">({user!.xp || 0} XP)</span>
               </Link>
 
-              {isParent && (
+              {isStudent && (
                 <Link
                   to={paths.wallet}
                   title="Ví xu của bạn - Bấm để nạp thêm"
@@ -145,7 +145,7 @@ export const Header: React.FC = () => {
                       <span>Hồ sơ cá nhân & Đổi mật khẩu</span>
                     </Link>
 
-                    {isParent && (
+                    {isStudent && (
                       <Link
                         to={paths.wallet}
                         onClick={() => setIsProfileDropdownOpen(false)}

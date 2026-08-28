@@ -15,7 +15,7 @@ export default function TechArchBoard() {
   username varchar(50) [unique]
   email varchar(100) [unique]
   hashed_password varchar(255)
-  role varchar(20) # student, parent, teacher, admin
+  role varchar(20) # student, teacher, creator, admin
   created_at timestamp
 }
 

@@ -75,6 +75,13 @@ def test_review_queue_approve_reject(client, teacher_auth, admin_auth, db_sessio
     db_session.add(game)
     db_session.commit()
 
+    # Giáo viên không được duyệt
+    res_teacher = client.post("/api/admin/review/decide", json={
+        "gameId": "pending_game_pytest",
+        "action": "approve",
+    }, headers=teacher_auth["headers"])
+    assert res_teacher.status_code == 403
+
     # Admin duyệt game
     res_approve = client.post("/api/admin/review/decide", json={
         "gameId": "pending_game_pytest",

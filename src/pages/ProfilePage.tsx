@@ -176,7 +176,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-1.5">
             <h2 className="text-2xl md:text-3xl font-black tracking-tight">{user?.name}</h2>
             <span className="px-3 py-0.5 rounded-full text-[10px] font-extrabold bg-white/20 uppercase tracking-widest border border-white/30 backdrop-blur-xs">
-              {user?.role === 'student' ? 'Học Sinh VIP' : user?.role === 'teacher' ? 'Thầy Cô / Creator' : user?.role === 'parent' ? 'Phụ Huynh' : user?.role === 'admin' ? 'Quản Trị Viên' : 'Thành Viên'}
+              {user?.role === 'student' ? 'Học Sinh VIP' : user?.role === 'teacher' ? 'Thầy Cô / Creator' : user?.role === 'creator' ? 'Creator' : user?.role === 'admin' ? 'Quản Trị Viên' : 'Thành Viên'}
             </span>
           </div>
 

@@ -176,7 +176,9 @@ export const GameDetailModal: React.FC<GameDetailModalProps> = ({
             className="flex-1 py-3.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
           >
             <Play className="w-4 h-4 fill-white" />
-            <span>CHƠI {FREE_LEVEL_COUNT} MÀN FREE 🚀</span>
+            <span>
+              {isPurchased ? 'CHƠI TẤT CẢ MÀN 🚀' : `CHƠI ${FREE_LEVEL_COUNT} MÀN FREE 🚀`}
+            </span>
           </button>
 
           {needsUnlock && (

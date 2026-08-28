@@ -129,7 +129,13 @@ export const api = {
     getGameById: (gameId: string) => apiRequest<Game>(`/games/${gameId}`),
 
     purchaseGame: (userId: string, gameId: string) =>
-      apiRequest<{ success: boolean; newBalance: number; message: string }>('/games/purchase', {
+      apiRequest<{
+        success: boolean;
+        balance: number;
+        newBalance?: number;
+        purchases?: string[];
+        message: string;
+      }>('/games/purchase', {
         method: 'POST',
         body: JSON.stringify({ userId, gameId }),
       }),
@@ -152,6 +158,7 @@ export const api = {
         newLevel: number;
         levelUp: boolean;
         coinReward: number;
+        newBalance?: number;
         newStreak: number;
         unlockedAchievements: any[];
       }>('/attempts/submit', {

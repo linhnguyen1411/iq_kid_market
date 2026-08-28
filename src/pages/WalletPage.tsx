@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export const WalletPage: React.FC = () => {
-  const { user, wallet, updateUserWallet, authToken, openAuthModal } = useAuth();
+  const { user, wallet, updateUserWallet, refreshSession, authToken, openAuthModal } = useAuth();
 
   const [topupAmount, setTopupAmount] = useState<number>(50000);
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,11 @@ export const WalletPage: React.FC = () => {
     try {
       const res = await api.wallet.confirmTopup(user.id, topupIntent.tx_id, topupIntent.amount);
       if (res.success) {
-        updateUserWallet(res.balance);
+        const nextBal = Number(res.balance);
+        if (Number.isFinite(nextBal)) {
+          updateUserWallet(nextBal);
+        }
+        await refreshSession();
         setShowQRModal(false);
         setTopupIntent(null);
         setFeedbackMsg({ type: 'success', message: res.message || 'Đã nạp tiền thành công vào ví!' });

@@ -312,7 +312,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
           {/* Games Card Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {filteredAndSortedGames.map((game) => {
-              const isBought = purchases.includes(game.id);
+              const isBought = user?.role === 'admin' || purchases.includes(game.id);
 
               return (
                 <GameCard
@@ -350,13 +350,14 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       {detailGame && (
         <GameDetailModal
           game={detailGame}
-          isPurchased={purchases.includes(detailGame.id)}
+          isPurchased={user?.role === 'admin' || purchases.includes(detailGame.id)}
           onClose={() => setDetailGame(null)}
           onPlayGame={(g, lvl) => {
             setDetailGame(null);
             onPlayGame(g, lvl);
           }}
           onInitiatePurchase={(g) => {
+            if (user?.role === 'admin') return;
             setDetailGame(null);
             setPurchaseGame(g);
           }}
@@ -364,7 +365,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       )}
 
       {/* 5. One-Click Purchase Checkout Modal */}
-      {purchaseGame && (
+      {purchaseGame && user?.role !== 'admin' && (
         <PurchaseModal
           game={purchaseGame}
           onClose={() => setPurchaseGame(null)}

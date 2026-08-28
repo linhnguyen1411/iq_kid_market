@@ -69,7 +69,13 @@ def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
     user_id = f"u_{int(time.time() * 1000)}_{uuid.uuid4().hex[:4]}"
 
     # Phân bổ quà tặng khởi đầu theo vai trò
-    role = body.role if body.role in ["student", "teacher", "parent", "creator", "admin"] else "student"
+    # Phân bổ quà tặng khởi đầu theo vai trò (không còn role phụ huynh)
+    if (body.role or "").strip().lower() == "parent":
+        raise HTTPException(
+            status_code=400,
+            detail="Vai trò phụ huynh đã ngừng hỗ trợ. Vui lòng đăng ký tài khoản học sinh (có ví xu).",
+        )
+    role = body.role if body.role in ["student", "teacher", "creator", "admin"] else "student"
     initial_balance = 90000 if role == "student" else (500000 if role in ["teacher", "creator"] else 1000000)
     initial_xp = 100 if role == "student" else 0
 

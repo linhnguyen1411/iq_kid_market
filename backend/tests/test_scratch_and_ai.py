@@ -85,12 +85,21 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     assert body["success"] is True
     assert body["count"] == 1
 
-    # Import 1 câu → lưu DB đủ 20 màn (kiểm qua hàng đợi duyệt của teacher)
-    res_queue = client.get("/api/admin/review/queue?status=pending_review", headers=headers)
-    assert res_queue.status_code == 200
-    imported = next((g for g in res_queue.json() if g["id"] == sample["id"]), None)
-    assert imported is not None
-    assert len(imported["levels"]) == 20
+    # Import 1 câu → lưu DB đủ 20 màn; teacher không xem được hàng đợi duyệt
+    res_queue_teacher = client.get("/api/admin/review/queue?status=pending_review", headers=headers)
+    assert res_queue_teacher.status_code == 403
+
+    res_detail = client.get(f"/api/games/{sample['id']}")
+    assert res_detail.status_code == 200
+    detail = res_detail.json()
+    assert len(detail["levels"]) == 20
+    assert detail["review_status"] == "pending_review"
+
+    # Đáp án đã được xáo — answer vẫn khớp một option
+    q0 = detail["levels"][0]["questions"][0]
+    opts = q0["data"]["options"]
+    assert isinstance(opts, list) and len(opts) >= 2
+    assert q0["data"]["answer"] in opts
 
     # Scratch (media/scene) không cho import text-pack
     res_bad = client.get(
@@ -98,3 +107,27 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
         headers=headers,
     )
     assert res_bad.status_code == 400
+
+
+def test_shuffle_question_data_keeps_correct_answer():
+    from app.ai_content import shuffle_question_data
+
+    data = {
+        "options": ["Đúng", "Sai 1", "Sai 2", "Sai 3"],
+        "answer": "Đúng",
+    }
+    # Chạy nhiều lần để chắc vẫn resolve đúng sau shuffle
+    for _ in range(20):
+        out = shuffle_question_data(data)
+        assert out["answer"] in out["options"]
+        assert "Đúng" in out["options"]
+        assert out["answer"] == "Đúng"
+
+    # answer dạng chữ cái A
+    lettered = {
+        "options": ["A. Đáp án đúng", "B. Sai", "C. Sai", "D. Sai"],
+        "answer": "A",
+    }
+    out2 = shuffle_question_data(lettered)
+    assert out2["answer"] == "A. Đáp án đúng"
+    assert out2["answer"] in out2["options"]

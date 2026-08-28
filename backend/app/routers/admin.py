@@ -13,6 +13,7 @@ from ..ai_content import (
     is_content_safe_for_kids,
     ensure_level_count,
     build_compact_sample_pack,
+    shuffle_levels_answers,
 )
 from ..game_config import (
     DEFAULT_UNLOCK_PRICE,
@@ -369,6 +370,8 @@ def upload_games(
                 count=target_count,
                 level_template=level_template,
             )
+            # Xáo đáp án mỗi màn (kể cả màn đã có sẵn trong JSON) — tránh đáp án luôn ở vị trí cố định
+            levels = shuffle_levels_answers(levels)
 
             # Validate question data theo schema engine
             for lv in levels:
@@ -573,10 +576,10 @@ def reset_custom_games(
 @router.get("/review/queue")
 def get_review_queue(
     status: str | None = "pending_review",
-    current_user: models.User = Depends(require_roles(["admin", "teacher"])),
+    current_user: models.User = Depends(require_roles(["admin"])),
     db: Session = Depends(get_db),
 ):
-    """Hàng đợi kiểm duyệt: mặc định chỉ game đang chờ duyệt (pending_review)."""
+    """Hàng đợi kiểm duyệt: chỉ Admin. Mặc định chỉ game đang chờ duyệt (pending_review)."""
     q = db.query(models.Game).filter(models.Game.is_seed == False)  # noqa: E712
     # Default pending_review so approved/rejected games leave the review queue.
     effective = (status or "pending_review").strip()
@@ -589,10 +592,10 @@ def get_review_queue(
 @router.post("/review/decide")
 def decide_review(
     body: schemas.ReviewDecideIn,
-    current_user: models.User = Depends(require_roles(["admin", "teacher"])),
+    current_user: models.User = Depends(require_roles(["admin"])),
     db: Session = Depends(get_db),
 ):
-    """Chỉ Admin hoặc Teacher mới có quyền phê duyệt hoặc từ chối game."""
+    """Chỉ Admin mới có quyền phê duyệt hoặc từ chối game."""
     game = db.query(models.Game).filter(
         models.Game.id == body.gameId, models.Game.is_seed == False  # noqa: E712
     ).first()

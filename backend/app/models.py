@@ -15,7 +15,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=True)  # Hash mật khẩu an toàn bằng bcrypt
     name = Column(String(150), nullable=False)
-    role = Column(String(20), nullable=False, default="student", index=True)  # student|teacher|parent|creator|admin
+    role = Column(String(20), nullable=False, default="student", index=True)  # student|teacher|creator|admin
     grade = Column(Integer, nullable=True, index=True)
     avatar = Column(String(50), default="smile_tiger")
     xp = Column(Integer, default=0, index=True)

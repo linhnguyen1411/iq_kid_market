@@ -23,7 +23,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSelectGame,
   onViewLeaderboard,
 }) => {
-  const { purchases } = useAuth();
+  const { purchases, user } = useAuth();
 
   const categories = [
     { code: 'iq', label: 'PHÁT TRIỂN IQ COGNITIVE', count: '40 Màn Chơi', color: 'from-sky-400 to-blue-500', icon: <Brain className="w-6 h-6" /> },
@@ -128,7 +128,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {games.slice(0, 4).map((game) => {
-              const isBought = purchases.includes(game.id);
+              const isBought = user?.role === 'admin' || purchases.includes(game.id);
 
               return (
                 <div

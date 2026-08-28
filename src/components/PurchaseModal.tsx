@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, Coins, CheckCircle2, AlertCircle, 
   CreditCard, Sparkles, Play, ArrowRight 
@@ -21,14 +21,20 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
   onSuccess,
   onNavigateToWallet,
 }) => {
-  const { user, wallet, addPurchase, updateUserWallet, openAuthModal } = useAuth();
+  const { user, wallet, addPurchase, updateUserWallet, refreshSession, openAuthModal } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isPurchasedSuccess, setIsPurchasedSuccess] = useState(false);
 
-  const currentBalance = wallet?.balance || 0;
-  const remainingBalance = currentBalance - game.price;
+  // Đồng bộ số dư thật từ server mỗi lần mở modal mua
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
+
+  const currentBalance = Number(wallet?.balance);
+  const safeBalance = Number.isFinite(currentBalance) ? currentBalance : 0;
+  const remainingBalance = safeBalance - game.price;
   const isBalanceEnough = remainingBalance >= 0;
 
   const handleConfirmPurchase = async () => {
@@ -49,12 +55,19 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
       if (res.success) {
         playSynthSound('victory');
         addPurchase(game.id);
-        updateUserWallet(res.newBalance);
+        // Server trả `balance` (chuẩn) — không dùng cộng trừ local
+        const nextBal = Number(res.balance ?? res.newBalance);
+        if (Number.isFinite(nextBal)) {
+          updateUserWallet(nextBal);
+        }
+        await refreshSession();
         setIsPurchasedSuccess(true);
       }
     } catch (err: any) {
       playSynthSound('incorrect');
       setErrorMsg(err.message || 'Giao dịch mua game thất bại!');
+      // Đồng bộ lại số dư thật từ server khi mua thất bại (tránh UI stale)
+      await refreshSession().catch(() => undefined);
     } finally {
       setLoading(false);
     }
@@ -95,7 +108,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs mb-4">
               <div className="flex items-center justify-between text-slate-600">
                 <span>Số dư ví hiện tại:</span>
-                <span className="font-mono font-bold text-slate-800">{currentBalance.toLocaleString('vi-VN')} xu</span>
+                <span className="font-mono font-bold text-slate-800">{safeBalance.toLocaleString('vi-VN')} xu</span>
               </div>
 
               <div className="flex items-center justify-between text-slate-600">

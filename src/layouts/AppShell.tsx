@@ -67,7 +67,7 @@ export function AppShell() {
   );
 
   const goWallet = useCallback(() => {
-    if (user?.role === 'parent') navigate(paths.wallet);
+    if (user?.role === 'student') navigate(paths.wallet);
   }, [navigate, user?.role]);
 
   const value = useMemo(
