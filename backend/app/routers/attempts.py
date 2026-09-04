@@ -10,23 +10,101 @@ from ..game_config import can_access_level, FREE_LEVEL_COUNT
 router = APIRouter(tags=["attempts"])
 
 
+def _game_level_nums(game: models.Game | None) -> set[int]:
+    """Tập số màn trong game (level_num)."""
+    if not game or not isinstance(game.levels, list) or not game.levels:
+        return set()
+    nums: set[int] = set()
+    for i, lv in enumerate(game.levels):
+        if not isinstance(lv, dict):
+            continue
+        raw = lv.get("level_num")
+        nums.add(int(raw) if raw is not None else i + 1)
+    return nums
+
+
+def _game_completion_rewards(game: models.Game) -> tuple[int, int]:
+    """Tổng XP / xu thưởng khi hoàn thành toàn bộ game (chỉ cộng 1 lần)."""
+    xp_total = 0
+    coin_total = 0
+    for lv in game.levels or []:
+        if not isinstance(lv, dict):
+            continue
+        xp_total += int(lv.get("xp_reward") or 80)
+        coin_total += int(lv.get("coin_reward") or 20)
+    return xp_total, coin_total
+
+
+def _completed_level_nums(db: Session, user_id: str, game_id: str) -> set[int]:
+    rows = (
+        db.query(models.Attempt.level_num)
+        .filter(
+            models.Attempt.user_id == user_id,
+            models.Attempt.game_id == game_id,
+            models.Attempt.completed == True,  # noqa: E712
+        )
+        .distinct()
+        .all()
+    )
+    return {int(r[0]) for r in rows}
+
+
 def check_and_unlock_achievements(user: models.User, db: Session) -> list[dict]:
     """
-    Kiểm tra và tự động mở khóa các danh hiệu thành tích (Achievements) khi thỏa điều kiện.
+    Mở khóa danh hiệu theo badge_code thật trong seed (không map nhầm theo id a1/a2…).
+
+    - math_pro / memory_master / logic_king / real_iq_expert: clear hết màn game tương ứng
+    - scratch_wizard: hoàn thành đủ bài trong khóa Scratch
+    - daily_hunter: streak >= 3
     """
-    existing_unlocked = {ua.achievement_id for ua in db.query(models.UserAchievement).filter_by(user_id=user.id).all()}
+    existing_unlocked = {
+        ua.achievement_id
+        for ua in db.query(models.UserAchievement).filter_by(user_id=user.id).all()
+    }
     all_achievements = db.query(models.Achievement).all()
 
-    # Đếm số màn chơi hoàn thành
-    completed_attempts_count = db.query(models.Attempt).filter_by(user_id=user.id, completed=True).count()
+    # badge_code -> game_id cần clear toàn bộ
+    game_clear_badges = {
+        "math_pro": "g2",          # Truy Tìm Quy Luật
+        "memory_master": "g3",     # Vua Ghi Nhớ
+        "logic_king": "g1",        # Ghép Cặp Thần Tốc
+        "real_iq_expert": "g_iq_thuc_te",
+    }
 
-    # Đếm số màn chơi khác nhau
-    distinct_levels_count = (
-        db.query(models.Attempt.game_id, models.Attempt.level_num)
-        .filter(models.Attempt.user_id == user.id, models.Attempt.completed == True)  # noqa: E712
-        .distinct()
-        .count()
-    )
+    cleared_cache: dict[str, bool] = {}
+
+    def has_cleared_game(game_id: str) -> bool:
+        if game_id not in cleared_cache:
+            game = db.get(models.Game, game_id)
+            required = _game_level_nums(game)
+            if not required:
+                cleared_cache[game_id] = False
+            else:
+                done = _completed_level_nums(db, user.id, game_id)
+                cleared_cache[game_id] = required.issubset(done)
+        return cleared_cache[game_id]
+
+    def has_finished_scratch() -> bool:
+        courses = db.query(models.ScratchCourse).all()
+        if not courses:
+            return False
+        for course in courses:
+            lessons = (
+                db.query(models.ScratchLesson)
+                .filter_by(course_id=course.id)
+                .all()
+            )
+            if not lessons:
+                continue
+            done = {
+                p.lesson_id
+                for p in db.query(models.UserScratchProgress)
+                .filter_by(user_id=user.id, completed=True)
+                .all()
+            }
+            if all(l.id in done for l in lessons):
+                return True
+        return False
 
     new_unlocked = []
 
@@ -34,24 +112,16 @@ def check_and_unlock_achievements(user: models.User, db: Session) -> list[dict]:
         if ach.id in existing_unlocked:
             continue
 
+        code = (ach.badge_code or "").strip().lower()
         should_unlock = False
 
-        # 1. Trò chơi đầu tiên
-        if (ach.badge_code == "first_game" or ach.id == "a1") and completed_attempts_count >= 1:
-            should_unlock = True
-        # 2. Chuỗi ngày học
-        elif (ach.badge_code == "streak_3" or ach.id == "a2") and (user.streak or 0) >= 3:
-            should_unlock = True
-        elif (ach.badge_code == "streak_7" or ach.id == "a3") and (user.streak or 0) >= 7:
-            should_unlock = True
-        # 3. Mốc Kinh nghiệm XP
-        elif (ach.badge_code == "xp_500" or ach.id == "a4") and user.xp >= 500:
-            should_unlock = True
-        elif (ach.badge_code == "xp_1000" or ach.id == "a5") and user.xp >= 1000:
-            should_unlock = True
-        # 4. Master 5 màn chơi
-        elif (ach.badge_code == "master_5" or ach.id == "a6") and distinct_levels_count >= 5:
-            should_unlock = True
+        if code in game_clear_badges:
+            should_unlock = has_cleared_game(game_clear_badges[code])
+        elif code == "scratch_wizard":
+            should_unlock = has_finished_scratch()
+        elif code == "daily_hunter":
+            should_unlock = (user.streak or 0) >= 3
+        # Không unlock theo id a1/a2… — seed badge khác với milestone first_game/xp_500 cũ
 
         if should_unlock:
             ts = int(time.time() * 1000)
@@ -62,13 +132,15 @@ def check_and_unlock_achievements(user: models.User, db: Session) -> list[dict]:
                 unlocked_at=datetime.utcnow(),
             )
             db.add(ua)
-            user.xp += ach.xp_bonus or 100  # Thưởng thêm XP khi mở khóa danh hiệu
+            bonus = int(ach.xp_bonus or 100)
+            user.xp = (user.xp or 0) + bonus
+            user.level = ((user.xp or 0) // XP_PER_LEVEL) + 1
             new_unlocked.append({
                 "id": ach.id,
                 "title": ach.title,
                 "badge_code": ach.badge_code,
                 "icon": ach.icon or "🏆",
-                "xp_bonus": ach.xp_bonus or 100,
+                "xp_bonus": bonus,
                 "description": ach.description,
             })
 
@@ -79,11 +151,11 @@ def check_and_unlock_achievements(user: models.User, db: Session) -> list[dict]:
 def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db)):
     """
     Nộp điểm màn chơi:
-    1. Ghi nhận bản ghi Attempt.
-    2. Cộng điểm kinh nghiệm XP & tính cấp độ Level.
-    3. Thưởng xu vào ví học sinh.
-    4. Cập nhật chuỗi ngày học liên tục (Daily Streak).
-    5. Tự động kiểm tra và mở khóa danh hiệu thành tích.
+    1. Ghi nhận bản ghi Attempt (mọi lượt chơi / chơi lại).
+    2. XP & xu chỉ cộng **1 lần / game**, khi hoàn thành **toàn bộ** màn lần đầu.
+       Chơi lại không được tính thêm điểm.
+    3. Cập nhật chuỗi ngày học (Daily Streak) và nhiệm vụ ngày.
+    4. Tự động kiểm tra và mở khóa danh hiệu thành tích.
     """
     user = db.get(models.User, body.userId)
     if not user:
@@ -103,6 +175,8 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
             "newBalance": user.wallet.balance if user.wallet else 0,
             "unlockedAchievements": [],
             "message": "Chế độ chơi thử Admin — không tính XP, xu hay bảng xếp hạng.",
+            "gameCleared": False,
+            "alreadyRewarded": False,
         }
 
     game = db.get(models.Game, body.gameId)
@@ -122,10 +196,14 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
                 ),
             )
 
+    required_levels = _game_level_nums(game)
+    prior_completed = _completed_level_nums(db, body.userId, body.gameId)
+    had_full_clear = bool(required_levels) and required_levels.issubset(prior_completed)
+
     now_dt = datetime.utcnow()
     now_ts = int(time.time() * 1000)
 
-    # 1. Ghi nhận lượt chơi
+    # 1. Ghi nhận lượt chơi (kể cả chơi lại)
     attempt = models.Attempt(
         id=f"att_{now_ts}",
         user_id=body.userId,
@@ -142,47 +220,70 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
     if body.completed:
         update_quest_progress(db, body.userId, "play_count")
         if body.score >= 100:
-            game = db.get(models.Game, body.gameId)
             if game and (game.category or "iq").lower() in {"iq", "math", "toán", "toan"}:
                 update_quest_progress(db, body.userId, "score_reach")
         unlock_daily_spin(db, body.userId)
 
-    # 2. Tính toán điểm kinh nghiệm XP & Level
-    if body.completed:
-        xp_reward = max(body.score, 50) + (body.levelNum * 10)
-    else:
-        xp_reward = 10
+    # 2. XP / xu: chỉ khi clear toàn bộ màn lần đầu
+    now_completed = prior_completed | ({body.levelNum} if body.completed else set())
+    first_full_clear = (
+        bool(body.completed)
+        and bool(required_levels)
+        and required_levels.issubset(now_completed)
+        and not had_full_clear
+        and game is not None
+    )
 
-    user.xp = (user.xp or 0) + xp_reward
+    xp_reward = 0
+    coin_reward = 0
+    if first_full_clear:
+        xp_reward, coin_reward = _game_completion_rewards(game)
+
     old_level = user.level or 1
-    user.level = (user.xp // XP_PER_LEVEL) + 1
-    level_up = user.level > old_level
+    if xp_reward:
+        user.xp = (user.xp or 0) + xp_reward
+        user.level = (user.xp // XP_PER_LEVEL) + 1
+    level_up = (user.level or 1) > old_level
 
-    # 3. Thưởng xu vào ví học sinh
-    coin_reward = 20 if body.completed else 5
     wallet = user.wallet
-    if wallet:
+    if coin_reward and wallet:
         wallet.balance += coin_reward
         tx = models.WalletTransaction(
             id=f"tx_rew_{now_ts}",
             wallet_user_id=wallet.user_id,
             amount=coin_reward,
             type="thưởng chơi game",
-            detail=f"Thưởng hoàn thành Màn {body.levelNum} (+{coin_reward} xu)",
+            detail=f"Thưởng hoàn thành toàn bộ game {body.gameId} (+{coin_reward} xu)",
             created_at=now_dt,
         )
         db.add(tx)
 
-    # 4. Cập nhật Daily Streak
+    # 3. Cập nhật Daily Streak (hoạt động học trong ngày)
     new_streak = update_daily_streak(user, now_dt)
 
-    # 5. Kiểm tra và mở khóa Danh hiệu thành tích
+    # 4. Kiểm tra và mở khóa Danh hiệu thành tích
     unlocked_achievements = check_and_unlock_achievements(user, db)
 
     db.commit()
     db.refresh(user)
 
-    message = f"Hoàn thành màn chơi! Nhận +{xp_reward} XP và +{coin_reward} xu 🎉"
+    if first_full_clear:
+        message = (
+            f"Hoàn thành toàn bộ game! Nhận +{xp_reward} XP và +{coin_reward} xu 🎉"
+        )
+    elif had_full_clear:
+        message = "Bạn đã nhận thưởng game này rồi. Chơi lại không tính thêm điểm."
+    elif body.completed:
+        remaining = len(required_levels - now_completed) if required_levels else 0
+        message = (
+            f"Hoàn thành màn {body.levelNum}! "
+            f"Còn {remaining} màn nữa để nhận XP (chỉ tính 1 lần / game)."
+            if remaining
+            else f"Hoàn thành màn {body.levelNum}!"
+        )
+    else:
+        message = "Đã ghi nhận lượt chơi."
+
     if level_up:
         message += f" Chúc mừng bé đã thăng lên Cấp {user.level}! 🌟"
 
@@ -198,6 +299,8 @@ def submit_attempt(body: schemas.SubmitAttemptIn, db: Session = Depends(get_db))
         "newBalance": wallet.balance if wallet else 0,
         "unlockedAchievements": unlocked_achievements,
         "message": message,
+        "gameCleared": bool(first_full_clear),
+        "alreadyRewarded": bool(had_full_clear),
     }
 
 

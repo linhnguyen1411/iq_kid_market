@@ -1,7 +1,11 @@
 import os
 import time
+import re
+from copy import deepcopy
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 from .. import models, schemas
 from ..database import get_db
 from ..auth_utils import require_roles, get_current_user_optional
@@ -24,6 +28,23 @@ from ..game_config import (
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+
+CATEGORY_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,48}$")
+
+
+def _assert_can_edit_game(game: models.Game, current_user: models.User) -> None:
+    if game.is_seed:
+        raise HTTPException(status_code=400, detail="Không thể sửa trò chơi gốc mặc định của hệ thống!")
+    if (
+        game.creator_id
+        and game.creator_id != current_user.id
+        and current_user.role != "admin"
+        and game.creator_id != "system"
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn chỉ có thể chỉnh sửa trò chơi do chính mình thiết kế!",
+        )
 
 
 # ---------- 1. Tạo game mới (Form CMS Studio) ----------
@@ -175,6 +196,11 @@ def add_level(
         levels.sort(key=lambda l: l.get("level_num", 0))
 
     game.levels = levels
+    flag_modified(game, "levels")
+    if current_user.role != "admin":
+        game.review_status = "pending_review"
+        game.is_published = False
+        game.review_feedback = None
     db.commit()
     db.refresh(game)
     return {
@@ -197,15 +223,14 @@ def update_level(
     if not game:
         raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi!")
 
-    if game.creator_id and game.creator_id != current_user.id and current_user.role != "admin" and game.creator_id != "system":
-        raise HTTPException(status_code=403, detail="Bạn không có quyền chỉnh sửa màn chơi này!")
+    _assert_can_edit_game(game, current_user)
 
-    levels = list(game.levels or [])
+    levels = deepcopy(list(game.levels or []))
     target_idx = next((i for i, l in enumerate(levels) if l.get("level_num") == level_num), None)
     if target_idx is None:
         raise HTTPException(status_code=404, detail=f"Không tìm thấy màn chơi số {level_num} trong game này!")
 
-    level_obj = levels[target_idx]
+    level_obj = deepcopy(levels[target_idx])
     if body.title:
         level_obj["title"] = body.title
     if body.xp_reward is not None:
@@ -230,10 +255,98 @@ def update_level(
 
     levels[target_idx] = level_obj
     game.levels = levels
+    flag_modified(game, "levels")
+    if current_user.role != "admin":
+        game.review_status = "pending_review"
+        game.is_published = False
+        game.review_feedback = None
     db.commit()
     db.refresh(game)
 
     return {"success": True, "game": schemas.GameOut.model_validate(game).model_dump()}
+
+
+# ---------- 4b. Cập nhật thông tin game (metadata + levels) ----------
+@router.put("/games/{game_id}")
+@router.post("/games/{game_id}/update")
+def update_game(
+    game_id: str,
+    body: schemas.UpdateGameIn,
+    current_user: models.User = Depends(require_roles(["admin", "teacher", "creator"])),
+    db: Session = Depends(get_db),
+):
+    game = db.get(models.Game, game_id)
+    if not game:
+        raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi để cập nhật!")
+
+    _assert_can_edit_game(game, current_user)
+
+    if body.title is not None:
+        title = body.title.strip()
+        if not title:
+            raise HTTPException(status_code=400, detail="Tên trò chơi không được để trống!")
+        game.title = title
+
+    if body.description is not None:
+        desc = body.description.strip()
+        if not desc:
+            raise HTTPException(status_code=400, detail="Mô tả bài học không được để trống!")
+        game.description = desc
+
+    if body.detailed_description is not None:
+        game.detailed_description = body.detailed_description.strip() or game.description
+
+    if body.price is not None:
+        unlock_price = int(body.price)
+        game.price = unlock_price if unlock_price > 0 else DEFAULT_UNLOCK_PRICE
+
+    if body.grade_from is not None:
+        game.grade_from = int(body.grade_from)
+    if body.grade_to is not None:
+        game.grade_to = int(body.grade_to)
+    if body.category is not None:
+        game.category = body.category.strip() or game.category
+    if body.thumbnail is not None:
+        game.thumbnail = body.thumbnail.strip() or game.thumbnail
+
+    if body.levels is not None:
+        if not isinstance(body.levels, list) or len(body.levels) < 1:
+            raise HTTPException(status_code=400, detail="Danh sách màn chơi (levels) phải là mảng có ít nhất 1 phần tử!")
+        levels = list(body.levels)
+        for lv in levels:
+            for q in lv.get("questions") or []:
+                q_type = (q.get("question_type") or game.template_code).strip().lower()
+                q_data = q.get("data")
+                if q_data:
+                    try:
+                        schemas.AddLevelQuestionIn.validate_game_data(q_type, q_data)
+                    except ValueError as val_err:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Màn {lv.get('level_num')}: {val_err}",
+                        ) from val_err
+        game.levels = levels
+        flag_modified(game, "levels")
+
+    # Giáo viên / creator sửa game → gửi lại kiểm duyệt; admin giữ trạng thái publish nếu đã duyệt
+    if current_user.role != "admin":
+        game.review_status = "pending_review"
+        game.is_published = False
+        game.review_feedback = None
+
+    db.commit()
+    db.refresh(game)
+
+    resubmit_note = (
+        " Game đã được gửi lại hàng đợi kiểm duyệt."
+        if current_user.role != "admin"
+        else ""
+    )
+    return {
+        "success": True,
+        "message": f'Đã cập nhật trò chơi "{game.title}" thành công!{resubmit_note}',
+        "game": schemas.GameOut.model_validate(game).model_dump(),
+    }
 
 
 # ---------- 5. Xóa trò chơi (Chỉ áp dụng game custom, cấm xóa seed gốc) ----------
@@ -663,3 +776,134 @@ def list_game_inventory(
         q = q.filter(models.Game.review_status == status)
     games = q.order_by(models.Game.id.asc()).all()
     return [schemas.GameOut.model_validate(g).model_dump() for g in games]
+
+
+# ---------- 11. Admin CMS: Quản lý thể loại game ----------
+def _normalize_category_code(code: str) -> str:
+    return (code or "").strip().lower().replace(" ", "_").replace("-", "_")
+
+
+@router.get("/categories")
+def list_admin_categories(
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    cats = (
+        db.query(models.GameCategory)
+        .order_by(models.GameCategory.sort_order.asc(), models.GameCategory.code.asc())
+        .all()
+    )
+    count_rows = db.query(models.Game.category, func.count(models.Game.id)).group_by(models.Game.category).all()
+    counts = {code: cnt for code, cnt in count_rows}
+    result = []
+    for cat in cats:
+        payload = schemas.GameCategoryOut.model_validate(cat).model_dump()
+        payload["game_count"] = counts.get(cat.code, 0)
+        result.append(payload)
+    return result
+
+
+@router.post("/categories")
+def create_game_category(
+    body: schemas.CreateGameCategoryIn,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    code = _normalize_category_code(body.code)
+    if not code or not CATEGORY_CODE_RE.match(code):
+        raise HTTPException(
+            status_code=400,
+            detail="Mã thể loại phải là chữ thường, bắt đầu bằng chữ cái (vd: iq, math, tieng_viet).",
+        )
+    label = (body.label or "").strip()
+    if not label:
+        raise HTTPException(status_code=400, detail="Tên thể loại không được để trống!")
+
+    if db.get(models.GameCategory, code):
+        raise HTTPException(status_code=400, detail=f"Thể loại '{code}' đã tồn tại!")
+
+    cat = models.GameCategory(
+        code=code,
+        label=label,
+        icon=(body.icon or "🎮").strip() or "🎮",
+        description=(body.description or "").strip() or None,
+        sort_order=int(body.sort_order or 0),
+        is_active=bool(body.is_active if body.is_active is not None else True),
+    )
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return {
+        "success": True,
+        "message": f"Đã tạo thể loại “{cat.label}”.",
+        "category": schemas.GameCategoryOut.model_validate(cat).model_dump(),
+    }
+
+
+@router.put("/categories/{code}")
+def update_game_category(
+    code: str,
+    body: schemas.UpdateGameCategoryIn,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    cat = db.get(models.GameCategory, code)
+    if not cat:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thể loại!")
+
+    if body.label is not None:
+        label = body.label.strip()
+        if not label:
+            raise HTTPException(status_code=400, detail="Tên thể loại không được để trống!")
+        cat.label = label
+    if body.icon is not None:
+        cat.icon = body.icon.strip() or cat.icon
+    if body.description is not None:
+        cat.description = body.description.strip() or None
+    if body.sort_order is not None:
+        cat.sort_order = int(body.sort_order)
+    if body.is_active is not None:
+        cat.is_active = bool(body.is_active)
+
+    db.commit()
+    db.refresh(cat)
+    game_count = db.query(models.Game).filter(models.Game.category == cat.code).count()
+    payload = schemas.GameCategoryOut.model_validate(cat).model_dump()
+    payload["game_count"] = game_count
+    return {
+        "success": True,
+        "message": f"Đã cập nhật thể loại “{cat.label}”.",
+        "category": payload,
+    }
+
+
+@router.delete("/categories/{code}")
+def delete_game_category(
+    code: str,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    cat = db.get(models.GameCategory, code)
+    if not cat:
+        raise HTTPException(status_code=404, detail="Không tìm thấy thể loại!")
+
+    game_count = db.query(models.Game).filter(models.Game.category == code).count()
+    if game_count > 0:
+        cat.is_active = False
+        db.commit()
+        return {
+            "success": True,
+            "deactivated": True,
+            "message": (
+                f"Thể loại “{cat.label}” đang có {game_count} game — đã ẩn (tắt active) "
+                "thay vì xóa."
+            ),
+        }
+
+    db.delete(cat)
+    db.commit()
+    return {
+        "success": True,
+        "deactivated": False,
+        "message": f"Đã xóa thể loại “{cat.label}”.",
+    }

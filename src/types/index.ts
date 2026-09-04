@@ -73,6 +73,16 @@ export interface Game {
   levels: Level[];
 }
 
+export interface GameCategory {
+  code: string;
+  label: string;
+  icon?: string;
+  description?: string | null;
+  sort_order: number;
+  is_active: boolean;
+  game_count?: number;
+}
+
 export interface Achievement {
   id: string;
   badge_code: string;

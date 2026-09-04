@@ -65,11 +65,33 @@ def test_be05_gamification_scenarios():
     student_id = res_student.json()["user"]["id"]
     print(f"   ✅ Học sinh đã tạo: ID={student_id}, XP=0, Level=1, Streak=0.")
 
-    # 2. TEST NỘP ĐIỂM MÀN CHƠI & LÊN LEVEL & THƯỞNG XU
-    print("2️⃣ [Test Nộp Điểm]: Gửi bài làm Màn 1 đạt 100 điểm...")
+    # 2. TEST NỘP ĐIỂM — XP/xu chỉ cộng khi clear toàn bộ game (1 lần)
+    print("2️⃣ [Test Nộp Điểm]: Màn lẻ không thưởng; clear hết màn mới nhận XP...")
+    from app import models as _models
+    mini = _models.Game(
+        id="g_be05_mini",
+        title="BE05 Mini",
+        description="test",
+        thumbnail="🧠",
+        price=0,
+        grade_from=1,
+        grade_to=5,
+        template_code="quiz",
+        category="iq",
+        review_status="approved",
+        is_published=True,
+        levels=[
+            {"level_num": 1, "title": "M1", "xp_reward": 100, "coin_reward": 10, "questions": []},
+            {"level_num": 2, "title": "M2", "xp_reward": 150, "coin_reward": 20, "questions": []},
+        ],
+    )
+    with TestingSessionLocal() as db:
+        db.add(mini)
+        db.commit()
+
     res_sub1 = client.post("/api/attempts/submit", json={
         "userId": student_id,
-        "gameId": "g1",
+        "gameId": "g_be05_mini",
         "levelNum": 1,
         "score": 100,
         "completed": True,
@@ -78,10 +100,23 @@ def test_be05_gamification_scenarios():
     assert res_sub1.status_code == 200
     data1 = res_sub1.json()
     assert data1["success"] is True
-    assert data1["xpAwarded"] >= 100
+    assert data1["xpAwarded"] == 0
+    assert data1["coinReward"] == 0
     assert data1["newStreak"] == 1
-    assert data1["coinReward"] == 20
-    print(f"   ✅ Nộp điểm thành công: Nhận +{data1['xpAwarded']} XP, Streak = {data1['newStreak']}.")
+    print(f"   ✅ Màn 1 chưa clear game: +0 XP, Streak = {data1['newStreak']}.")
+
+    res_clear = client.post("/api/attempts/submit", json={
+        "userId": student_id,
+        "gameId": "g_be05_mini",
+        "levelNum": 2,
+        "score": 100,
+        "completed": True,
+    })
+    assert res_clear.status_code == 200
+    data_clear = res_clear.json()
+    assert data_clear["xpAwarded"] == 250
+    assert data_clear["coinReward"] == 30
+    print(f"   ✅ Clear toàn bộ game: +{data_clear['xpAwarded']} XP (1 lần).")
 
     # 3. TEST DAILY STREAK LOGIC
     print("3️⃣ [Test Daily Streak]: Kiểm tra tính toán chuỗi ngày học...")

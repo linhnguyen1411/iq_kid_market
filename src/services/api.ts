@@ -1,6 +1,6 @@
 import { 
   Game, UserSession, LeaderboardItem, Achievement, 
-  ScratchCourse, ScratchLesson, AdminStats 
+  ScratchCourse, ScratchLesson, AdminStats, GameCategory 
 } from '../types';
 
 const BASE_URL = '/api';
@@ -102,6 +102,10 @@ export const api = {
   },
 
   // ---------- GAMES MARKETPLACE ----------
+  categories: {
+    list: () => apiRequest<GameCategory[]>('/categories'),
+  },
+
   games: {
     getGames: (params?: {
       grade?: number | string;
@@ -109,6 +113,7 @@ export const api = {
       search?: string;
       type?: string;
       creatorId?: string;
+      includePending?: string | boolean;
       sortBy?: string;
       page?: number;
       pageSize?: number;
@@ -161,6 +166,9 @@ export const api = {
         newBalance?: number;
         newStreak: number;
         unlockedAchievements: any[];
+        message?: string;
+        gameCleared?: boolean;
+        alreadyRewarded?: boolean;
       }>('/attempts/submit', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -196,6 +204,7 @@ export const api = {
         tx_id: string;
         amount: number;
         qr_url: string;
+        static_qr_url?: string;
         bank_name: string;
         bank_account: string;
         account_holder: string;
@@ -265,6 +274,28 @@ export const api = {
         body: JSON.stringify(data),
       }),
 
+    updateGame: (
+      gameId: string,
+      data: {
+        title?: string;
+        description?: string;
+        detailed_description?: string;
+        price?: number;
+        grade_from?: number;
+        grade_to?: number;
+        category?: string;
+        thumbnail?: string;
+        levels?: any[];
+      },
+    ) =>
+      apiRequest<{ success: boolean; game: Game; message?: string }>(
+        `/admin/games/${encodeURIComponent(gameId)}/update`,
+        {
+          method: 'POST',
+          body: JSON.stringify(data),
+        },
+      ),
+
     addLevel: (data: {
       gameId: string;
       title: string;
@@ -282,6 +313,26 @@ export const api = {
     }) =>
       apiRequest<{ success: boolean; game: Game }>('/admin/levels/add', {
         method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateLevel: (
+      gameId: string,
+      levelNum: number,
+      data: {
+        title?: string;
+        xp_reward?: number;
+        coin_reward?: number;
+        question?: {
+          question_type?: string;
+          prompt: string;
+          points?: number;
+          data: any;
+        };
+      },
+    ) =>
+      apiRequest<{ success: boolean; game: Game }>(`/admin/levels/${gameId}/${levelNum}`, {
+        method: 'PUT',
         body: JSON.stringify(data),
       }),
 
@@ -356,5 +407,41 @@ export const api = {
       const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
       return apiRequest<Game[]>(`/admin/games/inventory${qs}`);
     },
+
+    listCategories: () => apiRequest<GameCategory[]>('/admin/categories'),
+
+    createCategory: (data: {
+      code: string;
+      label: string;
+      icon?: string;
+      description?: string;
+      sort_order?: number;
+      is_active?: boolean;
+    }) =>
+      apiRequest<{ success: boolean; message: string; category: GameCategory }>(
+        '/admin/categories',
+        { method: 'POST', body: JSON.stringify(data) },
+      ),
+
+    updateCategory: (
+      code: string,
+      data: {
+        label?: string;
+        icon?: string;
+        description?: string;
+        sort_order?: number;
+        is_active?: boolean;
+      },
+    ) =>
+      apiRequest<{ success: boolean; message: string; category: GameCategory }>(
+        `/admin/categories/${encodeURIComponent(code)}`,
+        { method: 'PUT', body: JSON.stringify(data) },
+      ),
+
+    deleteCategory: (code: string) =>
+      apiRequest<{ success: boolean; message: string; deactivated?: boolean }>(
+        `/admin/categories/${encodeURIComponent(code)}`,
+        { method: 'DELETE' },
+      ),
   },
 };

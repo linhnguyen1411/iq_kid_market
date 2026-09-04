@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   CreditCard, Coins, ArrowUpRight, ArrowDownLeft, 
-  Sparkles, CheckCircle2, QrCode, X, DollarSign, ShieldCheck, TrendingUp 
+  Sparkles, CheckCircle2, QrCode, X, DollarSign, ShieldCheck, TrendingUp, Copy, Check 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -11,10 +11,12 @@ export const WalletPage: React.FC = () => {
 
   const [topupAmount, setTopupAmount] = useState<number>(50000);
   const [loading, setLoading] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [topupIntent, setTopupIntent] = useState<{
     tx_id: string;
     amount: number;
     qr_url: string;
+    static_qr_url?: string;
     bank_name: string;
     bank_account: string;
     account_holder: string;
@@ -98,6 +100,12 @@ export const WalletPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   return (
@@ -294,19 +302,54 @@ export const WalletPage: React.FC = () => {
               Mở App Ngân hàng bất kỳ để quét mã QR Napas thanh toán tức thì
             </p>
 
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 inline-block mb-4">
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 inline-block mb-4 shadow-sm">
               <img
-                src={topupIntent.qr_url}
-                alt="VietQR Napas"
-                className="w-52 h-52 mx-auto rounded-xl shadow-xs"
+                src={topupIntent.static_qr_url || '/techcombank_qr.png'}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = topupIntent.qr_url;
+                }}
+                alt="VietQR Techcombank Napas"
+                className="w-56 h-auto mx-auto rounded-xl"
               />
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-left text-xs space-y-1 mb-6">
-              <p><span className="text-slate-400">Ngân hàng:</span> <strong className="text-slate-800">{topupIntent.bank_name}</strong></p>
-              <p><span className="text-slate-400">Số tài khoản:</span> <strong className="text-slate-800 font-mono">{topupIntent.bank_account}</strong></p>
-              <p><span className="text-slate-400">Chủ tài khoản:</span> <strong className="text-slate-800 uppercase">{topupIntent.account_holder}</strong></p>
-              <p><span className="text-slate-400">Nội dung CK:</span> <strong className="text-indigo-600 font-mono">{topupIntent.transfer_content}</strong></p>
+            <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-left text-xs space-y-2 mb-6">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Ngân hàng:</span>
+                <strong className="text-slate-800 font-semibold">{topupIntent.bank_name}</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Số tài khoản:</span>
+                <div className="flex items-center gap-1.5">
+                  <strong className="text-slate-800 font-mono text-sm">{topupIntent.bank_account}</strong>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(topupIntent.bank_account, 'account')}
+                    className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors cursor-pointer"
+                    title="Sao chép số tài khoản"
+                  >
+                    {copiedField === 'account' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Chủ tài khoản:</span>
+                <strong className="text-slate-800 uppercase font-semibold">{topupIntent.account_holder}</strong>
+              </div>
+              <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60">
+                <span className="text-slate-400">Nội dung CK:</span>
+                <div className="flex items-center gap-1.5">
+                  <strong className="text-indigo-600 font-mono text-sm">{topupIntent.transfer_content}</strong>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(topupIntent.transfer_content, 'content')}
+                    className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors cursor-pointer"
+                    title="Sao chép nội dung chuyển khoản"
+                  >
+                    {copiedField === 'content' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button

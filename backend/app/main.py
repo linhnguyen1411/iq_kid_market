@@ -47,6 +47,7 @@ def on_startup():
     with SessionLocal() as db:
         seed_module.run_seed(db)
         seed_module.ensure_admin_user(db)
+        seed_module.ensure_game_categories(db)
 
 
 @app.get("/api/health")
