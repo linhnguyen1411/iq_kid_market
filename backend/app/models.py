@@ -88,6 +88,19 @@ class Game(Base):
     attempts = relationship("Attempt", back_populates="game", cascade="all, delete-orphan")
 
 
+class GameCategory(Base):
+    """Thể loại game — admin quản lý tại CMS (Chợ Game lọc theo code)."""
+    __tablename__ = "game_categories"
+
+    code = Column(String(50), primary_key=True)  # slug: iq, math, scratch...
+    label = Column(String(150), nullable=False)
+    icon = Column(String(20), default="🎮")
+    description = Column(Text, nullable=True)
+    sort_order = Column(Integer, default=0, index=True)
+    is_active = Column(Boolean, default=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class Purchase(Base):
     __tablename__ = "purchases"
 

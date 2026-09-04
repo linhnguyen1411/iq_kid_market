@@ -165,6 +165,36 @@ class PaginatedGamesOut(BaseModel):
     total_pages: int
 
 
+class GameCategoryOut(BaseModel):
+    code: str
+    label: str
+    icon: Optional[str] = "🎮"
+    description: Optional[str] = None
+    sort_order: int = 0
+    is_active: bool = True
+    game_count: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+
+class CreateGameCategoryIn(BaseModel):
+    code: str
+    label: str
+    icon: Optional[str] = "🎮"
+    description: Optional[str] = None
+    sort_order: Optional[int] = 0
+    is_active: Optional[bool] = True
+
+
+class UpdateGameCategoryIn(BaseModel):
+    label: Optional[str] = None
+    icon: Optional[str] = None
+    description: Optional[str] = None
+    sort_order: Optional[int] = None
+    is_active: Optional[bool] = None
+
+
 class PurchaseIn(BaseModel):
     userId: str
     gameId: str
@@ -181,6 +211,18 @@ class CreateGameIn(BaseModel):
     category: Optional[str] = "iq"
     creatorId: Optional[str] = None
     customFirstLevel: Optional[dict] = None
+
+
+class UpdateGameIn(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    detailed_description: Optional[str] = None
+    price: Optional[int] = None
+    grade_from: Optional[int] = None
+    grade_to: Optional[int] = None
+    category: Optional[str] = None
+    thumbnail: Optional[str] = None
+    levels: Optional[Any] = None
 
 
 class AddLevelQuestionIn(BaseModel):
@@ -314,6 +356,10 @@ class SubmitAttemptOut(BaseModel):
     newBalance: Optional[int] = None
     unlockedAchievements: list[dict]
     message: str
+    # True chỉ khi lần đầu clear hết màn của game (đúng lúc cộng XP/xu)
+    gameCleared: bool = False
+    # True nếu user đã từng nhận thưởng clear game này trước đó
+    alreadyRewarded: bool = False
 
 
 class LeaderboardItemOut(BaseModel):

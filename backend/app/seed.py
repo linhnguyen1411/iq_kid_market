@@ -194,6 +194,63 @@ def ensure_admin_user(db: Session) -> None:
         print(f"[seed] Đã chuyển {len(parents)} tài khoản phụ huynh → học sinh.")
 
 
+DEFAULT_GAME_CATEGORIES = [
+    {
+        "code": "iq",
+        "label": "Tư Duy IQ Não Bộ",
+        "icon": "🧠",
+        "description": "Rèn luyện tư duy logic, nhận biết hình ảnh và giải đố.",
+        "sort_order": 1,
+    },
+    {
+        "code": "math",
+        "label": "Toán Học Logic",
+        "icon": "🔢",
+        "description": "Phép tính, dãy số và bài toán tương tác.",
+        "sort_order": 2,
+    },
+    {
+        "code": "scratch",
+        "label": "Lập Trình Robot Scratch",
+        "icon": "🐱",
+        "description": "Lập trình kéo thả, robot Scratch và STEM.",
+        "sort_order": 3,
+    },
+    {
+        "code": "vietnamese",
+        "label": "Tiếng Việt & Ngôn Ngữ",
+        "icon": "📖",
+        "description": "Từ vựng, đọc hiểu và ngôn ngữ.",
+        "sort_order": 4,
+    },
+]
+
+
+def ensure_game_categories(db: Session) -> None:
+    """Luôn đảm bảo có danh mục thể loại mặc định (upsert nhẹ label/icon)."""
+    for row in DEFAULT_GAME_CATEGORIES:
+        existing = db.get(models.GameCategory, row["code"])
+        if existing:
+            existing.label = row["label"]
+            existing.icon = row.get("icon") or existing.icon
+            if row.get("description"):
+                existing.description = row["description"]
+            if existing.sort_order is None:
+                existing.sort_order = row.get("sort_order", 0)
+        else:
+            db.add(
+                models.GameCategory(
+                    code=row["code"],
+                    label=row["label"],
+                    icon=row.get("icon", "🎮"),
+                    description=row.get("description"),
+                    sort_order=row.get("sort_order", 0),
+                    is_active=True,
+                )
+            )
+    db.commit()
+
+
 if __name__ == "__main__":
     from .database import SessionLocal, engine, Base
     Base.metadata.create_all(bind=engine)

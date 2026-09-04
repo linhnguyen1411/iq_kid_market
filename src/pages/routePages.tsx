@@ -32,6 +32,7 @@ export function HomeRoute() {
 export function MarketplaceRoute() {
   const {
     games,
+    gameCategories,
     selectedCategory,
     setSelectedCategory,
     startPlay,
@@ -47,6 +48,7 @@ export function MarketplaceRoute() {
   return (
     <MarketplacePage
       games={games}
+      gameCategories={gameCategories}
       selectedCategory={selectedCategory}
       setSelectedCategory={setSelectedCategory}
       onPlayGame={startPlay}

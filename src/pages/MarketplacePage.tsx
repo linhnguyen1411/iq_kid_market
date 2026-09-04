@@ -4,7 +4,7 @@ import {
   Sparkles, CheckCircle2, Star, Coins, ArrowRight, X, 
   ArrowUpDown, RotateCcw, Flame, Trophy, Layers 
 } from 'lucide-react';
-import { Game } from '../types';
+import { Game, GameCategory } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { GameCard } from '../components/GameCard';
 import { GameDetailModal } from '../components/GameDetailModal';
@@ -23,14 +23,23 @@ function useDebounce<T>(value: T, delay: number): T {
 
 interface MarketplacePageProps {
   games: Game[];
+  gameCategories?: GameCategory[];
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   onPlayGame: (game: Game, levelNum?: number) => void;
   onNavigateToWallet?: () => void;
 }
 
+const FALLBACK_CATEGORIES: GameCategory[] = [
+  { code: 'iq', label: 'Tư Duy IQ Não Bộ', icon: '🧠', sort_order: 1, is_active: true },
+  { code: 'math', label: 'Toán Học Logic', icon: '🔢', sort_order: 2, is_active: true },
+  { code: 'scratch', label: 'Lập Trình Robot Scratch', icon: '🐱', sort_order: 3, is_active: true },
+  { code: 'vietnamese', label: 'Tiếng Việt & Ngôn Ngữ', icon: '📖', sort_order: 4, is_active: true },
+];
+
 export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   games,
+  gameCategories,
   selectedCategory,
   setSelectedCategory,
   onPlayGame,
@@ -48,6 +57,20 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   // Modals state
   const [detailGame, setDetailGame] = useState<Game | null>(null);
   const [purchaseGame, setPurchaseGame] = useState<Game | null>(null);
+
+  const categoryFilterOptions = useMemo(() => {
+    const list = (gameCategories?.length ? gameCategories : FALLBACK_CATEGORIES)
+      .filter((c) => c.is_active)
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+    return [
+      { code: 'all', label: 'Tất Cả Thể Loại', icon: '🎯' },
+      ...list.map((c) => ({
+        code: c.code,
+        label: c.label,
+        icon: c.icon || '🎮',
+      })),
+    ];
+  }, [gameCategories]);
 
   // Featured Games for top carousel / banner
   const featuredGames = useMemo(() => {
@@ -229,26 +252,21 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
               THỂ LOẠI BÀI HỌC
             </h4>
             <div className="flex flex-col gap-1">
-              {[
-                { code: 'all', label: 'Tất Cả Thể Loại' },
-                { code: 'iq', label: 'Tư Duy IQ Não Bộ' },
-                { code: 'math', label: 'Toán Học Logic' },
-                { code: 'scratch', label: 'Lập Trình Robot Scratch' },
-                { code: 'vietnamese', label: 'Tiếng Việt & Ngôn Ngữ' },
-              ].map((cat) => (
+              {categoryFilterOptions.map((cat) => (
                 <button
                   key={cat.code}
                   onClick={() => {
                     setSelectedCategory(cat.code);
                     playSynthSound('click');
                   }}
-                  className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`text-left px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
                     selectedCategory === cat.code
                       ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-2xs'
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >
-                  {cat.label}
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>

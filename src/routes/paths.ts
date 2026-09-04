@@ -13,6 +13,7 @@ export const paths = {
     root: '/admin',
     users: '/admin/nguoi-dung',
     games: '/admin/kho-game',
+    categories: '/admin/the-loai',
   },
 } as const;
 
@@ -27,6 +28,7 @@ export const pageTitles: Record<string, string> = {
   [paths.admin.root]: 'CMS Dashboard — IQ Kids Market',
   [paths.admin.users]: 'Quản trị người dùng — IQ Kids Market',
   [paths.admin.games]: 'Kho game & kiểm duyệt — IQ Kids Market',
+  [paths.admin.categories]: 'Quản lý thể loại game — IQ Kids Market',
 };
 
 export function titleForPath(pathname: string): string {
