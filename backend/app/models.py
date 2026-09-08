@@ -162,6 +162,7 @@ class ScratchCourse(Base):
     thumbnail = Column(String(20))
     difficulty = Column(String(50), default="Cơ bản")
     total_lessons = Column(Integer, default=0)
+    course_type = Column(String(50), default="algorithm_maze", nullable=True)
 
     lessons = relationship(
         "ScratchLesson", back_populates="course",
@@ -180,6 +181,7 @@ class ScratchLesson(Base):
     target_block_sequence = Column(Text)
     start_scene_json = Column(Text)
     xp_reward = Column(Integer, default=30)
+    engine_type = Column(String(50), default="algorithm_maze", nullable=True)
 
     course = relationship("ScratchCourse", back_populates="lessons")
 
@@ -200,6 +202,26 @@ class UserScratchProgress(Base):
     user = relationship("User", backref="scratch_progress")
     course = relationship("ScratchCourse")
     lesson = relationship("ScratchLesson")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", "lesson_num", name="uq_user_course_lesson"),
+    )
+
+
+class ScratchProject(Base):
+    __tablename__ = "scratch_projects"
+
+    id = Column(String(60), primary_key=True)  # "sp_<user_id>_<timestamp>"
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False, default="Dự Án Scratch Của Bé")
+    description = Column(Text, nullable=True)
+    thumbnail = Column(String(20), default="🐱")
+    project_data = Column(Text, nullable=False)  # JSON string lưu workspace XML, sprite state, telemetry
+    is_public = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", backref="scratch_projects")
 
 
 class DailyQuest(Base):

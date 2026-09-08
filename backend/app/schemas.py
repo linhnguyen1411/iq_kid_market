@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, List
 from pydantic import BaseModel
 
 
@@ -413,7 +413,7 @@ class LoginRewardIn(BaseModel):
 
 # ---------- Scratch Courses & Lessons ----------
 class ScratchSubmitIn(BaseModel):
-    userId: str
+    userId: Optional[str] = None
     courseId: str
     lessonNum: int
     submittedSequence: Any  # list[str] hoặc chuỗi "move_forward,turn_left"
@@ -422,10 +422,14 @@ class ScratchSubmitIn(BaseModel):
 class ScratchSubmitOut(BaseModel):
     success: bool
     message: str
+    hint: Optional[str] = None
     xpAwarded: int
     coinAwarded: int
     nextLessonNum: Optional[int] = None
     starsEarned: int
+    alreadyRewarded: bool = False
+    newXP: Optional[int] = None
+    newLevel: Optional[int] = None
 
 
 class CreateScratchCourseIn(BaseModel):
@@ -434,6 +438,7 @@ class CreateScratchCourseIn(BaseModel):
     description: Optional[str] = None
     thumbnail: Optional[str] = "🐱"
     difficulty: Optional[str] = "Cơ bản"
+    course_type: Optional[str] = "algorithm_maze"
 
 
 class CreateScratchLessonIn(BaseModel):
@@ -444,6 +449,7 @@ class CreateScratchLessonIn(BaseModel):
     target_block_sequence: str
     start_scene_json: Optional[str] = None
     xp_reward: Optional[int] = 30
+    engine_type: Optional[str] = "algorithm_maze"
 
 
 class UpdateScratchLessonIn(BaseModel):
@@ -452,4 +458,88 @@ class UpdateScratchLessonIn(BaseModel):
     target_block_sequence: Optional[str] = None
     start_scene_json: Optional[str] = None
     xp_reward: Optional[int] = None
+    engine_type: Optional[str] = None
+
+
+# ---------- Scratch Projects (Phase 6) ----------
+class ScratchProjectIn(BaseModel):
+    title: str = "Dự Án Scratch Của Bé"
+    description: Optional[str] = None
+    thumbnail: Optional[str] = "🐱"
+    project_data: Any
+    is_public: Optional[bool] = False
+
+
+class ScratchProjectUpdateIn(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail: Optional[str] = None
+    project_data: Optional[Any] = None
+    is_public: Optional[bool] = None
+
+
+class ScratchProjectOut(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    thumbnail: str
+    project_data: Any
+    is_public: bool
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class ScratchProjectListOut(BaseModel):
+    id: str
+    user_id: str
+    title: str
+    description: Optional[str] = None
+    thumbnail: str
+    is_public: bool
+    created_at: str
+    updated_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class ScratchProjectExportIn(BaseModel):
+    title: Optional[str] = "Du_An_Scratch"
+    project_data: Any
+
+
+# ---------- Scratch Analytics (Phase 8) ----------
+class ScratchSkillMasteryItem(BaseModel):
+    skill: str
+    title: str
+    mastery_percent: int
+    level_required: int
+
+
+class ScratchBadgeItem(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    icon: str
+    badge_code: str
+    xp_bonus: int = 100
+    unlocked: bool = False
+    unlocked_at: Optional[str] = None
+
+
+class ScratchAnalyticsOut(BaseModel):
+    total_completed_lessons: int
+    total_curriculum_lessons: int
+    completion_rate: int
+    total_stars: int
+    total_projects: int
+    streak_days: int
+    xp_earned: int
+    skills_mastery: List[ScratchSkillMasteryItem]
+    badges: List[ScratchBadgeItem]
+
 

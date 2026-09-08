@@ -1,6 +1,7 @@
 import { 
   Game, UserSession, LeaderboardItem, Achievement, 
-  ScratchCourse, ScratchLesson, AdminStats, GameCategory 
+  ScratchCourse, ScratchLesson, ScratchProject, ScratchProjectSummary,
+  ScratchAnalytics, AdminStats, GameCategory 
 } from '../types';
 
 const BASE_URL = '/api';
@@ -225,17 +226,22 @@ export const api = {
 
   // ---------- SCRATCH ENGINE ----------
   scratch: {
-    getCourses: (userId?: string) =>
-      apiRequest<ScratchCourse[]>(`/scratch/courses${userId ? `?userId=${userId}` : ''}`),
+    getCourses: (userId?: string, courseType?: string) => {
+      const params = new URLSearchParams();
+      if (userId) params.append('userId', userId);
+      if (courseType) params.append('type', courseType);
+      const query = params.toString() ? `?${params.toString()}` : '';
+      return apiRequest<ScratchCourse[]>(`/scratch/courses${query}`);
+    },
 
     getLessonDetail: (courseId: string, lessonNum: number, userId?: string) =>
       apiRequest<ScratchLesson>(`/scratch/courses/${courseId}/lessons/${lessonNum}${userId ? `?userId=${userId}` : ''}`),
 
     submitLesson: (data: {
-      userId: string;
+      userId?: string;
       courseId: string;
       lessonNum: number;
-      submittedSequence: string[];
+      submittedSequence: any;
     }) =>
       apiRequest<{
         success: boolean;
@@ -251,6 +257,100 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    // ---------- SCRATCH PROJECTS (PHASE 6) ----------
+    getProjects: (isPublic?: boolean) => {
+      const q = isPublic !== undefined ? `?is_public=${isPublic}` : '';
+      return apiRequest<ScratchProjectSummary[]>(`/scratch/projects${q}`);
+    },
+
+    getProject: (projectId: string) =>
+      apiRequest<ScratchProject>(`/scratch/projects/${projectId}`),
+
+    createProject: (data: {
+      title?: string;
+      description?: string;
+      thumbnail?: string;
+      project_data: any;
+      is_public?: boolean;
+    }) =>
+      apiRequest<ScratchProject>('/scratch/projects', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateProject: (
+      projectId: string,
+      data: {
+        title?: string;
+        description?: string;
+        thumbnail?: string;
+        project_data?: any;
+        is_public?: boolean;
+      }
+    ) =>
+      apiRequest<ScratchProject>(`/scratch/projects/${projectId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    deleteProject: (projectId: string) =>
+      apiRequest<{ success: boolean; message: string }>(`/scratch/projects/${projectId}`, {
+        method: 'DELETE',
+      }),
+
+    duplicateProject: (projectId: string) =>
+      apiRequest<ScratchProject>(`/scratch/projects/${projectId}/duplicate`, {
+        method: 'POST',
+      }),
+
+    exportSb3: async (data: { title?: string; project_data: any }, projectId?: string) => {
+      const token = localStorage.getItem('iqkids_auth_token');
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const qs = projectId ? `?project_id=${projectId}` : '';
+      const res = await fetch(`${BASE_URL}/scratch/projects/export-sb3${qs}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        throw new Error('Lỗi khi xuất file Scratch .sb3');
+      }
+      return res.blob();
+    },
+
+    importSb3: async (file: File, saveToAccount: boolean = false) => {
+      const token = localStorage.getItem('iqkids_auth_token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${BASE_URL}/scratch/projects/import-sb3?save_to_account=${saveToAccount}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Lỗi khi nhập file .sb3' }));
+        throw new Error(err.detail || 'Lỗi khi nhập file .sb3');
+      }
+      return res.json() as Promise<{
+        success: boolean;
+        message: string;
+        project: any;
+        saved_project_id?: string;
+      }>;
+    },
+
+    getAnalytics: () =>
+      apiRequest<ScratchAnalytics>('/scratch/analytics'),
   },
 
   // ---------- ADMIN & CREATOR STUDIO ----------
