@@ -132,6 +132,7 @@ def run_seed(db: Session, force: bool = False) -> None:
                 id=c["id"], title=c["title"], description=c.get("description"),
                 thumbnail=c.get("thumbnail"), difficulty=c.get("difficulty", "Cơ bản"),
                 total_lessons=c.get("total_lessons", len(c.get("lessons", []))),
+                course_type=c.get("course_type", "algorithm_maze"),
             ))
             db.flush()
             for l in c.get("lessons", []):
@@ -143,7 +144,16 @@ def run_seed(db: Session, force: bool = False) -> None:
                         course_id=c["id"], lesson_num=l["lesson_num"], title=l["title"],
                         content=l.get("content"), target_block_sequence=l.get("target_block_sequence"),
                         start_scene_json=l.get("start_scene_json"), xp_reward=l.get("xp_reward", 30),
+                        engine_type=l.get("engine_type", "algorithm_maze"),
                     ))
+                else:
+                    existing.title = l["title"]
+                    existing.content = l.get("content")
+                    existing.target_block_sequence = l.get("target_block_sequence")
+                    existing.start_scene_json = l.get("start_scene_json")
+                    existing.xp_reward = l.get("xp_reward", 30)
+                    existing.engine_type = l.get("engine_type", "algorithm_maze")
+            db.flush()
     else:
         print(f"[seed] CẢNH BÁO: không tìm thấy {SEED_JSON_PATH}, bỏ qua games/achievements/scratch courses.")
 
@@ -249,6 +259,66 @@ def ensure_game_categories(db: Session) -> None:
                 )
             )
     db.commit()
+
+
+def ensure_scratch_catalog(db: Session) -> None:
+    """Đảm bảo các khóa học Scratch, bài học, huy hiệu và nhiệm vụ mới luôn được đồng bộ khi khởi động."""
+    if not SEED_JSON_PATH.exists():
+        return
+
+    try:
+        seed = json.loads(SEED_JSON_PATH.read_text(encoding="utf-8"))
+
+        for a in seed.get("achievements", []):
+            existing = db.get(models.Achievement, a["id"])
+            if not existing:
+                db.add(models.Achievement(
+                    id=a["id"], title=a["title"], description=a.get("description"),
+                    badge_code=a.get("badge_code"), xp_bonus=a.get("xp_bonus", 100), icon=a.get("icon"),
+                ))
+            else:
+                existing.title = a["title"]
+                existing.description = a.get("description")
+                existing.badge_code = a.get("badge_code")
+                existing.xp_bonus = a.get("xp_bonus", 100)
+                existing.icon = a.get("icon")
+
+        for c in seed.get("scratch_courses", []):
+            db.merge(models.ScratchCourse(
+                id=c["id"], title=c["title"], description=c.get("description"),
+                thumbnail=c.get("thumbnail"), difficulty=c.get("difficulty", "Cơ bản"),
+                total_lessons=c.get("total_lessons", len(c.get("lessons", []))),
+                course_type=c.get("course_type", "algorithm_maze"),
+            ))
+            db.flush()
+            for l in c.get("lessons", []):
+                existing = db.query(models.ScratchLesson).filter_by(
+                    course_id=c["id"], lesson_num=l["lesson_num"]
+                ).first()
+                if not existing:
+                    db.add(models.ScratchLesson(
+                        course_id=c["id"], lesson_num=l["lesson_num"], title=l["title"],
+                        content=l.get("content"), target_block_sequence=l.get("target_block_sequence"),
+                        start_scene_json=l.get("start_scene_json"), xp_reward=l.get("xp_reward", 30),
+                        engine_type=l.get("engine_type", "algorithm_maze"),
+                    ))
+                else:
+                    existing.title = l["title"]
+                    existing.content = l.get("content")
+                    existing.target_block_sequence = l.get("target_block_sequence")
+                    existing.start_scene_json = l.get("start_scene_json")
+                    existing.xp_reward = l.get("xp_reward", 30)
+                    existing.engine_type = l.get("engine_type", "algorithm_maze")
+            db.flush()
+
+        from .daily_quests import QUEST_DEFINITIONS
+        for q in QUEST_DEFINITIONS:
+            db.merge(models.DailyQuest(**q))
+
+        db.commit()
+    except Exception as e:
+        print(f"[seed_catalog] Lỗi cập nhật scratch catalog: {e}")
+        db.rollback()
 
 
 if __name__ == "__main__":

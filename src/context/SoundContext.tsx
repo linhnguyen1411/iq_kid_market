@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { playSynthSound } from '../components/game-engines/soundUtils';
+import { playSynthSound, SoundType } from '../components/game-engines/soundUtils';
 
 interface SoundContextType {
   isSoundEnabled: boolean;
   isBgmEnabled: boolean;
   toggleSound: () => void;
   toggleBgm: () => void;
-  playSound: (type: 'correct' | 'incorrect' | 'click' | 'victory') => void;
+  playSound: (type: SoundType) => void;
 }
 
 const SoundContext = createContext<SoundContextType | undefined>(undefined);

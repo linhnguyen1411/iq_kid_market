@@ -68,3 +68,88 @@ body {
   transform: translateY(-4px);
 }
 
+/* ========================================================
+   SCRATCH STUDIO & BLOCKLY CUSTOM STYLES
+   ======================================================== */
+
+/* 1. Ẩn thanh cuộn ở giữa (Flyout scrollbar) của danh mục khối lệnh */
+.blocklyFlyoutScrollbar {
+  display: none !important;
+}
+
+/* 2. Cột danh mục Toolbox: Cho phép cuộn mượt mà nhưng ẩn thanh cuộn thô */
+.blocklyToolbox {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border-right: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc !important;
+  box-sizing: border-box !important;
+  height: 100% !important;
+}
+
+.blocklyToolbox::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.blocklyToolboxCategoryGroup {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  padding: 8px 6px 36px 6px !important;
+  min-height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.blocklyToolboxCategoryContainer {
+  margin: 0 !important;
+}
+
+/* 3. Tinh chỉnh các danh mục Toolbox đẹp mắt chuẩn Scratch */
+.blocklyToolboxCategory {
+  display: flex !important;
+  align-items: center !important;
+  padding: 6px 10px !important;
+  min-height: 36px !important;
+  height: auto !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.blocklyToolboxCategory:hover {
+  background-color: #f1f5f9 !important;
+}
+
+.blocklyToolboxSelected {
+  background-color: #e0e7ff !important;
+}
+
+.blocklyToolboxCategoryLabel {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  color: #334155 !important;
+  line-height: 1.2 !important;
+}
+
+.blocklyToolboxSelected .blocklyToolboxCategoryLabel {
+  color: #1e1b4b !important;
+  font-weight: 800 !important;
+}
+
+/* 4. Tinh chỉnh thanh cuộn chính của Workspace để thanh mảnh, không gây vướng mắt */
+.blocklyMainWorkspaceScrollbar {
+  opacity: 0.35;
+  transition: opacity 0.2s ease;
+}
+
+.blocklyMainWorkspaceScrollbar:hover {
+  opacity: 0.9;
+}
+
+

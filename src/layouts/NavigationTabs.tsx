@@ -16,7 +16,7 @@ export const NavigationTabs: React.FC = () => {
   const tabs: Array<{ to: string; label: string; icon: React.ReactNode; badge?: string; end?: boolean }> = [
     { to: paths.home, label: 'Khám Phá', icon: <Compass className="w-4 h-4" />, end: true },
     { to: paths.marketplace, label: 'Chợ Game Trí Tuệ', icon: <Gamepad2 className="w-4 h-4" /> },
-    { to: paths.scratch, label: 'Lập Trình Scratch', icon: <Code className="w-4 h-4" />, badge: 'Hot' },
+    { to: paths.scratch, label: 'Lập Trình & Thuật Toán', icon: <Code className="w-4 h-4" />, badge: 'Hot' },
     { to: paths.leaderboard, label: 'Bảng Vàng', icon: <Trophy className="w-4 h-4" /> },
   ];
 
