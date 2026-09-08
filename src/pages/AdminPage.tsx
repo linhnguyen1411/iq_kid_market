@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Settings, PlusCircle, Sparkles, CheckCircle2, 
   XCircle, Trash2, Eye, BarChart2, ShieldCheck, 
   BookOpen, Brain, RefreshCw, RotateCcw, TrendingUp, 
-  Play, Plus, ArrowRight, HelpCircle, Layers, Download, Upload
+  Play, Plus, ArrowRight, HelpCircle, Layers, Download, Upload, Pencil
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Game, AdminStats } from '../types';
@@ -26,9 +26,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [reviewQueue, setReviewQueue] = useState<Game[]>([]);
+  const [myGames, setMyGames] = useState<Game[]>([]);
   const [activeSubTab, setActiveSubTab] = useState<StudioTab>('stats');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editingGameId, setEditingGameId] = useState<string | null>(null);
+  const [editingLevelNum, setEditingLevelNum] = useState<number | null>(null);
 
   // Manual Create Game state
   const [title, setTitle] = useState('');
@@ -83,6 +86,29 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   const [seqItems, setSeqItems] = useState('2, 4, ?, 8, 10');
   const [seqAnswer, setSeqAnswer] = useState('6');
 
+  const fetchMyGames = async () => {
+    if (!user?.id) {
+      setMyGames([]);
+      return;
+    }
+    try {
+      if (user.role === 'admin') {
+        const inventory = await api.admin.getGameInventory('all');
+        setMyGames(
+          (Array.isArray(inventory) ? inventory : []).filter((g: Game) => !g.is_seed),
+        );
+      } else {
+        const data = await api.games.getGames({
+          creatorId: user.id,
+          includePending: true,
+        });
+        setMyGames(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.warn('Lỗi khi tải kho game của tôi:', err);
+    }
+  };
+
   const fetchData = async () => {
     try {
       const statsPromise = api.admin.getStats().catch(() => null);
@@ -97,14 +123,152 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
           (g: Game) => g.review_status === 'pending_review',
         ),
       );
+      await fetchMyGames();
     } catch (err) {
       console.warn('Lỗi khi tải dữ liệu admin:', err);
     }
   };
 
+  const editableGames = useMemo(() => {
+    return myGames.filter((g) => {
+      if (g.is_seed) return false;
+      if (isAdmin) return true;
+      return g.creator_id === user?.id;
+    });
+  }, [myGames, isAdmin, user?.id]);
+
+  const canEditGame = (game: Game) => {
+    if (game.is_seed) return false;
+    if (isAdmin) return true;
+    return game.creator_id === user?.id;
+  };
+
+  const reviewStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending_review':
+        return 'Chờ duyệt';
+      case 'approved':
+        return 'Đã duyệt';
+      case 'rejected':
+        return 'Cần sửa';
+      default:
+        return status;
+    }
+  };
+
+  const reviewStatusClass = (status: string) => {
+    switch (status) {
+      case 'pending_review':
+        return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'approved':
+        return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'rejected':
+        return 'bg-rose-100 text-rose-800 border-rose-200';
+      default:
+        return 'bg-slate-100 text-slate-600 border-slate-200';
+    }
+  };
+
+  const resetGameForm = () => {
+    setEditingGameId(null);
+    setTitle('');
+    setDesc('');
+    setPrice('20000');
+    setTemplateCode('matching');
+    setCategory('math');
+    setGradeMin('1');
+    setGradeMax('3');
+  };
+
+  const openEditGame = (game: Game) => {
+    if (!canEditGame(game)) return;
+    setEditingGameId(game.id);
+    setTitle(game.title);
+    setDesc(game.description || '');
+    setPrice(String(game.price ?? 0));
+    setTemplateCode(game.template_code);
+    setCategory(game.category);
+    setGradeMin(String(game.grade_from));
+    setGradeMax(String(game.grade_to));
+    setActiveSubTab('create');
+    playSynthSound('click');
+  };
+
+  const openEditPack = (game: Game) => {
+    if (!canEditGame(game)) return;
+    const pack = {
+      id: game.id,
+      title: game.title,
+      description: game.description,
+      detailed_description: game.detailed_description,
+      template_code: game.template_code,
+      category: game.category,
+      price: game.price,
+      grade_from: game.grade_from,
+      grade_to: game.grade_to,
+      thumbnail: game.thumbnail,
+      levels: game.levels,
+    };
+    setPackJson(JSON.stringify(pack, null, 2));
+    setPackPreview(pack);
+    setActiveSubTab('import_pack');
+    setMsg({
+      type: 'success',
+      text: `Đã nạp JSON game "${game.title}". Sửa và Import lại để cập nhật (giữ nguyên id).`,
+    });
+    playSynthSound('click');
+  };
+
+  const loadLevelIntoForm = (level: any, template: string) => {
+    setLevelTitle(level.title || '');
+    const q = level.questions?.[0];
+    if (!q) return;
+    const qType = q.question_type || template;
+    setLevelQuestionType(qType);
+    setLevelPrompt(q.prompt || '');
+    setLevelPoints(q.points || 25);
+    const data = q.data || {};
+    if (qType === 'matching') {
+      setMatchingPairs(data.pairs?.length ? data.pairs : [{ left: '', right: '' }]);
+    } else if (qType === 'quiz') {
+      const opts = data.options || ['', '', '', ''];
+      setQuizQuestion(data.question || q.prompt || '');
+      setQuizOptions(opts);
+      if (typeof data.correct_index === 'number') {
+        setQuizCorrectIndex(data.correct_index);
+      } else if (data.answer) {
+        const idx = opts.findIndex(
+          (o: string) => o === data.answer || String(o).startsWith(String(data.answer)),
+        );
+        setQuizCorrectIndex(idx >= 0 ? idx : 0);
+      }
+    } else if (qType === 'math') {
+      setMathExpression(data.expression || '');
+      setMathAnswer(String(data.answer ?? ''));
+      setMathHint(data.hint || '');
+    } else if (qType === 'sequence') {
+      setSeqItems((data.sequence || []).join(', '));
+      setSeqAnswer(String(data.answer ?? ''));
+    }
+  };
+
+  const clearLevelEdit = () => {
+    setEditingLevelNum(null);
+    setLevelTitle('');
+    setLevelPrompt('Nối các cặp tương ứng với nhau:');
+    setLevelPoints(25);
+  };
+
   useEffect(() => {
     fetchData();
-  }, [user?.role]);
+  }, [user?.role, user?.id]);
+
+  useEffect(() => {
+    if (editableGames.length > 0 && !editableGames.some((g) => g.id === selectedGameId)) {
+      setSelectedGameId(editableGames[0].id);
+      clearLevelEdit();
+    }
+  }, [editableGames, selectedGameId]);
 
   useEffect(() => {
     if (activeSubTab === 'ai_gen' && user && user.role !== 'admin') {
@@ -115,32 +279,56 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     }
   }, [activeSubTab, user]);
 
-  // Handler: Manual Create Game
+  // Handler: Manual Create / Update Game
   const handleCreateGame = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMsg(null);
     try {
-      const res = await api.admin.createGame({
+      const payload = {
         title,
         description: desc,
         price: parseInt(price, 10) || 0,
         grade_from: parseInt(gradeMin, 10) || 1,
         grade_to: parseInt(gradeMax, 10) || 3,
-        template_code: templateCode,
         category,
-        creatorId: user?.id,
-      });
-      if (res.success) {
-        setMsg({ type: 'success', text: res.message?.trim() || 'Tạo game mới thành công! Game đã được thêm vào hàng đợi kiểm duyệt.' });
-        setTitle('');
-        setDesc('');
-        playSynthSound('victory');
-        await onRefreshGames();
-        await fetchData();
+      };
+
+      if (editingGameId) {
+        const res = await api.admin.updateGame(editingGameId, payload);
+        if (res.success) {
+          setMsg({
+            type: 'success',
+            text:
+              res.message?.trim() ||
+              'Cập nhật game thành công! Game đã được gửi lại hàng đợi kiểm duyệt (nếu là giáo viên).',
+          });
+          resetGameForm();
+          playSynthSound('victory');
+          await onRefreshGames();
+          await fetchData();
+        }
+      } else {
+        const res = await api.admin.createGame({
+          ...payload,
+          template_code: templateCode,
+          creatorId: user?.id,
+        });
+        if (res.success) {
+          setMsg({
+            type: 'success',
+            text:
+              res.message?.trim() ||
+              'Tạo game mới thành công! Game đã được thêm vào hàng đợi kiểm duyệt.',
+          });
+          resetGameForm();
+          playSynthSound('victory');
+          await onRefreshGames();
+          await fetchData();
+        }
       }
     } catch (err: any) {
-      setMsg({ type: 'error', text: err.message || 'Lỗi khi tạo game' });
+      setMsg({ type: 'error', text: err.message || 'Lỗi khi lưu game' });
       playSynthSound('incorrect');
     } finally {
       setLoading(false);
@@ -274,7 +462,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     }
   };
 
-  // Handler: Dynamic Add Level
+  // Handler: Dynamic Add / Update Level
   const handleAddLevel = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -288,6 +476,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         question: quizQuestion,
         options: quizOptions,
         correct_index: quizCorrectIndex,
+        answer: quizOptions[quizCorrectIndex],
       };
     } else if (levelQuestionType === 'math') {
       levelData = {
@@ -304,26 +493,43 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
       levelData = { info: 'Custom Level Data' };
     }
 
+    const questionPayload = {
+      question_type: levelQuestionType,
+      prompt: levelPrompt || 'Hoàn thành thử thách sau:',
+      points: levelPoints,
+      data: levelData,
+    };
+
     try {
-      const res = await api.admin.addLevel({
-        gameId: selectedGameId,
-        title: levelTitle || 'Màn chơi mới',
-        question: {
-          question_type: levelQuestionType,
-          prompt: levelPrompt || 'Hoàn thành thử thách sau:',
-          points: levelPoints,
-          data: levelData,
-        },
-        creatorId: user?.id,
-      });
-      if (res.success) {
-        setMsg({ type: 'success', text: 'Đã bổ sung màn chơi mới vào game thành công!' });
-        setLevelTitle('');
-        playSynthSound('victory');
-        await onRefreshGames();
+      if (editingLevelNum != null) {
+        const res = await api.admin.updateLevel(selectedGameId, editingLevelNum, {
+          title: levelTitle || `Màn ${editingLevelNum}`,
+          question: questionPayload,
+        });
+        if (res.success) {
+          setMsg({ type: 'success', text: `Đã cập nhật màn ${editingLevelNum} thành công!` });
+          clearLevelEdit();
+          playSynthSound('victory');
+          await onRefreshGames();
+          await fetchMyGames();
+        }
+      } else {
+        const res = await api.admin.addLevel({
+          gameId: selectedGameId,
+          title: levelTitle || 'Màn chơi mới',
+          question: questionPayload,
+          creatorId: user?.id,
+        });
+        if (res.success) {
+          setMsg({ type: 'success', text: 'Đã bổ sung màn chơi mới vào game thành công!' });
+          setLevelTitle('');
+          playSynthSound('victory');
+          await onRefreshGames();
+          await fetchMyGames();
+        }
       }
     } catch (err: any) {
-      setMsg({ type: 'error', text: err.message || 'Lỗi bổ sung màn chơi' });
+      setMsg({ type: 'error', text: err.message || 'Lỗi lưu màn chơi' });
       playSynthSound('incorrect');
     } finally {
       setLoading(false);
@@ -474,7 +680,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
           { id: 'create' as const, label: 'Tạo Game Mới', icon: <PlusCircle className="w-4 h-4 text-indigo-500" />, roles: ['admin', 'teacher', 'creator'] },
           { id: 'levels' as const, label: 'Soạn Thảo Màn Chơi', icon: <BookOpen className="w-4 h-4 text-purple-500" />, roles: ['admin', 'teacher', 'creator'] },
           { id: 'review' as const, label: `Kiểm Duyệt (${reviewQueue.length})`, icon: <ShieldCheck className="w-4 h-4 text-rose-500" />, roles: ['admin'] },
-          { id: 'my_games' as const, label: `Kho Game (${games.length})`, icon: <Brain className="w-4 h-4 text-cyan-500" />, roles: ['admin', 'teacher', 'creator'] },
+          { id: 'my_games' as const, label: `Kho Game (${myGames.length})`, icon: <Brain className="w-4 h-4 text-cyan-500" />, roles: ['admin', 'teacher', 'creator'] },
         ] as const)
           .filter((tab) => tab.roles.includes((user?.role || '') as any))
           .map((tab) => (
@@ -831,9 +1037,25 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
       {activeSubTab === 'create' && (
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-            <PlusCircle className="w-4 h-4 text-indigo-600" />
-            <span>TỰ TAY THIẾT KẾ TRÒ CHƠI MỚI (MANUAL BUILDER)</span>
+            {editingGameId ? (
+              <>
+                <Pencil className="w-4 h-4 text-amber-600" />
+                <span>CHỈNH SỬA TRÒ CHƠI</span>
+              </>
+            ) : (
+              <>
+                <PlusCircle className="w-4 h-4 text-indigo-600" />
+                <span>TỰ TAY THIẾT KẾ TRÒ CHƠI MỚI (MANUAL BUILDER)</span>
+              </>
+            )}
           </h3>
+
+          {editingGameId && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 font-semibold">
+              Đang sửa game <strong>{title}</strong>. Giáo viên sau khi lưu sẽ gửi lại kiểm duyệt; admin giữ trạng thái
+              publish nếu game đã duyệt.
+            </p>
+          )}
 
           <form onSubmit={handleCreateGame} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
@@ -865,7 +1087,8 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               <select
                 value={templateCode}
                 onChange={(e) => setTemplateCode(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                disabled={!!editingGameId}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer disabled:opacity-60"
               >
                 <option value="matching">Ghép Cặp Cột A-B (Matching)</option>
                 <option value="quiz">Trắc Nghiệm Đố Vui (Quiz)</option>
@@ -930,15 +1153,33 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               </div>
             </div>
 
-            <div className="md:col-span-2 pt-2">
+            <div className="md:col-span-2 pt-2 flex flex-wrap gap-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-98"
+                className="flex-1 min-w-[200px] py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-98"
               >
-                <Plus className="w-4 h-4" />
-                <span>{loading ? 'Đang tạo game...' : 'TẠO GAME & GỬI KIỂM DUYỆT'}</span>
+                {editingGameId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                <span>
+                  {loading
+                    ? 'Đang lưu...'
+                    : editingGameId
+                      ? 'LƯU THAY ĐỔI GAME'
+                      : 'TẠO GAME & GỬI KIỂM DUYỆT'}
+                </span>
               </button>
+              {editingGameId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetGameForm();
+                    setMsg(null);
+                  }}
+                  className="px-5 py-3.5 rounded-2xl border border-slate-200 text-slate-600 text-xs font-black hover:bg-slate-50"
+                >
+                  Hủy sửa
+                </button>
+              )}
             </div>
           </form>
         </div>
@@ -949,21 +1190,56 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-purple-600" />
-            <span>SOẠN THẢO BỔ SUNG MÀN CHƠI (DYNAMIC LEVEL BUILDER)</span>
+            <span>SOẠN THẢO / SỬA MÀN CHƠI (LEVEL BUILDER)</span>
           </h3>
 
+          {editableGames.length === 0 ? (
+            <p className="text-xs text-slate-500 py-6 text-center">
+              Chưa có game custom để soạn thảo. Tạo game mới hoặc import pack trước.
+            </p>
+          ) : (
           <form onSubmit={handleAddLevel} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-slate-600 block mb-1">Chọn Game Cần Thêm Màn:</label>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Chọn Game:</label>
                 <select
                   value={selectedGameId}
-                  onChange={(e) => setSelectedGameId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedGameId(e.target.value);
+                    clearLevelEdit();
+                  }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
                 >
-                  {games.map((g) => (
+                  {editableGames.map((g) => (
                     <option key={g.id} value={g.id}>
-                      {g.title} ({g.category})
+                      {g.title} ({reviewStatusLabel(g.review_status)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Chọn màn để sửa (hoặc để trống = thêm mới):</label>
+                <select
+                  value={editingLevelNum ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) {
+                      clearLevelEdit();
+                      return;
+                    }
+                    const num = parseInt(val, 10);
+                    setEditingLevelNum(num);
+                    const game = editableGames.find((g) => g.id === selectedGameId);
+                    const level = game?.levels?.find((l: any) => l.level_num === num);
+                    if (level && game) loadLevelIntoForm(level, game.template_code);
+                  }}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                >
+                  <option value="">— Thêm màn mới —</option>
+                  {(editableGames.find((g) => g.id === selectedGameId)?.levels || []).map((lvl: any) => (
+                    <option key={lvl.level_num} value={lvl.level_num}>
+                      Màn {lvl.level_num}: {lvl.title || 'Không tên'}
                     </option>
                   ))}
                 </select>
@@ -1164,10 +1440,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               disabled={loading}
               className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98"
             >
-              <Plus className="w-4 h-4" />
-              <span>{loading ? 'Đang lưu...' : 'LƯU & BỔ SUNG MÀN CHƠI'}</span>
+              {editingLevelNum != null ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              <span>
+                {loading
+                  ? 'Đang lưu...'
+                  : editingLevelNum != null
+                    ? `LƯU MÀN ${editingLevelNum}`
+                    : 'LƯU & BỔ SUNG MÀN CHƠI'}
+              </span>
             </button>
           </form>
+          )}
         </div>
       )}
 
@@ -1239,37 +1522,99 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
         <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
             <Brain className="w-4 h-4 text-cyan-600" />
-            <span>KHO TRÒ CHƠI ĐÃ XUẤT BẢN ({games.length})</span>
+            <span>
+              {isAdmin ? 'KHO GAME CUSTOM (QUẢN TRỊ)' : 'GAME CỦA TÔI'} ({myGames.length})
+            </span>
           </h3>
 
+          {myGames.length === 0 ? (
+            <div className="text-center py-12 text-xs text-slate-400 font-medium">
+              Chưa có game nào. Tạo game mới hoặc import pack JSON.
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {games.map((g) => (
+            {myGames.map((g) => (
               <div
                 key={g.id}
-                className="p-4 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-between gap-3"
+                className="p-4 rounded-2xl border border-slate-100 bg-slate-50 flex flex-col gap-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-3xl shadow-2xs shrink-0">
-                    {g.thumbnail || '🎮'}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-3xl shadow-2xs shrink-0">
+                      {g.thumbnail || '🎮'}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs font-black text-slate-800 line-clamp-1">{g.title}</h4>
+                      <span className="text-[10px] text-slate-400 font-mono block">
+                        Lớp {g.grade_from}-{g.grade_to} • {g.levels?.length || 1} màn •{' '}
+                        {g.price === 0 ? 'Miễn phí' : `${g.price} xu`}
+                      </span>
+                      {g.creator_name && isAdmin && (
+                        <span className="text-[10px] text-slate-400 block">Tác giả: {g.creator_name}</span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-black text-slate-800 line-clamp-1">{g.title}</h4>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Lớp {g.grade_from}-{g.grade_to} • {g.levels?.length || 1} Màn • {g.price === 0 ? 'Miễn phí' : `${g.price} xu`}
-                    </span>
-                  </div>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg border shrink-0 ${reviewStatusClass(g.review_status)}`}
+                  >
+                    {reviewStatusLabel(g.review_status)}
+                  </span>
                 </div>
 
-                <button
-                  onClick={() => handleDeleteGame(g.id)}
-                  className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
-                  title="Xóa trò chơi"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {g.review_status === 'rejected' && g.review_feedback && (
+                  <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-100 rounded-xl p-2 leading-relaxed">
+                    Phản hồi: {g.review_feedback}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {canEditGame(g) && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openEditGame(g)}
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px] rounded-xl flex items-center gap-1.5"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Sửa thông tin
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditPack(g)}
+                        className="px-3 py-2 bg-teal-600 hover:bg-teal-500 text-white font-bold text-[11px] rounded-xl flex items-center gap-1.5"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        Sửa JSON
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedGameId(g.id);
+                          clearLevelEdit();
+                          setActiveSubTab('levels');
+                        }}
+                        className="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold text-[11px] rounded-xl flex items-center gap-1.5"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                        Sửa màn
+                      </button>
+                    </>
+                  )}
+                  {canEditGame(g) && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteGame(g.id)}
+                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors"
+                      title="Xóa trò chơi"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
     </div>

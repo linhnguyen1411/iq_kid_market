@@ -1,12 +1,27 @@
 import time
 import math
+import re
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 
 router = APIRouter(tags=["games"])
+
+CATEGORY_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,48}$")
+
+
+@router.get("/api/categories")
+def list_game_categories(db: Session = Depends(get_db)):
+    """Danh mục thể loại game (active) — dùng cho Chợ Game & form tạo game."""
+    cats = (
+        db.query(models.GameCategory)
+        .filter(models.GameCategory.is_active == True)  # noqa: E712
+        .order_by(models.GameCategory.sort_order.asc(), models.GameCategory.code.asc())
+        .all()
+    )
+    return [schemas.GameCategoryOut.model_validate(c).model_dump() for c in cats]
 
 
 @router.get("/api/games")

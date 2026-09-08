@@ -37,6 +37,7 @@ createRoot(document.getElementById('root')!).render(
               <Route path="admin" element={<AdminCmsPage />} />
               <Route path="admin/nguoi-dung" element={<AdminCmsPage />} />
               <Route path="admin/kho-game" element={<AdminCmsPage />} />
+              <Route path="admin/the-loai" element={<AdminCmsPage />} />
 
               {/* Legacy one-page aliases */}
               <Route path="marketplace" element={<Navigate to={paths.marketplace} replace />} />

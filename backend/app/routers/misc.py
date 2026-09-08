@@ -119,31 +119,41 @@ def get_user_achievements(user_id: str, db: Session = Depends(get_db)):
         for ua in db.query(models.UserAchievement).filter_by(user_id=user_id).all()
     }
 
-    # Thống kê số màn chơi hoàn thành
-    completed_count = db.query(models.Attempt).filter_by(user_id=user_id, completed=True).count()
+    # Thống kê tiến độ theo đúng badge_code seed
+    from .attempts import _completed_level_nums, _game_level_nums
+
+    game_clear_badges = {
+        "math_pro": "g2",
+        "memory_master": "g3",
+        "logic_king": "g1",
+        "real_iq_expert": "g_iq_thuc_te",
+    }
 
     result = []
     for ach in all_achievements:
         is_unlocked = ach.id in user_achievements
         unlocked_at = user_achievements[ach.id].isoformat() if is_unlocked and user_achievements[ach.id] else None
 
-        # Tính toán tiến độ %
         progress = 0
         if is_unlocked:
             progress = 100
         else:
-            if ach.badge_code in ("first_game", "a1"):
-                progress = min(100, int((completed_count / 1) * 100))
-            elif ach.badge_code in ("streak_3", "a2"):
+            code = (ach.badge_code or "").strip().lower()
+            if code in game_clear_badges:
+                game = db.get(models.Game, game_clear_badges[code])
+                required = _game_level_nums(game)
+                done = _completed_level_nums(db, user_id, game_clear_badges[code]) if required else set()
+                progress = min(100, int((len(done & required) / len(required)) * 100)) if required else 0
+            elif code == "scratch_wizard":
+                total = db.query(models.ScratchLesson).count() or 1
+                done = (
+                    db.query(models.UserScratchProgress)
+                    .filter_by(user_id=user_id, completed=True)
+                    .count()
+                )
+                progress = min(100, int((done / total) * 100))
+            elif code == "daily_hunter":
                 progress = min(100, int(((user.streak or 0) / 3) * 100))
-            elif ach.badge_code in ("streak_7", "a3"):
-                progress = min(100, int(((user.streak or 0) / 7) * 100))
-            elif ach.badge_code in ("xp_500", "a4"):
-                progress = min(100, int(((user.xp or 0) / 500) * 100))
-            elif ach.badge_code in ("xp_1000", "a5"):
-                progress = min(100, int(((user.xp or 0) / 1000) * 100))
-            elif ach.badge_code in ("master_5", "a6"):
-                progress = min(100, int((completed_count / 5) * 100))
 
         result.append({
             "id": ach.id,

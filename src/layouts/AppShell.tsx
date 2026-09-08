@@ -6,17 +6,19 @@ import Footer from '../layouts/Footer';
 import { AuthModal } from '../components/AuthModal';
 import { PurchaseModal } from '../components/PurchaseModal';
 import { useAuth } from '../context/AuthContext';
-import { Game, LeaderboardItem } from '../types';
+import { Game, LeaderboardItem, GameCategory } from '../types';
 import { api } from '../services/api';
 import { paths } from '../routes/paths';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
 interface AppDataContextValue {
   games: Game[];
+  gameCategories: GameCategory[];
   leaderboard: LeaderboardItem[];
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
   refreshGames: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
   startPlay: (game: Game, levelNum?: number) => void;
   goWallet: () => void;
   unlockGame: Game | null;
@@ -37,10 +39,20 @@ export function AppShell() {
   useDocumentTitle();
 
   const [games, setGames] = useState<Game[]>([]);
+  const [gameCategories, setGameCategories] = useState<GameCategory[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [unlockGame, setUnlockGame] = useState<Game | null>(null);
   const [hideChrome, setHideChrome] = useState(false);
+
+  const refreshCategories = useCallback(async () => {
+    try {
+      const data = await api.categories.list();
+      setGameCategories(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.warn('Lỗi khi tải thể loại game:', err);
+    }
+  }, []);
 
   const refreshGames = useCallback(async () => {
     try {
@@ -57,7 +69,8 @@ export function AppShell() {
 
   useEffect(() => {
     refreshGames();
-  }, [refreshGames]);
+    refreshCategories();
+  }, [refreshGames, refreshCategories]);
 
   const startPlay = useCallback(
     (game: Game, levelNum = 1) => {
@@ -73,16 +86,28 @@ export function AppShell() {
   const value = useMemo(
     () => ({
       games,
+      gameCategories,
       leaderboard,
       selectedCategory,
       setSelectedCategory,
       refreshGames,
+      refreshCategories,
       startPlay,
       goWallet,
       unlockGame,
       setUnlockGame,
     }),
-    [games, leaderboard, selectedCategory, refreshGames, startPlay, goWallet, unlockGame],
+    [
+      games,
+      gameCategories,
+      leaderboard,
+      selectedCategory,
+      refreshGames,
+      refreshCategories,
+      startPlay,
+      goWallet,
+      unlockGame,
+    ],
   );
 
   const outletContext = useMemo(() => ({ setHideChrome }), []);

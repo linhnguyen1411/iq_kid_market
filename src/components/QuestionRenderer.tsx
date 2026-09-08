@@ -10,8 +10,13 @@ export interface QuestionRendererProps {
   levelNum: number;
   xpReward: number;
   coinReward: number;
-  onSuccess: (score: number) => void;
+  onSuccess: (score: number) => void | Promise<void>;
   onBack: () => void;
+  /**
+   * true (mặc định, dùng admin preview): hiện màn thưởng local rồi mới gọi onSuccess.
+   * false (GamePlayPage): gọi onSuccess ngay khi giải xong — parent hiện thưởng từ API (tránh double UI).
+   */
+  showLocalRewardScreen?: boolean;
 }
 
 export default function QuestionRenderer({
@@ -20,33 +25,56 @@ export default function QuestionRenderer({
   xpReward,
   coinReward,
   onSuccess,
-  onBack
+  onBack,
+  showLocalRewardScreen = true,
 }: QuestionRendererProps) {
   const [levelSolved, setLevelSolved] = useState(false);
   const [scoreEarned, setScoreEarned] = useState(0);
   const [seconds, setSeconds] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Reset khi chuyển câu hỏi/màn chơi
+  // Reset khi đổi màn / câu hỏi (không phụ thuộc object identity từng render)
   useEffect(() => {
     setLevelSolved(false);
     setScoreEarned(0);
     setSeconds(0);
-  }, [question]);
+    setSubmitting(false);
+    setSubmitError(null);
+  }, [levelNum, question.id, question.prompt, question.question_type]);
 
   // Timer trong lúc chơi
   useEffect(() => {
-    if (levelSolved) return;
+    if (levelSolved || submitting) return;
     const interval = setInterval(() => setSeconds(s => s + 1), 1000);
     return () => clearInterval(interval);
-  }, [levelSolved]);
+  }, [levelSolved, submitting]);
 
-  const handleEngineComplete = (score: number) => {
+  const handleEngineComplete = async (score: number) => {
     setScoreEarned(score);
-    setLevelSolved(true);
+    setSubmitError(null);
+    if (showLocalRewardScreen) {
+      setLevelSolved(true);
+      return;
+    }
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await Promise.resolve(onSuccess(score));
+      // Parent unmount khi thành công (levelCompleted). Nếu vẫn mount → giữ submitting đến khi parent đổi.
+    } catch (err: any) {
+      setSubmitting(false);
+      setSubmitError(err?.message || "Không ghi nhận được kết quả. Thử lại nhé!");
+    }
   };
 
   const handleFinishLevelAndReward = () => {
     onSuccess(scoreEarned);
+  };
+
+  const handleRetrySubmit = () => {
+    setSubmitError(null);
+    void handleEngineComplete(scoreEarned);
   };
 
   const Engine = GAME_ENGINES[question.question_type];
@@ -89,7 +117,32 @@ export default function QuestionRenderer({
       </div>
 
       <AnimatePresence mode="wait">
-        {!levelSolved ? (
+        {submitError && !showLocalRewardScreen ? (
+          <motion.div
+            key="submit_error"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-10 flex flex-col items-center gap-4"
+          >
+            <p className="text-sm font-bold text-rose-600 max-w-md">{submitError}</p>
+            <button
+              type="button"
+              onClick={handleRetrySubmit}
+              className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-black"
+            >
+              Thử ghi nhận lại
+            </button>
+          </motion.div>
+        ) : submitting && !showLocalRewardScreen ? (
+          <motion.div
+            key="submitting"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12 text-slate-500 text-sm font-bold"
+          >
+            Đang ghi nhận kết quả…
+          </motion.div>
+        ) : !levelSolved ? (
           <motion.div
             key="gameplay"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -98,7 +151,7 @@ export default function QuestionRenderer({
             className="min-h-[250px] flex items-center justify-center"
           >
             {Engine ? (
-              <Engine question={question} onComplete={handleEngineComplete} />
+              <Engine question={question} onComplete={(score) => { void handleEngineComplete(score); }} />
             ) : (
               <div className="text-center text-rose-500 font-bold text-sm p-8">
                 ⚠️ Chưa có game engine cho question_type: "{question.question_type}".
@@ -108,7 +161,7 @@ export default function QuestionRenderer({
             )}
           </motion.div>
         ) : (
-          /* LEVEL COMPLETE REWARDS SCREEN */
+          /* LEVEL COMPLETE REWARDS SCREEN (admin / preview only) */
           <motion.div
             key="success_screen"
             initial={{ opacity: 0, scale: 0.9 }}
@@ -121,10 +174,9 @@ export default function QuestionRenderer({
 
             <h2 className="font-display text-2xl md:text-3xl text-emerald-600 mb-2">QUÁ TUYỆT VỜI! 🎉</h2>
             <p className="text-slate-600 text-sm md:text-base max-w-md mb-6 leading-relaxed">
-              Bạn nhỏ đã vận dụng tư duy xuất sắc giải mã thành công màn chơi này! Cùng xem những phần thưởng tích lũy được nhé!
+              Bạn nhỏ đã vận dụng tư duy xuất sắc giải mã thành công màn chơi này!
             </p>
 
-            {/* Achievement Rewards grid */}
             <div className="grid grid-cols-3 gap-3 md:gap-5 w-full max-w-md mb-8">
               <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex flex-col items-center">
                 <span className="text-xl md:text-2xl mb-1">⭐️</span>
@@ -143,14 +195,13 @@ export default function QuestionRenderer({
               </div>
             </div>
 
-            {/* CTA action buttons */}
             <button
               id="submit_rewards_btn"
               onClick={handleFinishLevelAndReward}
               className="px-8 py-4 bg-kids-green text-slate-900 hover:bg-green-400 font-display text-base font-bold rounded-2xl shadow-lg transition-all transform active:translate-y-1 hover:scale-103 flex items-center gap-2 kids-btn-shadow-green"
             >
               <Sparkles className="w-5 h-5" />
-              Nhận phần thưởng & Tiếp tục
+              Tiếp tục
               <ArrowRight className="w-5 h-5 ml-1" />
             </button>
           </motion.div>
