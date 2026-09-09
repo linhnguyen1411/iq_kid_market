@@ -359,6 +359,60 @@ export const api = {
 
     getAnalytics: () =>
       apiRequest<ScratchAnalytics>('/scratch/analytics'),
+
+    createCourse: (data: {
+      id?: string;
+      title: string;
+      description?: string;
+      thumbnail?: string;
+      difficulty?: string;
+      course_type?: string;
+    }) =>
+      apiRequest<{ success: boolean; course: any }>('/admin/scratch/courses', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    deleteCourse: (courseId: string) =>
+      apiRequest<{ success: boolean; message: string }>(`/admin/scratch/courses/${courseId}`, {
+        method: 'DELETE',
+      }),
+
+    createLesson: (data: {
+      course_id: string;
+      lesson_num?: number;
+      title: string;
+      content?: string;
+      target_block_sequence: string;
+      start_scene_json?: string;
+      xp_reward?: number;
+      engine_type?: string;
+    }) =>
+      apiRequest<{ success: boolean; lesson: any }>('/admin/scratch/lessons', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateLesson: (
+      lessonId: number,
+      data: {
+        title?: string;
+        content?: string;
+        target_block_sequence?: string;
+        start_scene_json?: string;
+        xp_reward?: number;
+        engine_type?: string;
+      },
+    ) =>
+      apiRequest<{ success: boolean; lesson: any }>(`/admin/scratch/lessons/${lessonId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    deleteLesson: (lessonId: number) =>
+      apiRequest<{ success: boolean; message: string }>(`/admin/scratch/lessons/${lessonId}`, {
+        method: 'DELETE',
+      }),
   },
 
   // ---------- ADMIN & CREATOR STUDIO ----------

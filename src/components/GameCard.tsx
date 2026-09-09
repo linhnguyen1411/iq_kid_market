@@ -30,7 +30,7 @@ export const GameCard: React.FC<GameCardProps> = ({
       case 'iq':
         return { label: 'Tư Duy IQ', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
       case 'scratch':
-        return { label: 'Lập Trình Robot', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+        return { label: 'Lập Trình & Thuật Toán', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
       case 'vietnamese':
         return { label: 'Tiếng Việt', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
       default:

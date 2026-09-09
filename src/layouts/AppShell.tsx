@@ -74,6 +74,10 @@ export function AppShell() {
 
   const startPlay = useCallback(
     (game: Game, levelNum = 1) => {
+      if (game.category === 'scratch' || game.id === 'g_scratch_studio') {
+        navigate(paths.scratch);
+        return;
+      }
       navigate(paths.play(game.id, levelNum));
     },
     [navigate],

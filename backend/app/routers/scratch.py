@@ -650,3 +650,21 @@ def delete_scratch_course(
     db.delete(course)
     db.commit()
     return {"success": True, "message": f'Đã xóa khóa học "{course.title}" thành công!'}
+
+
+@router.delete("/api/admin/scratch/lessons/{lesson_id}")
+def delete_scratch_lesson(
+    lesson_id: int,
+    current_user: models.User = Depends(require_roles(["admin", "teacher"])),
+    db: Session = Depends(get_db),
+):
+    lesson = db.get(models.ScratchLesson, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bài học Scratch để xóa!")
+
+    course = db.get(models.ScratchCourse, lesson.course_id)
+    db.delete(lesson)
+    if course:
+        course.total_lessons = max(0, len(course.lessons) - 1)
+    db.commit()
+    return {"success": True, "message": f'Đã xóa bài học "{lesson.title}" thành công!'}

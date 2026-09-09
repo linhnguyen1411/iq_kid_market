@@ -39,6 +39,9 @@ export default function PlayGameRoute() {
   }, [gameId, gameFromList]);
 
   if (!gameId) return <Navigate to={paths.marketplace} replace />;
+  if (gameId === 'g_scratch_studio' || game?.category === 'scratch') {
+    return <Navigate to={paths.scratch} replace />;
+  }
 
   if (loading && !game) {
     return (

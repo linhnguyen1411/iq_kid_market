@@ -33,7 +33,7 @@ interface MarketplacePageProps {
 const FALLBACK_CATEGORIES: GameCategory[] = [
   { code: 'iq', label: 'Tư Duy IQ Não Bộ', icon: '🧠', sort_order: 1, is_active: true },
   { code: 'math', label: 'Toán Học Logic', icon: '🔢', sort_order: 2, is_active: true },
-  { code: 'scratch', label: 'Lập Trình Robot Scratch', icon: '🐱', sort_order: 3, is_active: true },
+  { code: 'scratch', label: 'Lập Trình & Thuật Toán', icon: '💻', sort_order: 3, is_active: true },
   { code: 'vietnamese', label: 'Tiếng Việt & Ngôn Ngữ', icon: '📖', sort_order: 4, is_active: true },
 ];
 
