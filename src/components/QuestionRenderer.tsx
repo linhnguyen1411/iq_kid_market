@@ -6,6 +6,7 @@ import type { Question } from "./game-engines/types";
 import TextToSpeechButton from "./TextToSpeechButton";
 
 export interface QuestionRendererProps {
+  key?: React.Key;
   question: Question;
   levelNum: number;
   xpReward: number;

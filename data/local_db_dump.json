@@ -1,0 +1,3433 @@
+{
+  "game_categories": [
+    {
+      "code": "iq",
+      "label": "Tư Duy IQ Não Bộ",
+      "icon": "🧠",
+      "description": "Rèn luyện tư duy logic, nhận biết hình ảnh và giải đố.",
+      "sort_order": 1,
+      "is_active": 1,
+      "created_at": "2026-09-08 14:08:58.188359"
+    },
+    {
+      "code": "math",
+      "label": "Toán Học Logic",
+      "icon": "🔢",
+      "description": "Phép tính, dãy số và bài toán tương tác.",
+      "sort_order": 2,
+      "is_active": 1,
+      "created_at": "2026-09-08 14:08:58.188365"
+    },
+    {
+      "code": "scratch",
+      "label": "Lập Trình Robot Scratch",
+      "icon": "🐱",
+      "description": "Lập trình kéo thả, robot Scratch và STEM.",
+      "sort_order": 3,
+      "is_active": 1,
+      "created_at": "2026-09-08 14:08:58.188365"
+    },
+    {
+      "code": "vietnamese",
+      "label": "Tiếng Việt & Ngôn Ngữ",
+      "icon": "📖",
+      "description": "Từ vựng, đọc hiểu và ngôn ngữ.",
+      "sort_order": 4,
+      "is_active": 1,
+      "created_at": "2026-09-08 14:08:58.188366"
+    }
+  ],
+  "achievements": [
+    {
+      "id": "a1",
+      "title": "Nhà Toán Học Nhí",
+      "description": "Bứt phá toàn bộ 30 màn Truy Tìm Quy Luật",
+      "badge_code": "math_pro",
+      "xp_bonus": 500,
+      "icon": "🥇"
+    },
+    {
+      "id": "a2",
+      "title": "Siêu Trí Nhớ",
+      "description": "Vượt qua toàn bộ 30 màn lật thẻ Vua Ghi Nhớ",
+      "badge_code": "memory_master",
+      "xp_bonus": 500,
+      "icon": "🧠"
+    },
+    {
+      "id": "a3",
+      "title": "Vua Logic",
+      "description": "Hoàn thiện 30 màn rèn tư duy Ghép Cặp",
+      "badge_code": "logic_king",
+      "xp_bonus": 500,
+      "icon": "💡"
+    },
+    {
+      "id": "a4",
+      "title": "Lập Trình Viên Tương Lai",
+      "description": "Hoàn thành khóa học Scratch cơ bản",
+      "badge_code": "scratch_wizard",
+      "xp_bonus": 600,
+      "icon": "🤖"
+    },
+    {
+      "id": "a5",
+      "title": "Thợ Săn Thử Thách",
+      "description": "Tham gia giải quyết 3 thử thách liên tiếp hàng ngày",
+      "badge_code": "daily_hunter",
+      "xp_bonus": 300,
+      "icon": "🔥"
+    },
+    {
+      "id": "a6",
+      "title": "Nhà Thông Thái Thực Đời",
+      "description": "Vượt qua toàn bộ 10 mốc Thử Thách IQ Thực Tế",
+      "badge_code": "real_iq_expert",
+      "xp_bonus": 450,
+      "icon": "🌟"
+    }
+  ],
+  "scratch_courses": [
+    {
+      "id": "sc1",
+      "title": "Chinh phục Scratch Tinh Vân",
+      "description": "Nhập môn lập trình kéo thả Scratch bằng cách điều khiển tàu phi thuyền phiêu lưu trong vũ trụ.",
+      "thumbnail": "🚀",
+      "difficulty": "Cơ bản",
+      "total_lessons": 5
+    },
+    {
+      "id": "sc2",
+      "title": "Khám Phá Mê Cung Thuật Toán",
+      "description": "Nâng cao tư duy không gian và giải thuật toán rẽ nhánh cơ bản với các mê cung lắt léo hơn.",
+      "thumbnail": "🌀",
+      "difficulty": "Nâng cao",
+      "total_lessons": 4
+    }
+  ],
+  "scratch_lessons": [
+    {
+      "id": 1,
+      "course_id": "sc1",
+      "lesson_num": 1,
+      "title": "Khởi Động Động Cơ",
+      "content": "Giúp chú mèo Scratch tiến về tinh vân lấp lánh bằng cách sử dụng khối lệnh 'Di chuyển'.",
+      "target_block_sequence": "move_forward,move_forward",
+      "start_scene_json": "{\"cat_pos\":[0,2],\"star_pos\":[2,2]}",
+      "xp_reward": 100
+    },
+    {
+      "id": 2,
+      "course_id": "sc1",
+      "lesson_num": 2,
+      "title": "Bẻ Lái Tránh Chướng Ngại Vật",
+      "content": "Để tránh đám mây bụi vũ trụ, hãy điều khiển chú mèo rẽ phải trước khi đi tiếp.",
+      "target_block_sequence": "move_forward,turn_right,move_forward",
+      "start_scene_json": "{\"cat_pos\":[0,1],\"star_pos\":[1,2]}",
+      "xp_reward": 120
+    },
+    {
+      "id": 3,
+      "course_id": "sc1",
+      "lesson_num": 3,
+      "title": "Chu Kỳ Lặp Vô Tận",
+      "content": "Sử dụng khối 'Vòng lặp' để mèo tự động di chuyển 3 bước mà không cần nối nhiều khối.",
+      "target_block_sequence": "repeat_3[move_forward]",
+      "start_scene_json": "{\"cat_pos\":[0,0],\"star_pos\":[3,0]}",
+      "xp_reward": 150
+    },
+    {
+      "id": 4,
+      "course_id": "sc1",
+      "lesson_num": 4,
+      "title": "Vượt Trọng Lực Vũ Trụ",
+      "content": "Hãy xoay người hướng lên trên (Quay trái) và kích hoạt vòng lặp 3 lần di chuyển để tiến đến ngôi sao lấp lánh ở (1,0)!",
+      "target_block_sequence": "turn_left,repeat_3[move_forward]",
+      "start_scene_json": "{\"cat_pos\":[1,3],\"star_pos\":[1,0]}",
+      "xp_reward": 180
+    },
+    {
+      "id": 5,
+      "course_id": "sc1",
+      "lesson_num": 5,
+      "title": "Hành Trình Vòng Cung",
+      "content": "Tiến lên 2 bước, rẽ phải và tiến thêm 2 bước nữa để thu thập ngôi sao năng lượng tại tọa độ tinh vân (2,2)!",
+      "target_block_sequence": "move_forward,move_forward,turn_right,move_forward,move_forward",
+      "start_scene_json": "{\"cat_pos\":[0,0],\"star_pos\":[2,2]}",
+      "xp_reward": 200
+    },
+    {
+      "id": 6,
+      "course_id": "sc2",
+      "lesson_num": 1,
+      "title": "Quay Đầu Đi Tìm Sao",
+      "content": "Ngôi sao ở ngay phía sau con tại (0,1). Hãy xoay chú mèo quay ngược lại (Quay trái 2 lần) và tiến lên 2 bước!",
+      "target_block_sequence": "turn_left,turn_left,move_forward,move_forward",
+      "start_scene_json": "{\"cat_pos\":[2,1],\"star_pos\":[0,1]}",
+      "xp_reward": 220
+    },
+    {
+      "id": 7,
+      "course_id": "sc2",
+      "lesson_num": 2,
+      "title": "Bám Sát Rìa Vũ Trụ",
+      "content": "Sử dụng vòng lặp 3 lần di chuyển liên tiếp để đi dọc rìa trên cùng đến (3,0), sau đó rẽ phải và tiến thêm 1 bước xuống (3,1)!",
+      "target_block_sequence": "repeat_3[move_forward],turn_right,move_forward",
+      "start_scene_json": "{\"cat_pos\":[0,0],\"star_pos\":[3,1]}",
+      "xp_reward": 250
+    },
+    {
+      "id": 8,
+      "course_id": "sc2",
+      "lesson_num": 3,
+      "title": "Đường Đi Zích Zắc",
+      "content": "Kiểm soát bước đi zích zắc thông minh: Tiến, rẽ trái, tiến, rẽ phải, tiến, rẽ trái, tiến để thu hoạch sao rực rỡ tại tọa độ (2,0)!",
+      "target_block_sequence": "move_forward,turn_left,move_forward,turn_right,move_forward,turn_left,move_forward",
+      "start_scene_json": "{\"cat_pos\":[0,2],\"star_pos\":[2,0]}",
+      "xp_reward": 280
+    },
+    {
+      "id": 9,
+      "course_id": "sc2",
+      "lesson_num": 4,
+      "title": "Lùi Lại Về Đích",
+      "content": "Từ góc phải bên dưới (3,3), hãy quay đầu hoàn toàn sang trái (Quay trái 2 lần) và dùng siêu vòng lặp để lướt thẳng về đích tại (0,3)!",
+      "target_block_sequence": "turn_left,turn_left,repeat_3[move_forward]",
+      "start_scene_json": "{\"cat_pos\":[3,3],\"star_pos\":[0,3]}",
+      "xp_reward": 300
+    }
+  ],
+  "daily_quests": [
+    {
+      "id": "quest_play_count",
+      "title": "Chinh phục màn chơi",
+      "description": "Hoàn thành 2 màn chơi bất kỳ trong ngày.",
+      "type": "play_count",
+      "target_count": 2,
+      "xp_reward": 50,
+      "coin_reward": 20,
+      "is_active": 1
+    },
+    {
+      "id": "quest_score_reach",
+      "title": "Điểm số tuyệt đối",
+      "description": "Đạt 100 điểm trong một game Toán hoặc IQ.",
+      "type": "score_reach",
+      "target_count": 1,
+      "xp_reward": 75,
+      "coin_reward": 30,
+      "is_active": 1
+    },
+    {
+      "id": "quest_scratch_complete",
+      "title": "Nhà lập trình nhí",
+      "description": "Hoàn thành một bài học Scratch trong ngày.",
+      "type": "scratch_complete",
+      "target_count": 1,
+      "xp_reward": 60,
+      "coin_reward": 25,
+      "is_active": 1
+    }
+  ],
+  "users": [
+    {
+      "id": "u1",
+      "username": "kid_binh",
+      "password_hash": "$2b$12$qDO7PKGIBn8N.vxXt37vYe9QJUPbZ58wPWn/xwk28D4SpiAeex7Gm",
+      "name": "Thế Bình 🌟",
+      "role": "student",
+      "grade": 2,
+      "avatar": "smile_tiger",
+      "xp": 120,
+      "level": 1,
+      "streak": 3,
+      "last_active_date": null,
+      "created_at": "2026-09-08 14:07:50.021297"
+    },
+    {
+      "id": "u2",
+      "username": "giao_vien_lan",
+      "password_hash": "$2b$12$r2qnX94E6J3zXScEQHfai.wrm33HIc2e2FtwjbQWCDcfyMVQalggW",
+      "name": "Cô Lan Anh 👩‍🏫",
+      "role": "teacher",
+      "grade": null,
+      "avatar": "logic_owl",
+      "xp": 450,
+      "level": 5,
+      "streak": 0,
+      "last_active_date": null,
+      "created_at": "2026-09-08 14:07:50.021301"
+    },
+    {
+      "id": "u3",
+      "username": "kid_dung",
+      "password_hash": "$2b$12$H5h0vP0ZtDl6RmTc.9cZrePLANTJ6RUCxv0BO3xN89UisB/28fz.e",
+      "name": "Minh Dũng 🦊",
+      "role": "student",
+      "grade": 3,
+      "avatar": "cool_fox",
+      "xp": 80,
+      "level": 1,
+      "streak": 1,
+      "last_active_date": null,
+      "created_at": "2026-09-08 14:07:50.021301"
+    },
+    {
+      "id": "u_admin",
+      "username": "admin",
+      "password_hash": "$2b$12$CZyOJuZVbqY.CT0E6T2/Ve2PSBwxvbYcpKgHieNgdNBhbdiUdUia2",
+      "name": "Ban Quản Trị 🛡️",
+      "role": "admin",
+      "grade": null,
+      "avatar": "brave_dragon",
+      "xp": 0,
+      "level": 1,
+      "streak": 0,
+      "last_active_date": null,
+      "created_at": "2026-09-08 14:07:50.021302"
+    }
+  ],
+  "wallets": [
+    {
+      "user_id": "u1",
+      "balance": 90000,
+      "currency": "VND"
+    },
+    {
+      "user_id": "u2",
+      "balance": 500000,
+      "currency": "VND"
+    },
+    {
+      "user_id": "u3",
+      "balance": 1000000,
+      "currency": "VND"
+    },
+    {
+      "user_id": "u_admin",
+      "balance": 0,
+      "currency": "VND"
+    }
+  ],
+  "wallet_transactions": [
+    {
+      "id": "tx_1",
+      "wallet_user_id": "u1",
+      "amount": 90000,
+      "type": "nạp tiền",
+      "detail": "Được tặng ban đầu",
+      "created_at": "2026-06-22 10:00:00.000000"
+    },
+    {
+      "id": "tx_2",
+      "wallet_user_id": "u2",
+      "amount": 500000,
+      "type": "nạp tiền",
+      "detail": "Nạp qua QR",
+      "created_at": "2026-06-22 08:00:00.000000"
+    },
+    {
+      "id": "tx_3",
+      "wallet_user_id": "u3",
+      "amount": 1000000,
+      "type": "nạp tiền",
+      "detail": "Được tặng ban đầu",
+      "created_at": "2026-06-22 07:15:00.000000"
+    }
+  ],
+  "games": [
+    {
+      "id": "g1",
+      "title": "Ghép Cặp Thần Tốc",
+      "description": "Rèn luyện phản xạ nhanh nhạy qua việc nối hình ảnh, phép tính với đáp án đúng.",
+      "detailed_description": "Chào mừng các nhà thám hiểm nhí! Trong game này, con sẽ được thử thách trí thông minh bằng cách nối các cặp hình ảnh ngộ nghĩnh, từ vựng tiếng Anh bổ ích, và các phép toán diệu kỳ với nhau. Hoàn thành màn chơi thật nhanh để nhận được danh hiệu 'Nhà Toán Học Nhí' và 'Vua Từ Vựng' nhé!",
+      "thumbnail": "⚡",
+      "price": 0,
+      "grade_from": 1,
+      "grade_to": 3,
+      "template_code": "matching",
+      "category": "iq",
+      "creator_id": null,
+      "creator_name": null,
+      "review_status": "approved",
+      "review_feedback": null,
+      "is_published": 1,
+      "is_seed": 1,
+      "rating_avg": 4.8,
+      "plays_count": 1250,
+      "levels": [
+        {
+          "id": "matching_l1",
+          "level_num": 1,
+          "title": "Màn 1: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_1",
+              "question_type": "matching",
+              "prompt": "Tiếng Anh con vật siêu vui (Lớp 1 - Màn 1)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Cat 🐱",
+                    "right": "Con mèo"
+                  },
+                  {
+                    "left": "Dog 🐶",
+                    "right": "Con chó"
+                  },
+                  {
+                    "left": "Fish 🐟",
+                    "right": "Con cá"
+                  },
+                  {
+                    "left": "Bird 🐦",
+                    "right": "Con chim"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l2",
+          "level_num": 2,
+          "title": "Màn 2: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_2",
+              "question_type": "matching",
+              "prompt": "Thời tiết & Thiên nhiên (Lớp 1 - Màn 2)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Sun ☀️",
+                    "right": "Mặt trời"
+                  },
+                  {
+                    "left": "Rain 🌧️",
+                    "right": "Cơn mưa"
+                  },
+                  {
+                    "left": "Wind 💨",
+                    "right": "Cơn gió"
+                  },
+                  {
+                    "left": "Snow ❄️",
+                    "right": "Tuyết rơi"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l3",
+          "level_num": 3,
+          "title": "Màn 3: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_3",
+              "question_type": "matching",
+              "prompt": "Phép toán cộng trừ cơ bản (Lớp 1 - Màn 3)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "1 + 1",
+                    "right": "2"
+                  },
+                  {
+                    "left": "2 + 1",
+                    "right": "3"
+                  },
+                  {
+                    "left": "3 + 1",
+                    "right": "4"
+                  },
+                  {
+                    "left": "3 + 2",
+                    "right": "5"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l4",
+          "level_num": 4,
+          "title": "Màn 4: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_4",
+              "question_type": "matching",
+              "prompt": "Tiếng Anh con vật siêu vui (Lớp 1 - Màn 4)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Cat 🐱",
+                    "right": "Con mèo"
+                  },
+                  {
+                    "left": "Dog 🐶",
+                    "right": "Con chó"
+                  },
+                  {
+                    "left": "Fish 🐟",
+                    "right": "Con cá"
+                  },
+                  {
+                    "left": "Bird 🐦",
+                    "right": "Con chim"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l5",
+          "level_num": 5,
+          "title": "Màn 5: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_5",
+              "question_type": "matching",
+              "prompt": "Thời tiết & Thiên nhiên (Lớp 1 - Màn 5)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Sun ☀️",
+                    "right": "Mặt trời"
+                  },
+                  {
+                    "left": "Rain 🌧️",
+                    "right": "Cơn mưa"
+                  },
+                  {
+                    "left": "Wind 💨",
+                    "right": "Cơn gió"
+                  },
+                  {
+                    "left": "Snow ❄️",
+                    "right": "Tuyết rơi"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l6",
+          "level_num": 6,
+          "title": "Màn 6: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_6",
+              "question_type": "matching",
+              "prompt": "Phép toán cộng trừ cơ bản (Lớp 1 - Màn 6)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "1 + 1",
+                    "right": "2"
+                  },
+                  {
+                    "left": "2 + 1",
+                    "right": "3"
+                  },
+                  {
+                    "left": "3 + 1",
+                    "right": "4"
+                  },
+                  {
+                    "left": "3 + 2",
+                    "right": "5"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l7",
+          "level_num": 7,
+          "title": "Màn 7: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_7",
+              "question_type": "matching",
+              "prompt": "Tiếng Anh con vật siêu vui (Lớp 1 - Màn 7)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Cat 🐱",
+                    "right": "Con mèo"
+                  },
+                  {
+                    "left": "Dog 🐶",
+                    "right": "Con chó"
+                  },
+                  {
+                    "left": "Fish 🐟",
+                    "right": "Con cá"
+                  },
+                  {
+                    "left": "Bird 🐦",
+                    "right": "Con chim"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l8",
+          "level_num": 8,
+          "title": "Màn 8: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_8",
+              "question_type": "matching",
+              "prompt": "Thời tiết & Thiên nhiên (Lớp 1 - Màn 8)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Sun ☀️",
+                    "right": "Mặt trời"
+                  },
+                  {
+                    "left": "Rain 🌧️",
+                    "right": "Cơn mưa"
+                  },
+                  {
+                    "left": "Wind 💨",
+                    "right": "Cơn gió"
+                  },
+                  {
+                    "left": "Snow ❄️",
+                    "right": "Tuyết rơi"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l9",
+          "level_num": 9,
+          "title": "Màn 9: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_9",
+              "question_type": "matching",
+              "prompt": "Phép toán cộng trừ cơ bản (Lớp 1 - Màn 9)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "1 + 1",
+                    "right": "2"
+                  },
+                  {
+                    "left": "2 + 1",
+                    "right": "3"
+                  },
+                  {
+                    "left": "3 + 1",
+                    "right": "4"
+                  },
+                  {
+                    "left": "3 + 2",
+                    "right": "5"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l10",
+          "level_num": 10,
+          "title": "Màn 10: Khởi đầu",
+          "xp_reward": 60,
+          "coin_reward": 15,
+          "questions": [
+            {
+              "id": "mq_10",
+              "question_type": "matching",
+              "prompt": "Tiếng Anh con vật siêu vui (Lớp 1 - Màn 10)",
+              "points": 12,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Cat 🐱",
+                    "right": "Con mèo"
+                  },
+                  {
+                    "left": "Dog 🐶",
+                    "right": "Con chó"
+                  },
+                  {
+                    "left": "Fish 🐟",
+                    "right": "Con cá"
+                  },
+                  {
+                    "left": "Bird 🐦",
+                    "right": "Con chim"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l11",
+          "level_num": 11,
+          "title": "Màn 11: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_11",
+              "question_type": "matching",
+              "prompt": "Màu sắc vui nhộn (Lớp 2 - Màn 11)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Red 🔴",
+                    "right": "Màu đỏ"
+                  },
+                  {
+                    "left": "Blue 🔵",
+                    "right": "Màu xanh dương"
+                  },
+                  {
+                    "left": "Green 🟢",
+                    "right": "Màu xanh lá"
+                  },
+                  {
+                    "left": "Yellow 🟡",
+                    "right": "Màu vàng"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l12",
+          "level_num": 12,
+          "title": "Màn 12: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_12",
+              "question_type": "matching",
+              "prompt": "Phép nhân phân chia diệu kỳ (Lớp 2 - Màn 12)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "2 x 3",
+                    "right": "6"
+                  },
+                  {
+                    "left": "5 x 2",
+                    "right": "10"
+                  },
+                  {
+                    "left": "3 x 4",
+                    "right": "12"
+                  },
+                  {
+                    "left": "8 : 2",
+                    "right": "4"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l13",
+          "level_num": 13,
+          "title": "Màn 13: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_13",
+              "question_type": "matching",
+              "prompt": "Từ vựng trái cây tiếng Anh (Lớp 2 - Màn 13)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Apple 🍎",
+                    "right": "Quả táo"
+                  },
+                  {
+                    "left": "Banana 🍌",
+                    "right": "Quả chuối"
+                  },
+                  {
+                    "left": "Orange 🍊",
+                    "right": "Quả cam"
+                  },
+                  {
+                    "left": "Strawberry 🍓",
+                    "right": "Quả dâu"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l14",
+          "level_num": 14,
+          "title": "Màn 14: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_14",
+              "question_type": "matching",
+              "prompt": "Màu sắc vui nhộn (Lớp 2 - Màn 14)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Red 🔴",
+                    "right": "Màu đỏ"
+                  },
+                  {
+                    "left": "Blue 🔵",
+                    "right": "Màu xanh dương"
+                  },
+                  {
+                    "left": "Green 🟢",
+                    "right": "Màu xanh lá"
+                  },
+                  {
+                    "left": "Yellow 🟡",
+                    "right": "Màu vàng"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l15",
+          "level_num": 15,
+          "title": "Màn 15: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_15",
+              "question_type": "matching",
+              "prompt": "Phép nhân phân chia diệu kỳ (Lớp 2 - Màn 15)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "2 x 3",
+                    "right": "6"
+                  },
+                  {
+                    "left": "5 x 2",
+                    "right": "10"
+                  },
+                  {
+                    "left": "3 x 4",
+                    "right": "12"
+                  },
+                  {
+                    "left": "8 : 2",
+                    "right": "4"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l16",
+          "level_num": 16,
+          "title": "Màn 16: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_16",
+              "question_type": "matching",
+              "prompt": "Từ vựng trái cây tiếng Anh (Lớp 2 - Màn 16)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Apple 🍎",
+                    "right": "Quả táo"
+                  },
+                  {
+                    "left": "Banana 🍌",
+                    "right": "Quả chuối"
+                  },
+                  {
+                    "left": "Orange 🍊",
+                    "right": "Quả cam"
+                  },
+                  {
+                    "left": "Strawberry 🍓",
+                    "right": "Quả dâu"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l17",
+          "level_num": 17,
+          "title": "Màn 17: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_17",
+              "question_type": "matching",
+              "prompt": "Màu sắc vui nhộn (Lớp 2 - Màn 17)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Red 🔴",
+                    "right": "Màu đỏ"
+                  },
+                  {
+                    "left": "Blue 🔵",
+                    "right": "Màu xanh dương"
+                  },
+                  {
+                    "left": "Green 🟢",
+                    "right": "Màu xanh lá"
+                  },
+                  {
+                    "left": "Yellow 🟡",
+                    "right": "Màu vàng"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l18",
+          "level_num": 18,
+          "title": "Màn 18: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_18",
+              "question_type": "matching",
+              "prompt": "Phép nhân phân chia diệu kỳ (Lớp 2 - Màn 18)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "2 x 3",
+                    "right": "6"
+                  },
+                  {
+                    "left": "5 x 2",
+                    "right": "10"
+                  },
+                  {
+                    "left": "3 x 4",
+                    "right": "12"
+                  },
+                  {
+                    "left": "8 : 2",
+                    "right": "4"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l19",
+          "level_num": 19,
+          "title": "Màn 19: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_19",
+              "question_type": "matching",
+              "prompt": "Từ vựng trái cây tiếng Anh (Lớp 2 - Màn 19)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Apple 🍎",
+                    "right": "Quả táo"
+                  },
+                  {
+                    "left": "Banana 🍌",
+                    "right": "Quả chuối"
+                  },
+                  {
+                    "left": "Orange 🍊",
+                    "right": "Quả cam"
+                  },
+                  {
+                    "left": "Strawberry 🍓",
+                    "right": "Quả dâu"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l20",
+          "level_num": 20,
+          "title": "Màn 20: Thử thách",
+          "xp_reward": 70,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_20",
+              "question_type": "matching",
+              "prompt": "Màu sắc vui nhộn (Lớp 2 - Màn 20)",
+              "points": 14,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Red 🔴",
+                    "right": "Màu đỏ"
+                  },
+                  {
+                    "left": "Blue 🔵",
+                    "right": "Màu xanh dương"
+                  },
+                  {
+                    "left": "Green 🟢",
+                    "right": "Màu xanh lá"
+                  },
+                  {
+                    "left": "Yellow 🟡",
+                    "right": "Màu vàng"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l21",
+          "level_num": 21,
+          "title": "Màn 21: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_21",
+              "question_type": "matching",
+              "prompt": "Hình học & Số học phức tạp (Lớp 3 - Màn 21)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Square ⬜",
+                    "right": "Hình vuông"
+                  },
+                  {
+                    "left": "Triangle 🔺",
+                    "right": "Hình tam giác"
+                  },
+                  {
+                    "left": "Circle 🔴",
+                    "right": "Hình tròn"
+                  },
+                  {
+                    "left": "Cube 🧊",
+                    "right": "Hình lập phương"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l22",
+          "level_num": 22,
+          "title": "Màn 22: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_22",
+              "question_type": "matching",
+              "prompt": "Nghề nghiệp tiếng Anh (Lớp 3 - Màn 22)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Doctor 🧑‍⚕️",
+                    "right": "Bác sĩ"
+                  },
+                  {
+                    "left": "Teacher 🧑‍🏫",
+                    "right": "Giáo viên"
+                  },
+                  {
+                    "left": "Pilot 🧑‍✈️",
+                    "right": "Phi công"
+                  },
+                  {
+                    "left": "Chef 🧑‍🍳",
+                    "right": "Đầu bếp"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l23",
+          "level_num": 23,
+          "title": "Màn 23: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_23",
+              "question_type": "matching",
+              "prompt": "Từ trái nghĩa (Lớp 3 - Màn 23)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Big (To)",
+                    "right": "Small (Nhỏ)"
+                  },
+                  {
+                    "left": "Fast (Nhanh)",
+                    "right": "Slow (Chậm)"
+                  },
+                  {
+                    "left": "Happy (Vui)",
+                    "right": "Sad (Buồn)"
+                  },
+                  {
+                    "left": "Hot (Nóng)",
+                    "right": "Cold (Lạnh)"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l24",
+          "level_num": 24,
+          "title": "Màn 24: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_24",
+              "question_type": "matching",
+              "prompt": "Hình học & Số học phức tạp (Lớp 3 - Màn 24)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Square ⬜",
+                    "right": "Hình vuông"
+                  },
+                  {
+                    "left": "Triangle 🔺",
+                    "right": "Hình tam giác"
+                  },
+                  {
+                    "left": "Circle 🔴",
+                    "right": "Hình tròn"
+                  },
+                  {
+                    "left": "Cube 🧊",
+                    "right": "Hình lập phương"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l25",
+          "level_num": 25,
+          "title": "Màn 25: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_25",
+              "question_type": "matching",
+              "prompt": "Nghề nghiệp tiếng Anh (Lớp 3 - Màn 25)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Doctor 🧑‍⚕️",
+                    "right": "Bác sĩ"
+                  },
+                  {
+                    "left": "Teacher 🧑‍🏫",
+                    "right": "Giáo viên"
+                  },
+                  {
+                    "left": "Pilot 🧑‍✈️",
+                    "right": "Phi công"
+                  },
+                  {
+                    "left": "Chef 🧑‍🍳",
+                    "right": "Đầu bếp"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l26",
+          "level_num": 26,
+          "title": "Màn 26: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_26",
+              "question_type": "matching",
+              "prompt": "Từ trái nghĩa (Lớp 3 - Màn 26)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Big (To)",
+                    "right": "Small (Nhỏ)"
+                  },
+                  {
+                    "left": "Fast (Nhanh)",
+                    "right": "Slow (Chậm)"
+                  },
+                  {
+                    "left": "Happy (Vui)",
+                    "right": "Sad (Buồn)"
+                  },
+                  {
+                    "left": "Hot (Nóng)",
+                    "right": "Cold (Lạnh)"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l27",
+          "level_num": 27,
+          "title": "Màn 27: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_27",
+              "question_type": "matching",
+              "prompt": "Hình học & Số học phức tạp (Lớp 3 - Màn 27)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Square ⬜",
+                    "right": "Hình vuông"
+                  },
+                  {
+                    "left": "Triangle 🔺",
+                    "right": "Hình tam giác"
+                  },
+                  {
+                    "left": "Circle 🔴",
+                    "right": "Hình tròn"
+                  },
+                  {
+                    "left": "Cube 🧊",
+                    "right": "Hình lập phương"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l28",
+          "level_num": 28,
+          "title": "Màn 28: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_28",
+              "question_type": "matching",
+              "prompt": "Nghề nghiệp tiếng Anh (Lớp 3 - Màn 28)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Doctor 🧑‍⚕️",
+                    "right": "Bác sĩ"
+                  },
+                  {
+                    "left": "Teacher 🧑‍🏫",
+                    "right": "Giáo viên"
+                  },
+                  {
+                    "left": "Pilot 🧑‍✈️",
+                    "right": "Phi công"
+                  },
+                  {
+                    "left": "Chef 🧑‍🍳",
+                    "right": "Đầu bếp"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l29",
+          "level_num": 29,
+          "title": "Màn 29: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_29",
+              "question_type": "matching",
+              "prompt": "Từ trái nghĩa (Lớp 3 - Màn 29)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Big (To)",
+                    "right": "Small (Nhỏ)"
+                  },
+                  {
+                    "left": "Fast (Nhanh)",
+                    "right": "Slow (Chậm)"
+                  },
+                  {
+                    "left": "Happy (Vui)",
+                    "right": "Sad (Buồn)"
+                  },
+                  {
+                    "left": "Hot (Nóng)",
+                    "right": "Cold (Lạnh)"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "matching_l30",
+          "level_num": 30,
+          "title": "Màn 30: Bản lĩnh",
+          "xp_reward": 80,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_30",
+              "question_type": "matching",
+              "prompt": "Hình học & Số học phức tạp (Lớp 3 - Màn 30)",
+              "points": 16,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Square ⬜",
+                    "right": "Hình vuông"
+                  },
+                  {
+                    "left": "Triangle 🔺",
+                    "right": "Hình tam giác"
+                  },
+                  {
+                    "left": "Circle 🔴",
+                    "right": "Hình tròn"
+                  },
+                  {
+                    "left": "Cube 🧊",
+                    "right": "Hình lập phương"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "created_at": "2026-09-08 14:07:50.026650"
+    },
+    {
+      "id": "g2",
+      "title": "Truy Tìm Quy Luật",
+      "description": "Điền số tiếp theo vào chuỗi quy luật logic. Rèn tư duy toán học toàn diện.",
+      "detailed_description": "Tìm kiếm mối quan hệ ẩn giấu đằng sau những con số đầy mê hoặc! Trò chơi giúp con rèn luyện tư duy logic, nhận diện chuỗi quy luật và dự đoán xu hướng. Từ đó tăng cường kỹ năng phân tích và rèn luyện vượt trội bán cầu não trái.",
+      "thumbnail": "🧩",
+      "price": 15000,
+      "grade_from": 1,
+      "grade_to": 3,
+      "template_code": "sequence",
+      "category": "math",
+      "creator_id": null,
+      "creator_name": null,
+      "review_status": "approved",
+      "review_feedback": null,
+      "is_published": 1,
+      "is_seed": 1,
+      "rating_avg": 4.7,
+      "plays_count": 890,
+      "levels": [
+        {
+          "id": "sequence_l1",
+          "level_num": 1,
+          "title": "Màn 1: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_1",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "1",
+                  "2",
+                  "3",
+                  "4",
+                  "?"
+                ],
+                "answer": "5",
+                "explanation": "Cộng thêm 1 vào số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l2",
+          "level_num": 2,
+          "title": "Màn 2: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_2",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "4",
+                  "6",
+                  "8",
+                  "10",
+                  "?"
+                ],
+                "answer": "12",
+                "explanation": "Cộng thêm 2 (quy luật số chẵn)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l3",
+          "level_num": 3,
+          "title": "Màn 3: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_3",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "10",
+                  "9",
+                  "8",
+                  "7",
+                  "?"
+                ],
+                "answer": "6",
+                "explanation": "Bớt đi 1 đơn vị đằng sau."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l4",
+          "level_num": 4,
+          "title": "Màn 4: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_4",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "4",
+                  "5",
+                  "6",
+                  "7",
+                  "?"
+                ],
+                "answer": "8",
+                "explanation": "Cộng thêm 1 vào số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l5",
+          "level_num": 5,
+          "title": "Màn 5: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_5",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "10",
+                  "12",
+                  "14",
+                  "16",
+                  "?"
+                ],
+                "answer": "18",
+                "explanation": "Cộng thêm 2 (quy luật số chẵn)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l6",
+          "level_num": 6,
+          "title": "Màn 6: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_6",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "10",
+                  "9",
+                  "8",
+                  "7",
+                  "?"
+                ],
+                "answer": "6",
+                "explanation": "Bớt đi 1 đơn vị đằng sau."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l7",
+          "level_num": 7,
+          "title": "Màn 7: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_7",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "7",
+                  "8",
+                  "9",
+                  "10",
+                  "?"
+                ],
+                "answer": "11",
+                "explanation": "Cộng thêm 1 vào số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l8",
+          "level_num": 8,
+          "title": "Màn 8: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_8",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "16",
+                  "18",
+                  "20",
+                  "22",
+                  "?"
+                ],
+                "answer": "24",
+                "explanation": "Cộng thêm 2 (quy luật số chẵn)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l9",
+          "level_num": 9,
+          "title": "Màn 9: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_9",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "10",
+                  "9",
+                  "8",
+                  "7",
+                  "?"
+                ],
+                "answer": "6",
+                "explanation": "Bớt đi 1 đơn vị đằng sau."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l10",
+          "level_num": 10,
+          "title": "Màn 10: Quy luật số học",
+          "xp_reward": 70,
+          "coin_reward": 17,
+          "questions": [
+            {
+              "id": "sq_10",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "10",
+                  "11",
+                  "12",
+                  "13",
+                  "?"
+                ],
+                "answer": "14",
+                "explanation": "Cộng thêm 1 vào số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l11",
+          "level_num": 11,
+          "title": "Màn 11: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_11",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "3",
+                  "6",
+                  "12",
+                  "24",
+                  "?"
+                ],
+                "answer": "48",
+                "explanation": "Nhân đôi số phía trước (gấp 2 lần)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l12",
+          "level_num": 12,
+          "title": "Màn 12: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_12",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "100",
+                  "90",
+                  "80",
+                  "70",
+                  "?"
+                ],
+                "answer": "60",
+                "explanation": "Trừ đi 10 đơn vị ở số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l13",
+          "level_num": 13,
+          "title": "Màn 13: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_13",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "65",
+                  "70",
+                  "75",
+                  "80",
+                  "?"
+                ],
+                "answer": "85",
+                "explanation": "Quy luật cộng thêm 5."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l14",
+          "level_num": 14,
+          "title": "Màn 14: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_14",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "3",
+                  "6",
+                  "12",
+                  "24",
+                  "?"
+                ],
+                "answer": "48",
+                "explanation": "Nhân đôi số phía trước (gấp 2 lần)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l15",
+          "level_num": 15,
+          "title": "Màn 15: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_15",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "100",
+                  "90",
+                  "80",
+                  "70",
+                  "?"
+                ],
+                "answer": "60",
+                "explanation": "Trừ đi 10 đơn vị ở số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l16",
+          "level_num": 16,
+          "title": "Màn 16: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_16",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "80",
+                  "85",
+                  "90",
+                  "95",
+                  "?"
+                ],
+                "answer": "100",
+                "explanation": "Quy luật cộng thêm 5."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l17",
+          "level_num": 17,
+          "title": "Màn 17: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_17",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "3",
+                  "6",
+                  "12",
+                  "24",
+                  "?"
+                ],
+                "answer": "48",
+                "explanation": "Nhân đôi số phía trước (gấp 2 lần)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l18",
+          "level_num": 18,
+          "title": "Màn 18: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_18",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "100",
+                  "90",
+                  "80",
+                  "70",
+                  "?"
+                ],
+                "answer": "60",
+                "explanation": "Trừ đi 10 đơn vị ở số đứng trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l19",
+          "level_num": 19,
+          "title": "Màn 19: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_19",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "95",
+                  "100",
+                  "105",
+                  "110",
+                  "?"
+                ],
+                "answer": "115",
+                "explanation": "Quy luật cộng thêm 5."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l20",
+          "level_num": 20,
+          "title": "Màn 20: Quy luật số học",
+          "xp_reward": 80,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "sq_20",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 18,
+              "data": {
+                "sequence": [
+                  "3",
+                  "6",
+                  "12",
+                  "24",
+                  "?"
+                ],
+                "answer": "48",
+                "explanation": "Nhân đôi số phía trước (gấp 2 lần)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l21",
+          "level_num": 21,
+          "title": "Màn 21: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_21",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "4",
+                  "9",
+                  "16",
+                  "?"
+                ],
+                "answer": "25",
+                "explanation": "Dãy số chính phương (1x1, 2x2, 3x3, 4x4, 5x5)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l22",
+          "level_num": 22,
+          "title": "Màn 22: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_22",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "3",
+                  "2",
+                  "4",
+                  "3",
+                  "5",
+                  "?"
+                ],
+                "answer": "4",
+                "explanation": "Cộng 2 rồi trừ 1 xen kẽ (+2, -1, +2, -1)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l23",
+          "level_num": 23,
+          "title": "Màn 23: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_23",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "2",
+                  "3",
+                  "5",
+                  "8",
+                  "13",
+                  "?"
+                ],
+                "answer": "21",
+                "explanation": "Số tiếp theo là tổng của 2 số liền trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l24",
+          "level_num": 24,
+          "title": "Màn 24: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_24",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "4",
+                  "9",
+                  "16",
+                  "?"
+                ],
+                "answer": "25",
+                "explanation": "Dãy số chính phương (1x1, 2x2, 3x3, 4x4, 5x5)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l25",
+          "level_num": 25,
+          "title": "Màn 25: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_25",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "3",
+                  "2",
+                  "4",
+                  "3",
+                  "5",
+                  "?"
+                ],
+                "answer": "4",
+                "explanation": "Cộng 2 rồi trừ 1 xen kẽ (+2, -1, +2, -1)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l26",
+          "level_num": 26,
+          "title": "Màn 26: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_26",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "2",
+                  "3",
+                  "5",
+                  "8",
+                  "13",
+                  "?"
+                ],
+                "answer": "21",
+                "explanation": "Số tiếp theo là tổng của 2 số liền trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l27",
+          "level_num": 27,
+          "title": "Màn 27: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_27",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "4",
+                  "9",
+                  "16",
+                  "?"
+                ],
+                "answer": "25",
+                "explanation": "Dãy số chính phương (1x1, 2x2, 3x3, 4x4, 5x5)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l28",
+          "level_num": 28,
+          "title": "Màn 28: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_28",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "3",
+                  "2",
+                  "4",
+                  "3",
+                  "5",
+                  "?"
+                ],
+                "answer": "4",
+                "explanation": "Cộng 2 rồi trừ 1 xen kẽ (+2, -1, +2, -1)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l29",
+          "level_num": 29,
+          "title": "Màn 29: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_29",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "2",
+                  "3",
+                  "5",
+                  "8",
+                  "13",
+                  "?"
+                ],
+                "answer": "21",
+                "explanation": "Số tiếp theo là tổng của 2 số liền trước."
+              }
+            }
+          ]
+        },
+        {
+          "id": "sequence_l30",
+          "level_num": 30,
+          "title": "Màn 30: Quy luật số học",
+          "xp_reward": 90,
+          "coin_reward": 27,
+          "questions": [
+            {
+              "id": "sq_30",
+              "question_type": "sequence",
+              "prompt": "Tìm con số thích hợp điền vào dấu chấm hỏi (?)",
+              "points": 21,
+              "data": {
+                "sequence": [
+                  "1",
+                  "4",
+                  "9",
+                  "16",
+                  "?"
+                ],
+                "answer": "25",
+                "explanation": "Dãy số chính phương (1x1, 2x2, 3x3, 4x4, 5x5)."
+              }
+            }
+          ]
+        }
+      ],
+      "created_at": "2026-09-08 14:07:50.026651"
+    },
+    {
+      "id": "g3",
+      "title": "Vua Ghi Nhớ",
+      "description": "Nhớ vị trí lật thẻ hình lộng lẫy để rèn siêu trí tuệ quang học.",
+      "detailed_description": "Phát triển khả năng tập trung cao độ và rèn lưu giữ trí nhớ ngắn hạn! Trẻ lật các quân bài ngộ nghĩnh, tìm kiếm những cặp hình ảnh giống hệt nhau về chủ đề loài vật, khoa học và trường học. Thử thách tính giờ sinh động thúc đẩy não bộ hoạt động linh hoạt.",
+      "thumbnail": "🧠",
+      "price": 25000,
+      "grade_from": 1,
+      "grade_to": 3,
+      "template_code": "memory",
+      "category": "iq",
+      "creator_id": null,
+      "creator_name": null,
+      "review_status": "approved",
+      "review_feedback": null,
+      "is_published": 1,
+      "is_seed": 1,
+      "rating_avg": 4.9,
+      "plays_count": 2100,
+      "levels": [
+        {
+          "id": "memory_l1",
+          "level_num": 1,
+          "title": "Màn 1: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_1",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l2",
+          "level_num": 2,
+          "title": "Màn 2: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_2",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶",
+                  "🐻"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l3",
+          "level_num": 3,
+          "title": "Màn 3: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_3",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l4",
+          "level_num": 4,
+          "title": "Màn 4: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_4",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶",
+                  "🐻"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l5",
+          "level_num": 5,
+          "title": "Màn 5: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_5",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l6",
+          "level_num": 6,
+          "title": "Màn 6: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_6",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶",
+                  "🐻"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l7",
+          "level_num": 7,
+          "title": "Màn 7: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_7",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l8",
+          "level_num": 8,
+          "title": "Màn 8: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_8",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶",
+                  "🐻"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l9",
+          "level_num": 9,
+          "title": "Màn 9: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_9",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l10",
+          "level_num": 10,
+          "title": "Màn 10: Sở thú",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "mq_10",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 17,
+              "data": {
+                "theme": "con_vat",
+                "items": [
+                  "🐱",
+                  "🐶",
+                  "🐻"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l11",
+          "level_num": 11,
+          "title": "Màn 11: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_11",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l12",
+          "level_num": 12,
+          "title": "Màn 12: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_12",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊",
+                  "🍉"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l13",
+          "level_num": 13,
+          "title": "Màn 13: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_13",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l14",
+          "level_num": 14,
+          "title": "Màn 14: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_14",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊",
+                  "🍉"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l15",
+          "level_num": 15,
+          "title": "Màn 15: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_15",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l16",
+          "level_num": 16,
+          "title": "Màn 16: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_16",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊",
+                  "🍉"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l17",
+          "level_num": 17,
+          "title": "Màn 17: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_17",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l18",
+          "level_num": 18,
+          "title": "Màn 18: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_18",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊",
+                  "🍉"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l19",
+          "level_num": 19,
+          "title": "Màn 19: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_19",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l20",
+          "level_num": 20,
+          "title": "Màn 20: Khu vườn",
+          "xp_reward": 90,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "mq_20",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 19,
+              "data": {
+                "theme": "trai_cay",
+                "items": [
+                  "🍎",
+                  "🍌",
+                  "🍇",
+                  "🍊",
+                  "🍉"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l21",
+          "level_num": 21,
+          "title": "Màn 21: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_21",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l22",
+          "level_num": 22,
+          "title": "Màn 22: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_22",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫",
+                  "🚀",
+                  "🛸"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l23",
+          "level_num": 23,
+          "title": "Màn 23: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_23",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l24",
+          "level_num": 24,
+          "title": "Màn 24: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_24",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫",
+                  "🚀",
+                  "🛸"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l25",
+          "level_num": 25,
+          "title": "Màn 25: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_25",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l26",
+          "level_num": 26,
+          "title": "Màn 26: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_26",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫",
+                  "🚀",
+                  "🛸"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l27",
+          "level_num": 27,
+          "title": "Màn 27: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_27",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l28",
+          "level_num": 28,
+          "title": "Màn 28: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_28",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫",
+                  "🚀",
+                  "🛸"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l29",
+          "level_num": 29,
+          "title": "Màn 29: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_29",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "memory_l30",
+          "level_num": 30,
+          "title": "Màn 30: Khoa học",
+          "xp_reward": 100,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "mq_30",
+              "question_type": "memory",
+              "prompt": "Lật các thẻ bài để tìm toàn bộ cặp trùng khớp với nhau!",
+              "points": 21,
+              "data": {
+                "theme": "truong_hoc",
+                "items": [
+                  "🎒",
+                  "✏️",
+                  "📐",
+                  "📕",
+                  "🎨",
+                  "🏫",
+                  "🚀",
+                  "🛸"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "created_at": "2026-09-08 14:07:50.026652"
+    },
+    {
+      "id": "g_scratch_studio",
+      "title": "Lập Trình Robot Scratch",
+      "description": "Lắp ráp các khối thuật toán logic tư duy để chỉ huy phi thuyền hoặc chuyển động chú mèo.",
+      "detailed_description": "Chào mừng con đến với Studio Lập Trình Robot Scratch cực đỉnh! Tại đây con sẽ được làm quen với tư duy thuật toán máy tính, học cách lắp ghép các khối lệnh tuần tự, vòng lặp lặp lại, hay xoay góc rẽ hướng linh hoạt để dắt đường chú mèo lập trình và chiếc phi thuyền giải quyết 9 thử thách mê cung từ dễ đến nâng cao. Nhận ngay huy hiệu danh giá và hàng trăm XP thưởng nhé!",
+      "thumbnail": "🤖",
+      "price": 0,
+      "grade_from": 1,
+      "grade_to": 9,
+      "template_code": "memory",
+      "category": "scratch",
+      "creator_id": null,
+      "creator_name": null,
+      "review_status": "approved",
+      "review_feedback": null,
+      "is_published": 1,
+      "is_seed": 1,
+      "rating_avg": 4.9,
+      "plays_count": 2840,
+      "levels": [],
+      "created_at": "2026-09-08 14:07:50.026652"
+    },
+    {
+      "id": "g_iq_thuc_te",
+      "title": "Thử Thách IQ Thực Tế",
+      "description": "Giải đố các tình huống thực tế đời sống gần gũi giúp phát triển phản xạ nhanh nhạy và tư duy thông thái.",
+      "detailed_description": "Kho trò chơi thực tế thiết kế riêng để nuôi dưỡng tinh thần khám phá thế giới xung quanh một cách khoa học! Bạn nhỏ sẽ được đặt vào 10 tình huống thực tế sinh động: từ xem giờ đồng hồ bữa cơm gia đình, tính lát bánh cắt sinh nhật, dọn dẹp phân phối đồ ăn thú cưng, đến việc tuân thủ chu kỳ đèn đỏ đèn xanh trên hè phố. Vừa học vừa chơi, tăng tốc phản xạ giải quyết vấn đề!",
+      "thumbnail": "💡",
+      "price": 0,
+      "grade_from": 1,
+      "grade_to": 5,
+      "template_code": "sequence",
+      "category": "iq",
+      "creator_id": null,
+      "creator_name": null,
+      "review_status": "approved",
+      "review_feedback": null,
+      "is_published": 1,
+      "is_seed": 1,
+      "rating_avg": 4.95,
+      "plays_count": 1420,
+      "levels": [
+        {
+          "id": "iq_real_l1",
+          "level_num": 1,
+          "title": "Dịch chuyển Kim Giờ",
+          "xp_reward": 80,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "iq_real_q1",
+              "question_type": "sequence",
+              "prompt": "Sau mỗi tiếng cơm trưa, chiếc kim giờ dịch chuyển thêm 1 nấc mới. Điền mốc tiếp theo hoàn thành quy luật thời gian thực tế!",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "1 giờ",
+                  "2 giờ",
+                  "3 giờ",
+                  "4 giờ",
+                  "?"
+                ],
+                "answer": "5 giờ",
+                "options": [
+                  "5 giờ",
+                  "6 giờ",
+                  "12 giờ",
+                  "8 giờ"
+                ],
+                "explanation": "Thời gian trôi xuôi chiều liên tiếp nhau nên sau 4 giờ sẽ đến mốc 5 giờ."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l2",
+          "level_num": 2,
+          "title": "Bánh Ngọt Sinh Nhật",
+          "xp_reward": 95,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "iq_real_q2",
+              "question_type": "sequence",
+              "prompt": "Một nhát gập đôi tờ giấy tạo 2 bề bề mặt. Hãy đoán quy luật nhân đôi để biết số phần bánh khi ta dùng 3 đường cắt đối xứng tâm!",
+              "points": 20,
+              "data": {
+                "sequence": [
+                  "1 nhát: 2 phần",
+                  "2 nhát: 4 phần",
+                  "3 nhát: ?"
+                ],
+                "answer": "8 phần",
+                "options": [
+                  "6 phần",
+                  "8 phần",
+                  "10 phần",
+                  "12 phần"
+                ],
+                "explanation": "Mỗi nhát cắt chia đôi không gian vuông góc chéo đối xứng tạo ra cấp số nhân đôi: 2, 4, rồi đến 8 phần bằng nhau."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l3",
+          "level_num": 3,
+          "title": "Bữa Tiệc Thú Cưng",
+          "xp_reward": 90,
+          "coin_reward": 20,
+          "questions": [
+            {
+              "id": "iq_real_q3",
+              "question_type": "matching",
+              "prompt": "Bé dọn thức ăn thực tế cho các bạn thú cưng của gia đình. Hãy ghép cặp đúng món ăn được chúng yêu thích nhất!",
+              "points": 25,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Cá 🐟 yêu thích của",
+                    "right": "Mèo con 🐱"
+                  },
+                  {
+                    "left": "Khúc xương 🦴 cho",
+                    "right": "Chó cưng 🐶"
+                  },
+                  {
+                    "left": "Cà rốt 🥕 cho",
+                    "right": "Thỏ béo 🐰"
+                  },
+                  {
+                    "left": "Phô mai thơm 🧀 cho",
+                    "right": "Chuột Hamster 🐹"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l4",
+          "level_num": 4,
+          "title": "Hạ thủy Thuyền Buồm",
+          "xp_reward": 100,
+          "coin_reward": 22,
+          "questions": [
+            {
+              "id": "iq_real_q4",
+              "question_type": "sequence",
+              "prompt": "Đoàn thuyền buồm hạ thủy theo hàng sặc sỡ trên nền cát vàng. Bạn nhỏ hãy dự kiến màu của chiếc thuyền thứ năm!",
+              "points": 15,
+              "data": {
+                "sequence": [
+                  "⛵ Đỏ",
+                  "⛵ Xanh",
+                  "⛵ Đỏ",
+                  "⛵ Xanh",
+                  "?"
+                ],
+                "answer": "⛵ Đỏ",
+                "options": [
+                  "⛵ Đỏ",
+                  "⛵ Xanh",
+                  "⛵ Vàng",
+                  "⛵ Tím"
+                ],
+                "explanation": "Quy luật sắp đặt xen kẽ liên tục hai màu sắc tuần hoàn: Đỏ rồi tới Xanh."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l5",
+          "level_num": 5,
+          "title": "Đèn Giao Thông Đô Thị",
+          "xp_reward": 100,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "iq_real_q5",
+              "question_type": "sequence",
+              "prompt": "Đèn báo hiệu tự động xoay chuyển trên đường phố. Hãy tìm tín hiệu tiếp theo để người đi bộ dừng hoặc chuẩn bị!",
+              "points": 20,
+              "data": {
+                "sequence": [
+                  "🔴 Đỏ (Dừng)",
+                  "🟢 Xanh (Đi)",
+                  "🟡 Vàng (Chậm)",
+                  "🔴 Đỏ (Dừng)",
+                  "?"
+                ],
+                "answer": "🟢 Xanh (Đi)",
+                "options": [
+                  "🟢 Xanh (Đi)",
+                  "🔴 Đỏ (Dừng)",
+                  "🟡 Vàng (Chậm)",
+                  "🔵 Xanh lam"
+                ],
+                "explanation": "Vòng xoay chu kỳ quy chuẩn giao thông luôn là Đỏ chuyển sang Xanh, rồi đến Vàng và lặp lại từ đầu."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l6",
+          "level_num": 6,
+          "title": "Xếp Hàng Đón Xe Bus",
+          "xp_reward": 110,
+          "coin_reward": 25,
+          "questions": [
+            {
+              "id": "iq_real_q6",
+              "question_type": "sequence",
+              "prompt": "Bé trai và Bé gái xếp hàng trật tự lên xe dã ngoại. Hãy đoán xem vị trí thứ năm là bạn Nam hay Nữ?",
+              "points": 22,
+              "data": {
+                "sequence": [
+                  "1. Bạn Nam",
+                  "2. Bạn Nữ",
+                  "3. Bạn Nam",
+                  "4. Bạn Nữ",
+                  "?"
+                ],
+                "answer": "5. Bạn Nam",
+                "options": [
+                  "5. Bạn Nam",
+                  "5. Bạn Nữ",
+                  "5. Bác Tài Xế",
+                  "5. Cô Giáo"
+                ],
+                "explanation": "Đội ngũ xếp hàng xen kẽ nhịp nhàng tuần hoàn liên tục: Nam -> Nữ -> Nam -> Nữ -> Nam."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l7",
+          "level_num": 7,
+          "title": "Dấu tích Lốp Xe trên sân",
+          "xp_reward": 120,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "iq_real_q7",
+              "question_type": "matching",
+              "prompt": "Tìm dấu vết lốp xe in hằn trên nền cát ẩm để phá án truy vết phương tiện giao thông đời thường nhé!",
+              "points": 25,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Xe đạp 🚲 tạo",
+                    "right": "1 vệt lốp mỏng dẹt"
+                  },
+                  {
+                    "left": "Xe máy điện 🏍️ tạo",
+                    "right": "1 vệt lốp dày có gai sâu"
+                  },
+                  {
+                    "left": "Xe ô tô con 🚗 tạo",
+                    "right": "2 vệt lốp song song cỡ vừa"
+                  },
+                  {
+                    "left": "Xe máy cày 🚜 tạo",
+                    "right": "2 vệt lốp khổng lồ gai răng cưa"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l8",
+          "level_num": 8,
+          "title": "Tước vị Thờ Gian dã ngoại",
+          "xp_reward": 115,
+          "coin_reward": 28,
+          "questions": [
+            {
+              "id": "iq_real_q8",
+              "question_type": "sequence",
+              "prompt": "Các tháng đi dã ngoại của trường cách đều nhau 2 tháng (Tháng lẻ). Hãy tìm kỳ dã ngoại kế tiếp!",
+              "points": 20,
+              "data": {
+                "sequence": [
+                  "Tháng 1",
+                  "Tháng 3",
+                  "Tháng 5",
+                  "Tháng 7",
+                  "?"
+                ],
+                "answer": "Tháng 9",
+                "options": [
+                  "Tháng 8",
+                  "Tháng 9",
+                  "Tháng 10",
+                  "Tháng 11"
+                ],
+                "explanation": "Cứ cách 2 tháng trường sẽ đi chơi dã ngoại 1 lần (dãy số tăng cách đều +2 đơn vị lẻ)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l9",
+          "level_num": 9,
+          "title": "Chỉ số Rót Nước ngọt",
+          "xp_reward": 125,
+          "coin_reward": 30,
+          "questions": [
+            {
+              "id": "iq_real_q9",
+              "question_type": "sequence",
+              "prompt": "Lượng nước được rót đầy bình tăng tiến đều đặn qua mỗi bữa giải khát. Hãy tìm nấc can nước cuối cùng!",
+              "points": 25,
+              "data": {
+                "sequence": [
+                  "250 ml",
+                  "500 ml",
+                  "750 ml",
+                  "?"
+                ],
+                "answer": "1000 ml",
+                "options": [
+                  "800 ml",
+                  "900 ml",
+                  "1000 ml",
+                  "1200 ml"
+                ],
+                "explanation": "Lượng nước tăng dần đều 250ml sau mỗi lần rót dồn (250 -> 500 -> 750 -> 1000ml)."
+              }
+            }
+          ]
+        },
+        {
+          "id": "iq_real_l10",
+          "level_num": 10,
+          "title": "Nhà thông thái Phân Loại Rác",
+          "xp_reward": 150,
+          "coin_reward": 40,
+          "questions": [
+            {
+              "id": "iq_real_q10",
+              "question_type": "matching",
+              "prompt": "Hãy giúp thành phố xanh tươi sạch đẹp bằng cách ghép rác sinh hoạt đời sống vào đúng thùng phân loại!",
+              "points": 30,
+              "data": {
+                "pairs": [
+                  {
+                    "left": "Vỏ chuối, rau thừa 🌽 ném vào",
+                    "right": "Thùng Rác Hữu Cơ 🍏"
+                  },
+                  {
+                    "left": "Chai nhựa, vỏ lon 🥤 ném vào",
+                    "right": "Thùng Rác Tái Chế 🔄"
+                  },
+                  {
+                    "left": "Pin hỏng, bóng đèn 🔋 ném vào",
+                    "right": "Thùng Rác Nguy Hại ⚠️"
+                  },
+                  {
+                    "left": "Túi bóng cũ bẩn và sành sứ ném vào",
+                    "right": "Thùng Rác Còn Lại 🗑️"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "created_at": "2026-09-08 14:07:50.026653"
+    }
+  ],
+  "purchases": [
+    {
+      "id": 1,
+      "user_id": "u1",
+      "game_id": "g1",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027422"
+    },
+    {
+      "id": 2,
+      "user_id": "u2",
+      "game_id": "g1",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027423"
+    },
+    {
+      "id": 3,
+      "user_id": "u2",
+      "game_id": "g2",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027423"
+    },
+    {
+      "id": 4,
+      "user_id": "u2",
+      "game_id": "g3",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027424"
+    },
+    {
+      "id": 5,
+      "user_id": "u3",
+      "game_id": "g1",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027424"
+    },
+    {
+      "id": 6,
+      "user_id": "u3",
+      "game_id": "g2",
+      "purchased_price": 0,
+      "purchased_at": "2026-09-08 14:07:50.027424"
+    }
+  ],
+  "attempts": [
+    {
+      "id": "att_seed_1",
+      "user_id": "u1",
+      "game_id": "g1",
+      "level_num": 5,
+      "score": 280,
+      "completed": 1,
+      "duration_secs": 60,
+      "created_at": "2026-06-22 12:00:00.000000"
+    },
+    {
+      "id": "att_seed_2",
+      "user_id": "u1",
+      "game_id": "g2",
+      "level_num": 2,
+      "score": 120,
+      "completed": 1,
+      "duration_secs": 60,
+      "created_at": "2026-06-21 11:30:00.000000"
+    }
+  ],
+  "user_achievements": [],
+  "user_daily_quests": [],
+  "user_daily_spins": [],
+  "login_reward_claims": [],
+  "user_scratch_progress": []
+}

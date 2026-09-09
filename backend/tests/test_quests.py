@@ -8,8 +8,8 @@ def test_daily_quests_are_created_and_progressed(client, student_auth, db_sessio
     response = client.get(f"/api/quests/daily?userId={uid}")
     assert response.status_code == 200
     quests = response.json()
-    assert len(quests) == 3
-    assert {quest["type"] for quest in quests} == {"play_count", "score_reach", "scratch_complete"}
+    assert len(quests) == 4
+    assert {quest["type"] for quest in quests} == {"play_count", "score_reach", "scratch_complete", "scratch_project_save"}
 
     # Hoàn thành 1 màn chơi -> play_count = 1, chưa COMPLETED
     res1 = client.post("/api/attempts/submit", json={"userId": uid, "gameId": "g1", "levelNum": 1, "score": 90, "completed": True})
@@ -167,12 +167,16 @@ def test_scratch_quest_progress(client, student_auth, db_session):
     target_seq = courses[0]["lessons"][0]["target_block_sequence"]
 
     # Nộp bài scratch đúng khối lệnh
-    res = client.post("/api/scratch/lessons/submit", json={
-        "userId": uid,
-        "courseId": c_id,
-        "lessonNum": 1,
-        "submittedSequence": target_seq,
-    })
+    res = client.post(
+        "/api/scratch/lessons/submit",
+        json={
+            "userId": uid,
+            "courseId": c_id,
+            "lessonNum": 1,
+            "submittedSequence": target_seq,
+        },
+        headers=student_auth["headers"],
+    )
     assert res.status_code == 200
 
     quests = client.get(f"/api/quests/daily?userId={uid}").json()

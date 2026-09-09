@@ -20,7 +20,7 @@ export const paths = {
 export const pageTitles: Record<string, string> = {
   [paths.home]: 'Khám phá — IQ Kids Market',
   [paths.marketplace]: 'Chợ Game Trí Tuệ — IQ Kids Market',
-  [paths.scratch]: 'Lập trình Scratch — IQ Kids Market',
+  [paths.scratch]: 'Lập trình & Thuật toán — IQ Kids Market',
   [paths.leaderboard]: 'Bảng Vàng — IQ Kids Market',
   [paths.wallet]: 'Ví Xu — IQ Kids Market',
   [paths.profile]: 'Hồ sơ — IQ Kids Market',

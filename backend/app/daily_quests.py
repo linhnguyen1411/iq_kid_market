@@ -12,6 +12,7 @@ QUEST_DEFINITIONS = (
     {"id": "quest_play_count", "title": "Chinh phục màn chơi", "description": "Hoàn thành 2 màn chơi bất kỳ trong ngày.", "type": "play_count", "target_count": 2, "xp_reward": 50, "coin_reward": 20},
     {"id": "quest_score_reach", "title": "Điểm số tuyệt đối", "description": "Đạt 100 điểm trong một game Toán hoặc IQ.", "type": "score_reach", "target_count": 1, "xp_reward": 75, "coin_reward": 30},
     {"id": "quest_scratch_complete", "title": "Nhà lập trình nhí", "description": "Hoàn thành một bài học Scratch trong ngày.", "type": "scratch_complete", "target_count": 1, "xp_reward": 60, "coin_reward": 25},
+    {"id": "quest_scratch_project_save", "title": "Kiến trúc sư Scratch", "description": "Tạo và lưu một dự án sáng tạo mới trong Scratch Studio.", "type": "scratch_project_save", "target_count": 1, "xp_reward": 50, "coin_reward": 20},
 )
 
 SPIN_REWARDS = (

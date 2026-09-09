@@ -15,12 +15,16 @@ def test_scratch_courses_and_submission(client, student_auth, teacher_auth):
 
     # 2. Nộp đúng khối lệnh bài 1 -> Mở khóa bài 2
     target_seq = lessons[0]["target_block_sequence"]
-    res_submit = client.post("/api/scratch/lessons/submit", json={
-        "userId": student_auth["user_id"],
-        "courseId": c_id,
-        "lessonNum": 1,
-        "submittedSequence": target_seq,
-    })
+    res_submit = client.post(
+        "/api/scratch/lessons/submit",
+        json={
+            "userId": student_auth["user_id"],
+            "courseId": c_id,
+            "lessonNum": 1,
+            "submittedSequence": target_seq,
+        },
+        headers=student_auth["headers"],
+    )
     assert res_submit.status_code == 200
     assert res_submit.json()["success"] is True
     assert res_submit.json()["nextLessonNum"] == 2

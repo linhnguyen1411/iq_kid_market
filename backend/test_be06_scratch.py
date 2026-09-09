@@ -61,6 +61,8 @@ def test_be06_scratch_pipeline():
     })
     assert res_student.status_code == 200
     student_id = res_student.json()["user"]["id"]
+    student_token = res_student.json()["access_token"]
+    student_headers = {"Authorization": f"Bearer {student_token}"}
 
     res_teacher = client.post("/api/auth/register", json={
         "username": "teacher_scratch",
@@ -90,12 +92,16 @@ def test_be06_scratch_pipeline():
 
     # 3. TEST NỘP BÀI SAI KHỐI LỆNH -> BÁO LỖI GỢI Ý
     print("3️⃣ [Test Nộp Bài Sai Khối Lệnh]: POST /api/scratch/lessons/submit...")
-    res_wrong = client.post("/api/scratch/lessons/submit", json={
-        "userId": student_id,
-        "courseId": course_id,
-        "lessonNum": 1,
-        "submittedSequence": ["turn_left", "turn_right"],  # Sai
-    })
+    res_wrong = client.post(
+        "/api/scratch/lessons/submit",
+        json={
+            "userId": student_id,
+            "courseId": course_id,
+            "lessonNum": 1,
+            "submittedSequence": ["turn_left", "turn_right"],  # Sai
+        },
+        headers=student_headers,
+    )
     assert res_wrong.status_code == 200
     data_wrong = res_wrong.json()
     assert data_wrong["success"] is False
@@ -105,12 +111,16 @@ def test_be06_scratch_pipeline():
     # 4. TEST NỘP BÀI ĐÚNG KHỐI LỆNH -> NHẬN XP, XU VÀ MỞ KHÓA BÀI TIẾP THEO
     print("4️⃣ [Test Nộp Bài Đúng Khối Lệnh]: POST /api/scratch/lessons/submit...")
     target_seq = lessons[0]["target_block_sequence"]
-    res_correct = client.post("/api/scratch/lessons/submit", json={
-        "userId": student_id,
-        "courseId": course_id,
-        "lessonNum": 1,
-        "submittedSequence": target_seq,  # Đúng chuỗi mục tiêu
-    })
+    res_correct = client.post(
+        "/api/scratch/lessons/submit",
+        json={
+            "userId": student_id,
+            "courseId": course_id,
+            "lessonNum": 1,
+            "submittedSequence": target_seq,  # Đúng chuỗi mục tiêu
+        },
+        headers=student_headers,
+    )
     assert res_correct.status_code == 200
     data_correct = res_correct.json()
     assert data_correct["success"] is True

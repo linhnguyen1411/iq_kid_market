@@ -112,6 +112,7 @@ export interface ScratchLesson {
   xp_reward: number;
   coin_reward: number;
   hint_text?: string;
+  engine_type?: 'algorithm_maze' | 'scratch_studio';
   isLocked?: boolean;
   completed?: boolean;
 }
@@ -123,6 +124,7 @@ export interface ScratchCourse {
   thumbnail: string;
   grade_level: number;
   difficulty: string;
+  course_type?: 'algorithm_maze' | 'scratch_studio';
   lessons_count: number;
   lessons: ScratchLesson[];
   completed_lessons_count?: number;
@@ -154,3 +156,62 @@ export interface AdminStats {
   customGamesCount: number;
   usersList: User[];
 }
+
+export interface ScratchProjectSummary {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string | null;
+  thumbnail: string;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ScratchProject extends ScratchProjectSummary {
+  project_data: {
+    title?: string;
+    sprite?: {
+      x: number;
+      y: number;
+      direction: number;
+      size: number;
+      visible: boolean;
+    };
+    blocklyXml?: string;
+    blocks?: any[];
+    telemetry?: any;
+    [key: string]: any;
+  } | any;
+}
+
+export interface ScratchSkillMasteryItem {
+  skill: string;
+  title: string;
+  mastery_percent: number;
+  level_required: number;
+}
+
+export interface ScratchBadgeItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  icon: string;
+  badge_code: string;
+  xp_bonus: number;
+  unlocked: boolean;
+  unlocked_at?: string | null;
+}
+
+export interface ScratchAnalytics {
+  total_completed_lessons: number;
+  total_curriculum_lessons: number;
+  completion_rate: number;
+  total_stars: number;
+  total_projects: number;
+  streak_days: number;
+  xp_earned: number;
+  skills_mastery: ScratchSkillMasteryItem[];
+  badges: ScratchBadgeItem[];
+}
+

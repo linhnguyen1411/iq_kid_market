@@ -1,3 +1,4 @@
+import os
 import time
 import uuid
 import urllib.parse
@@ -10,10 +11,10 @@ from ..auth_utils import get_current_user_optional
 router = APIRouter(tags=["wallet"])
 
 # Cấu hình tài khoản ngân hàng thụ hưởng nhận nạp tiền qua VietQR
-DEFAULT_BANK_ID = "MB"  # Ngân hàng Quân Đội MBBank
-DEFAULT_BANK_NAME = "MBBank (Ngân hàng Quân Đội)"
-DEFAULT_ACCOUNT_NO = "0334888999"
-DEFAULT_ACCOUNT_NAME = "IQ KID MARKET"
+DEFAULT_BANK_ID = os.getenv("BANK_ID", "TCB")  # Ngân hàng TMCP Kỹ thương Việt Nam (Techcombank)
+DEFAULT_BANK_NAME = os.getenv("BANK_NAME", "Techcombank")
+DEFAULT_ACCOUNT_NO = os.getenv("BANK_ACCOUNT_NO", "2628121220")
+DEFAULT_ACCOUNT_NAME = os.getenv("BANK_ACCOUNT_NAME", "NGUYEN PHAN HOANG LINH")
 
 
 # ---------- 1. Nạp tiền trực tiếp (Demo / Fast Topup) ----------
@@ -89,6 +90,7 @@ def create_topup_intent(body: schemas.CreateTopupIntentIn, db: Session = Depends
         "tx_id": tx_id,
         "amount": body.amount,
         "qr_url": qr_url,
+        "static_qr_url": "/techcombank_qr.png",
         "bank_name": DEFAULT_BANK_NAME,
         "bank_account": DEFAULT_ACCOUNT_NO,
         "account_holder": DEFAULT_ACCOUNT_NAME,
