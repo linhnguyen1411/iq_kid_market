@@ -14,6 +14,15 @@ echo "🔄 BẮT ĐẦU QUY TRÌNH ĐỒNG BỘ CSDL LOCAL LÊN PRODUCTION VPS"
 echo "   Mục tiêu: ${VPS_HOST} (CSDL: iqkids_db)"
 echo "======================================================================"
 
+if [ "${1:-}" != "--force-overwrite-all-production-data" ]; then
+  echo "⚠️  CẢNH BÁO NGUY HIỂM:"
+  echo "   Script này sẽ GHI ĐÈ TOÀN BỘ CSDL PRODUCTION (bao gồm tài khoản người dùng, ví tiền, tiến độ chơi) bằng CSDL dưới máy Local!"
+  echo "   Nếu bạn CHỈ muốn deploy code frontend/backend, hãy dùng script: ./scripts/deploy-vps.sh"
+  echo "   Nếu bạn THỰC SỰ muốn ghi đè toàn bộ CSDL Production, hãy chạy kèm cờ:"
+  echo "   ./scripts/sync-local-db-to-vps.sh --force-overwrite-all-production-data"
+  exit 1
+fi
+
 # Bước 1: Sao lưu CSDL hiện tại trên VPS trước khi can thiệp
 echo ""
 echo "--- BƯỚC 1: SAO LƯU DỰ PHÒNG CSDL VPS ---"
