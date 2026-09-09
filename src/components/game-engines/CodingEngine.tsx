@@ -19,18 +19,20 @@ export default function CodingEngine({ question, onComplete }: GameEngineProps) 
     playSynthSound('click');
     setSelectedCodingChoice(val);
 
-    const targetAnswer = String(question.data?.answer || "").trim().toLowerCase();
-    const isCorrect = val.trim().toLowerCase() === targetAnswer;
-    if (isCorrect) {
-      playSynthSound('correct');
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      playSynthSound('incorrect');
-      setIsCodingFailed(true);
-      setTimeout(() => setIsCodingFailed(false), 800);
+    const targetAnswer = question.data?.answer ? String(question.data.answer).trim().toLowerCase() : null;
+    if (targetAnswer) {
+      if (val.trim().toLowerCase() !== targetAnswer) {
+        playSynthSound('incorrect');
+        setIsCodingFailed(true);
+        setTimeout(() => setIsCodingFailed(false), 800);
+        return;
+      }
     }
+
+    playSynthSound('correct');
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { selectedOption: val, answer: val });
   };
 
   return (

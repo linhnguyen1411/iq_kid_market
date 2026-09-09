@@ -319,8 +319,6 @@ def ensure_scratch_catalog(db: Session) -> None:
     except Exception as e:
         print(f"[seed_catalog] Lỗi cập nhật scratch catalog: {e}")
         db.rollback()
-
-
 if __name__ == "__main__":
     from .database import SessionLocal, engine, Base
     Base.metadata.create_all(bind=engine)

@@ -24,7 +24,7 @@ export default function MathEngine({ question, onComplete }: GameEngineProps) {
   const [solved, setSolved] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const correctAnswer = String(data.answer ?? '').trim();
+  const correctAnswer = data.answer !== undefined && data.answer !== null ? String(data.answer).trim() : null;
 
   const handleDigit = (digit: string) => {
     if (solved || inputVal.length >= 6) return;
@@ -48,16 +48,25 @@ export default function MathEngine({ question, onComplete }: GameEngineProps) {
   const handleCheck = () => {
     if (solved || !inputVal) return;
 
-    if (inputVal.trim() === correctAnswer) {
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      setIsWrong(true);
-      playSynthSound('incorrect');
-      setTimeout(() => setIsWrong(false), 800);
+    if (correctAnswer) {
+      if (inputVal.trim() !== correctAnswer) {
+        setIsWrong(true);
+        playSynthSound('incorrect');
+        setTimeout(() => setIsWrong(false), 800);
+        return;
+      }
     }
+
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { answer: inputVal.trim() });
   };
+
+  const expressionDisplay =
+    data.expression ||
+    (data.num1 !== undefined && data.num2 !== undefined
+      ? `${data.num1} ${data.operator || '+'} ${data.num2} = ?`
+      : 'Điền kết quả = ?');
 
   return (
     <div className="flex flex-col items-center gap-5 w-full max-w-lg mx-auto text-left">
@@ -75,7 +84,7 @@ export default function MathEngine({ question, onComplete }: GameEngineProps) {
 
         {/* Math Expression */}
         <h2 className="text-3xl md:text-4xl font-black font-mono text-indigo-950 tracking-wider mb-4">
-          {data.expression || `${correctAnswer} = ?`}
+          {expressionDisplay}
         </h2>
 
         {/* Visual Item Demonstration if available */}

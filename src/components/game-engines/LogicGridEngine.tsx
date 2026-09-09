@@ -20,7 +20,7 @@ export default function LogicGridEngine({ question, onComplete }: GameEngineProp
     ['🍌', '?'],
   ];
   const options: string[] = data.options || ['🍎', '🍌', '🍇', '🍊'];
-  const correctAnswer = String(data.answer || '🍎').trim();
+  const correctAnswer = data.answer ? String(data.answer).trim() : null;
 
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isWrong, setIsWrong] = useState(false);
@@ -32,19 +32,22 @@ export default function LogicGridEngine({ question, onComplete }: GameEngineProp
     playSynthSound('click');
     setSelectedOption(opt);
 
-    if (opt.trim() === correctAnswer) {
-      setSolved(true);
-      setIsWrong(false);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      setIsWrong(true);
-      playSynthSound('incorrect');
-      setTimeout(() => {
-        setIsWrong(false);
-        setSelectedOption(null);
-      }, 700);
+    if (correctAnswer) {
+      if (opt.trim() !== correctAnswer) {
+        setIsWrong(true);
+        playSynthSound('incorrect');
+        setTimeout(() => {
+          setIsWrong(false);
+          setSelectedOption(null);
+        }, 700);
+        return;
+      }
     }
+
+    setSolved(true);
+    setIsWrong(false);
+    playSynthSound('victory');
+    onComplete(question.points, { selectedOption: opt, answer: opt });
   };
 
   const gridSize = grid.length || 2;

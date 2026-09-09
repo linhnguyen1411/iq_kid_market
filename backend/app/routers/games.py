@@ -6,6 +6,7 @@ from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
+from ..auth_utils import get_current_user_optional, get_current_user_required
 
 router = APIRouter(tags=["games"])
 
@@ -109,31 +110,55 @@ def list_games(
 
 
 @router.get("/api/games/{game_id}")
-def get_game_detail(game_id: str, db: Session = Depends(get_db)):
+def get_game_detail(
+    game_id: str,
+    current_user: models.User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
     """
     Lấy thông tin chi tiết một trò chơi bao gồm danh sách màn chơi (Levels Roadmap).
+    Tự động làm sạch toàn bộ đáp án (Sanitization) nếu người dùng là học sinh hoặc khách vãng lai.
+    Chỉ tác giả sở hữu game hoặc Quản trị viên mới xem được toàn bộ đáp án phục vụ biên tập.
     """
     game = db.get(models.Game, game_id)
     if not game:
         raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi yêu cầu!")
 
-    return schemas.GameOut.model_validate(game).model_dump()
+    data = schemas.GameOut.model_validate(game).model_dump()
+    is_editor_or_admin = current_user and (
+        current_user.role == "admin"
+        or (game.creator_id and current_user.id == game.creator_id)
+    )
+
+    if not is_editor_or_admin:
+        data["levels"] = schemas.sanitize_game_levels_for_learner(data.get("levels"))
+
+    return data
 
 
 @router.post("/api/games/purchase")
-def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
+def purchase_game(
+    body: schemas.PurchaseIn,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
     """
     Quy trình Mua Game An Toàn (ACID Transaction):
-    1. Khóa hàng ví người mua (with_for_update) chống race condition.
-    2. Kiểm tra quyền sở hữu & số dư ví.
-    3. Trừ tiền người mua + Ghi log giao dịch ví.
-    4. Tự động chia sẻ 80% doanh thu cho Ví của Creator (nếu có).
-    5. Cấp bản quyền game (Purchase record) & Tăng lượt chơi.
+    1. Xác thực danh tính qua JWT Token (current_user). Chống IDOR trừ tiền ví người khác.
+    2. Khóa hàng ví người mua (with_for_update) chống race condition.
+    3. Kiểm tra quyền sở hữu & số dư ví.
+    4. Trừ tiền người mua + Ghi log giao dịch ví.
+    5. Tự động chia sẻ 80% doanh thu cho Ví của Creator (nếu có).
+    6. Cấp bản quyền game (Purchase record) & Tăng lượt chơi.
     """
+    buyer_id = current_user.id
+    if body.userId and body.userId != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Bạn không thể dùng ví của người khác để mua game!")
+
     # 1. Khóa hàng ví người mua để đảm bảo số dư nhất quán
     wallet = (
         db.query(models.Wallet)
-        .filter(models.Wallet.user_id == body.userId)
+        .filter(models.Wallet.user_id == buyer_id)
         .with_for_update()
         .first()
     )
@@ -145,7 +170,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Trò chơi không tồn tại!")
 
     # 2. Kiểm tra xem người dùng đã sở hữu game chưa
-    already = db.query(models.Purchase).filter_by(user_id=body.userId, game_id=body.gameId).first()
+    already = db.query(models.Purchase).filter_by(user_id=buyer_id, game_id=body.gameId).first()
     if already:
         raise HTTPException(status_code=400, detail="Bạn đã mua và sở hữu trò chơi này trước đó!")
 
@@ -167,10 +192,10 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
         detail=f'Mua bản quyền game "{game.title}"',
     )
     db.add(tx_buyer)
-    db.add(models.Purchase(user_id=body.userId, game_id=body.gameId, purchased_price=game.price))
+    db.add(models.Purchase(user_id=buyer_id, game_id=body.gameId, purchased_price=game.price))
 
     # 5. Chia sẻ 80% doanh thu cho Creator nếu game do creator/teacher tạo
-    if game.creator_id and game.creator_id != "system" and game.creator_id != body.userId:
+    if game.creator_id and game.creator_id != "system" and game.creator_id != buyer_id:
         creator_wallet = (
             db.query(models.Wallet)
             .filter(models.Wallet.user_id == game.creator_id)
@@ -185,7 +210,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
                 wallet_user_id=creator_wallet.user_id,
                 amount=revenue_share,
                 type="nhận doanh thu",
-                detail=f'Doanh thu tác giả (80%) từ game "{game.title}" (Người mua: {body.userId})',
+                detail=f'Doanh thu tác giả (80%) từ game "{game.title}" (Người mua: {buyer_id})',
             )
             db.add(tx_creator)
 
@@ -194,7 +219,7 @@ def purchase_game(body: schemas.PurchaseIn, db: Session = Depends(get_db)):
     db.commit()
 
     # Lấy danh sách toàn bộ game user đã sở hữu
-    purchases = [p.game_id for p in db.query(models.Purchase).filter_by(user_id=body.userId).all()]
+    purchases = [p.game_id for p in db.query(models.Purchase).filter_by(user_id=buyer_id).all()]
     return {
         "success": True,
         "balance": wallet.balance,

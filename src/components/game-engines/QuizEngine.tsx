@@ -22,17 +22,24 @@ export default function QuizEngine({ question, onComplete }: GameEngineProps) {
 
     const targetAnswer = String(question.data?.answer || "").trim().toLowerCase();
     const cleanVal = val.trim().toLowerCase();
-    const isCorrect = cleanVal.includes(targetAnswer) || cleanVal === targetAnswer;
-    if (isCorrect) {
-      playSynthSound('correct');
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      playSynthSound('incorrect');
-      setIsQuizFailed(true);
-      setTimeout(() => setIsQuizFailed(false), 800);
+
+    if (targetAnswer) {
+      const isCorrect =
+        cleanVal === targetAnswer ||
+        (cleanVal.length === 1 && (targetAnswer.startsWith(`${cleanVal}.`) || targetAnswer.startsWith(`${cleanVal})`))) ||
+        (targetAnswer.length === 1 && (cleanVal.startsWith(`${targetAnswer}.`) || cleanVal.startsWith(`${targetAnswer})`)));
+      if (!isCorrect) {
+        playSynthSound('incorrect');
+        setIsQuizFailed(true);
+        setTimeout(() => setIsQuizFailed(false), 800);
+        return;
+      }
     }
+
+    playSynthSound('correct');
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { selectedOption: val });
   };
 
   return (

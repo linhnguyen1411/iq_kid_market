@@ -16,7 +16,8 @@ export default function FlashcardEngine({ question, onComplete }: GameEngineProp
   const handleLearnComplete = () => {
     playSynthSound('correct');
     playSynthSound('victory');
-    onComplete(question.points);
+    const total = (question.data?.cards || []).length;
+    onComplete(question.points, { completed: true, cardsViewed: total });
   };
 
   const card = (question.data?.cards || [])[flashcardIdx] || { front: "Front Data", back: "Back Data", fact: "Fact", pronounce: "Pronounce" };

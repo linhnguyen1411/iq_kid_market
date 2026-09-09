@@ -35,12 +35,9 @@ CATEGORY_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,48}$")
 def _assert_can_edit_game(game: models.Game, current_user: models.User) -> None:
     if game.is_seed:
         raise HTTPException(status_code=400, detail="Không thể sửa trò chơi gốc mặc định của hệ thống!")
-    if (
-        game.creator_id
-        and game.creator_id != current_user.id
-        and current_user.role != "admin"
-        and game.creator_id != "system"
-    ):
+    if current_user.role == "admin":
+        return
+    if not game.creator_id or game.creator_id != current_user.id:
         raise HTTPException(
             status_code=403,
             detail="Bạn chỉ có thể chỉnh sửa trò chơi do chính mình thiết kế!",
@@ -77,6 +74,7 @@ def create_game(
         template=body.template_code,
         base_id=game_id,
         count=DEFAULT_LEVEL_COUNT,
+        pad_to_count=False,
     )
     unlock_price = body.price if body.price and body.price > 0 else DEFAULT_UNLOCK_PRICE
 
@@ -482,6 +480,7 @@ def upload_games(
                 base_id=game_id,
                 count=target_count,
                 level_template=level_template,
+                pad_to_count=bool(g.get("level_template") or g.get("target_level_count")),
             )
             # Xáo đáp án mỗi màn (kể cả màn đã có sẵn trong JSON) — tránh đáp án luôn ở vị trí cố định
             levels = shuffle_levels_answers(levels)

@@ -43,17 +43,20 @@ export default function SequenceEngine({ question, onComplete }: GameEngineProps
     playSynthSound('click');
     setSelectedSeqVal(val);
 
-    const correctAnswer = question.data?.answer || "";
-    if (val === correctAnswer) {
-      playSynthSound('correct');
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      playSynthSound('incorrect');
-      setIsSeqFailed(true);
-      setTimeout(() => setIsSeqFailed(false), 800);
+    const correctAnswer = question.data?.answer ? String(question.data.answer).trim() : null;
+    if (correctAnswer) {
+      if (val.trim() !== correctAnswer) {
+        playSynthSound('incorrect');
+        setIsSeqFailed(true);
+        setTimeout(() => setIsSeqFailed(false), 800);
+        return;
+      }
     }
+
+    playSynthSound('correct');
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { answer: val });
   };
 
   const bubbleFontSize = (value: string) => {

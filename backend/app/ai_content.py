@@ -352,21 +352,26 @@ def ensure_level_count(
     base_id: str,
     count: int = DEFAULT_LEVEL_COUNT,
     level_template: dict | None = None,
+    pad_to_count: bool = False,
 ) -> list:
     """
-    Chuẩn hoá đúng `count` màn.
-    Thiếu màn → nhân bản từ level_template / màn đầu tiên đã có (không sinh 20 câu khác nhau).
+    Chuẩn hoá danh sách màn chơi:
+    - Nếu levels đã có nội dung (do người dùng/giáo viên tạo): giữ nguyên chính xác số màn hợp lệ,
+      sắp xếp theo level_num tuần tự (1..N), KHÔNG tự ý nhân bản vô nghĩa.
+    - Chỉ bổ sung màn khi danh sách rỗng hoặc khi cờ pad_to_count=True.
+    - Khi bổ sung màn, sử dụng build_level với độ khó tăng dần theo level_num, tránh clone trùng lặp 1 câu hỏi.
     """
     normalized: list = []
     seen = set()
-    for raw in levels or []:
+    for raw in (levels or []):
         if not isinstance(raw, dict):
             continue
         try:
-            num = int(raw.get("level_num") or 0)
+            num = int(raw.get("level_num") or len(normalized) + 1)
         except (TypeError, ValueError):
-            continue
-        if num < 1 or num > count or num in seen:
+            num = len(normalized) + 1
+
+        if num in seen:
             continue
         seen.add(num)
         item = dict(raw)
@@ -378,23 +383,25 @@ def ensure_level_count(
             item["questions"] = build_level(base_id, template, topic, num)["questions"]
         normalized.append(item)
 
-    # Mẫu để clone: ưu tiên level_template → màn 1 → màn bất kỳ đã có
-    seed = None
-    if isinstance(level_template, dict) and (
-        level_template.get("questions") or level_template.get("data")
-    ):
-        seed = level_template
-    if seed is None and normalized:
-        seed = sorted(normalized, key=lambda x: int(x["level_num"]))[0]
+    # Sắp xếp lại theo thứ tự level_num
+    normalized.sort(key=lambda x: int(x["level_num"]))
 
+    # Nếu người dùng đã cung cấp các màn chơi và không yêu cầu ép đủ count
+    if normalized and not pad_to_count:
+        for idx, lv in enumerate(normalized):
+            lv["level_num"] = idx + 1
+            lv["is_free"] = (idx + 1) <= FREE_LEVEL_COUNT
+        return normalized
+
+    # Nếu danh sách rỗng hoặc pad_to_count=True: tạo đủ `count` màn đa dạng
+    target_count = max(count, len(normalized)) if pad_to_count else (count if not normalized else len(normalized))
     by_num = {int(lv["level_num"]): lv for lv in normalized}
     result = []
-    for n in range(1, count + 1):
+    for n in range(1, target_count + 1):
         if n in by_num:
             result.append(by_num[n])
-        elif seed is not None:
-            result.append(clone_level_from_template(seed, base_id, topic, n, template))
         else:
+            # Tạo màn mới đa dạng theo level_num thay vì clone lặp lại cùng một câu hỏi
             result.append(build_level(base_id, template, topic, n))
     return result
 
@@ -497,8 +504,8 @@ GEMINI_DATA_SCHEMA_RULES = """
 QUY TẮC CẤU TRÚC THUỘC TÍNH "data" CHO TỪNG LOẠI GAME ENGINE:
 1. "quiz":
    { "options": ["A. Lựa chọn 1", "B. Lựa chọn 2", "C. Lựa chọn 3", "D. Lựa chọn 4"],
-     "answer": "A",
-     "explanation": "Lời giải thích sư phạm chi tiết." }
+     "answer": "A. Lựa chọn 1",
+     "explanation": "Lời giải thích sư phạm chi tiết (answer phải là 1 phần tử nằm trong options hoặc chữ cái đại diện A/B/C/D)." }
 
 2. "matching":
    { "pairs": [ { "left": "Vế trái 1", "right": "Vế phải 1 tương ứng" }, { "left": "Vế trái 2", "right": "Vế phải 2" }, { "left": "Vế trái 3", "right": "Vế phải 3" }, { "left": "Vế trái 4", "right": "Vế phải 4" } ] }
@@ -542,6 +549,9 @@ QUY TẮC CẤU TRÚC THUỘC TÍNH "data" CHO TỪNG LOẠI GAME ENGINE:
 
 11. "coding":
     { "challenge": "Sửa lỗi cú pháp lệnh gán dữ liệu:", "code_block": "biến x = 5", "options": ["Sửa thành x = 5", "Thêm dấu ngoặc", "Xóa biến"], "answer": "Sửa thành x = 5", "explanation": "Python không dùng từ khóa biến." }
+
+12. "logic_grid":
+    { "grid": [["🍎", "🍌"], ["🍌", "?"]], "options": ["🍎", "🍌", "🍇", "🍊"], "answer": "🍎", "explanation": "Quy luật ma trận đối xứng." }
 """
 
 

@@ -14,7 +14,7 @@ export interface Question {
  */
 export interface GameEngineProps {
   question: Question;
-  onComplete: (score: number) => void;
+  onComplete: (score: number, submittedAnswer?: any) => void;
 }
 
 export type GameEngineComponent = ComponentType<GameEngineProps>;
