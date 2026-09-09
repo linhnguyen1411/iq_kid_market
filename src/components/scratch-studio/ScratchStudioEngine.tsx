@@ -574,11 +574,14 @@ export default function ScratchStudioEngine({
         const cont = await waitMs(500);
         if (!cont) break;
       } else if (type === 'scratch_play_drum') {
-        telemetryRef.current.actions.sounds_played.push('drum');
-        playSynthSound('drum');
-        const secs = Number(curr.getFieldValue('SECS')) || 0.25;
-        const cont = await waitMs(secs * 1000);
-        if (!cont) break;
+        const beats = Math.max(1, Math.min(20, Math.round(Number(curr.getFieldValue('DRUM')) || 1)));
+        const secs = Math.max(0.05, Number(curr.getFieldValue('SECS')) || 0.25);
+        for (let b = 0; b < beats && !isCancelledRef.current; b++) {
+          telemetryRef.current.actions.sounds_played.push('drum');
+          playSynthSound('drum');
+          const cont = await waitMs(secs * 1000);
+          if (!cont) break;
+        }
       }
 
       // 4. CONTROL BLOCKS

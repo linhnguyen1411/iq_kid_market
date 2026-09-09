@@ -3,22 +3,31 @@ import {
   Code, Lock, CheckCircle2, Play, 
   Sparkles, Coins, ArrowLeft, Trophy,
   Compass, Bot, Layers, BookOpen, Rocket, Check, Flame,
-  Folder, Plus, Trash2, Copy, Download, Upload, Clock, FileCode2
+  Folder, Plus, Trash2, Copy, Download, Upload, Clock, FileCode2,
+  X, AlertCircle, ShoppingCart
 } from 'lucide-react';
 import { ScratchCourse, ScratchLesson, ScratchProjectSummary } from '../types';
 import UnifiedExerciseRenderer from '../components/exercise-engine/UnifiedExerciseRenderer';
 import ScratchStudioEngine from '../components/scratch-studio/ScratchStudioEngine';
 import ScratchAnalyticsWidget from '../components/scratch-studio/ScratchAnalyticsWidget';
+import MazeLevelCreatorModal from '../components/game-engines/MazeLevelCreatorModal';
+import { playSynthSound } from '../components/game-engines/soundUtils';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 
 export const ScratchPage: React.FC = () => {
-  const { user, wallet, updateUserStats, updateUserWallet } = useAuth();
+  const { user, wallet, updateUserStats, updateUserWallet, openAuthModal } = useAuth();
 
   // Active Pedagogical Track: 'algorithm_maze' (Lớp 1-3) | 'scratch_studio' (Lớp 3-9)
   const [activeTrack, setActiveTrack] = useState<'algorithm_maze' | 'scratch_studio'>('algorithm_maze');
   const [isFreeStudioOpen, setIsFreeStudioOpen] = useState(false);
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [isCreatorModalOpen, setIsCreatorModalOpen] = useState(false);
+
+  // Quản lý mua khóa học Scratch
+  const [purchasingCourse, setPurchasingCourse] = useState<ScratchCourse | null>(null);
+  const [purchasingLoading, setPurchasingLoading] = useState(false);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
 
   // Quản lý dự án của bé (Phase 6)
   const [userProjects, setUserProjects] = useState<ScratchProjectSummary[]>([]);
@@ -134,8 +143,50 @@ export const ScratchPage: React.FC = () => {
     }
   };
 
+  const handleConfirmPurchaseCourse = async () => {
+    if (!purchasingCourse) return;
+    if (!user) {
+      openAuthModal('login');
+      return;
+    }
+
+    const price = purchasingCourse.price || 0;
+    const userBalance = Number(wallet?.balance || 0);
+    if (userBalance < price) {
+      setPurchaseError(`Số dư ví (${userBalance.toLocaleString()} xu) không đủ để mua khóa học này (${price.toLocaleString()} xu). Bé hãy nhờ phụ huynh nạp thêm xu nhé!`);
+      return;
+    }
+
+    setPurchasingLoading(true);
+    setPurchaseError(null);
+    try {
+      const res = await api.scratch.purchaseCourse(purchasingCourse.id);
+      if (res.success) {
+        playSynthSound('victory');
+        const nextBal = Number(res.balance ?? res.newBalance);
+        if (Number.isFinite(nextBal)) {
+          updateUserWallet(nextBal);
+        }
+        await fetchCourses();
+        setPurchasingCourse(null);
+      }
+    } catch (err: any) {
+      playSynthSound('incorrect');
+      setPurchaseError(err.message || 'Lỗi khi thanh toán khóa học!');
+    } finally {
+      setPurchasingLoading(false);
+    }
+  };
+
   const handleSelectLesson = async (course: ScratchCourse, lesson: ScratchLesson) => {
-    if (lesson.isLocked) return;
+    if (lesson.isLocked) {
+      if (lesson.lockReason === 'need_purchase') {
+        setPurchasingCourse(course);
+      } else if (lesson.lockReason === 'need_previous') {
+        alert(`Bé hãy hoàn thành Bài ${lesson.lesson_num - 1} trước để mở khóa bài học này nhé! 🐱🚀`);
+      }
+      return;
+    }
     try {
       const detail = await api.scratch.getLessonDetail(course.id, lesson.lesson_num, user?.id);
       setSelectedLesson(detail);
@@ -307,37 +358,76 @@ export const ScratchPage: React.FC = () => {
         </div>
       </div>
 
-      {/* 2. Pedagogical Track Switcher Tabs */}
-      <div className="flex flex-wrap items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-2xs">
-        <button
-          onClick={() => setActiveTrack('algorithm_maze')}
-          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-black text-xs md:text-sm transition-all cursor-pointer ${
-            activeTrack === 'algorithm_maze'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-200'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Compass className="w-4 h-4" />
-          <span>Tư Duy Thuật Toán (Mê Cung Robot)</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-white/20 text-white">
-            Lớp 1 - 3
-          </span>
-        </button>
+      {/* Admin & Teacher Bypass Banner (Phương án 2) */}
+      {(user?.role === 'admin' || user?.role === 'teacher') && (
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200/80 rounded-2xl p-3 px-4 flex flex-wrap items-center justify-between gap-3 text-purple-900 text-xs font-bold shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">👑</span>
+            <div>
+              <span className="font-black text-purple-950">Chế độ {user.role === 'admin' ? 'Quản Trị Viên' : 'Giáo Viên'}:</span>
+              <span className="ml-1 text-purple-800 font-normal">Toàn bộ bài học đã được mở khóa tự động để kiểm thử và giảng dạy!</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCreatorModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-95 text-white text-xs font-black flex items-center gap-1.5 shadow-xs transition-all cursor-pointer hover:scale-102 active:scale-98"
+              title="Mở giao diện trực quan thiết kế màn chơi mê cung mới"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Soạn Màn Mê Cung Mới 🧩</span>
+            </button>
+            <span className="px-2.5 py-1 rounded-full bg-purple-200/80 text-purple-900 text-[10px] font-mono font-bold">
+              Bypass Lock Active
+            </span>
+          </div>
+        </div>
+      )}
 
-        <button
-          onClick={() => setActiveTrack('scratch_studio')}
-          className={`flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-black text-xs md:text-sm transition-all cursor-pointer ${
-            activeTrack === 'scratch_studio'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-200'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Rocket className="w-4 h-4" />
-          <span>Scratch Studio (MIT Chuẩn)</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">
-            Lớp 3 - 9
-          </span>
-        </button>
+      {/* 2. Pedagogical Track Switcher Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-2 rounded-2xl border border-slate-200/80 shadow-2xs">
+        <div className="flex flex-wrap items-center gap-2 flex-1">
+          <button
+            onClick={() => setActiveTrack('algorithm_maze')}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-black text-xs md:text-sm transition-all cursor-pointer ${
+              activeTrack === 'algorithm_maze'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-200'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span>Tư Duy Thuật Toán (Mê Cung Chú Khỉ 🐒)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-white/20 text-white">
+              Lớp 1 - 3
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTrack('scratch_studio')}
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl font-black text-xs md:text-sm transition-all cursor-pointer ${
+              activeTrack === 'scratch_studio'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-200'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Rocket className="w-4 h-4" />
+            <span>Scratch Studio (MIT Chuẩn)</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-800">
+              Lớp 3 - 9
+            </span>
+          </button>
+        </div>
+
+        {/* Quick Soạn Bài button for Admin & Teacher */}
+        {(user?.role === 'admin' || user?.role === 'teacher') && activeTrack === 'algorithm_maze' && (
+          <button
+            onClick={() => setIsCreatorModalOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 text-amber-600" />
+            <span>+ Tạo Màn Chơi</span>
+          </button>
+        )}
       </div>
 
       {/* 3. Track Content */}
@@ -426,7 +516,12 @@ export const ScratchPage: React.FC = () => {
                             <span>+{lesson.xp_reward || 100} XP</span>
                           </div>
 
-                          {!isLocked && (
+                          {isLocked ? (
+                            <span className="text-slate-400 text-[10px] italic flex items-center gap-1">
+                              <Lock className="w-3 h-3 text-slate-400" />
+                              <span>Làm Bài {lesson.lesson_num - 1} trước</span>
+                            </span>
+                          ) : (
                             <span className="text-indigo-600 font-black text-[11px] flex items-center gap-1">
                               <span>Làm bài</span>
                               <Play className="w-3 h-3 fill-indigo-600" />
@@ -669,13 +764,29 @@ export const ScratchPage: React.FC = () => {
                         <p className="text-xs text-slate-500">{course.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">
                         Độ khó: {course.difficulty || 'Trung bình'}
                       </span>
                       <span className="px-2.5 py-1 rounded-full bg-orange-50 text-orange-700 text-[10px] font-bold">
                         {course.lessons?.length || 0} Bài Học
                       </span>
+                      {(course.price || 0) > 0 && (
+                        course.isPurchased ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200 flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Đã sở hữu</span>
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => setPurchasingCourse(course)}
+                            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-[11px] font-black shadow-xs flex items-center gap-1.5 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                          >
+                            <Coins className="w-3.5 h-3.5" />
+                            <span>Mở Khóa ({course.price?.toLocaleString()} Xu)</span>
+                          </button>
+                        )
+                      )}
                     </div>
                   </div>
 
@@ -691,16 +802,45 @@ export const ScratchPage: React.FC = () => {
                           onClick={() => handleSelectLesson(course, lesson)}
                           className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between ${
                             isLocked
-                              ? 'bg-slate-50/60 border-slate-200/60 opacity-60 cursor-not-allowed'
+                              ? 'bg-slate-50/70 border-slate-200/70 cursor-not-allowed opacity-75'
                               : 'bg-white border-slate-200/80 hover:border-orange-300 hover:shadow-md cursor-pointer'
                           }`}
                         >
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-2">
-                              <span className="text-[10px] font-mono font-bold text-orange-600">
-                                Bài {lesson.lesson_num}
-                              </span>
-                              {getEngineBadge(lesson.engine_type)}
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono font-bold text-orange-600">
+                                  Bài {lesson.lesson_num}
+                                </span>
+                                {getEngineBadge(lesson.engine_type)}
+                              </div>
+
+                              {isCompleted ? (
+                                <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Đã xong</span>
+                                </span>
+                              ) : isLocked ? (
+                                lesson.lockReason === 'need_purchase' ? (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                    <Lock className="w-3 h-3 text-amber-600" />
+                                    <span>Cần mở khóa</span>
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                                    <Lock className="w-3 h-3 text-slate-400" />
+                                    <span>Chưa mở</span>
+                                  </span>
+                                )
+                              ) : lesson.lesson_num === 1 && !course.isPurchased && (course.price || 0) > 0 ? (
+                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  Học thử
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                                  Sẵn sàng
+                                </span>
+                              )}
                             </div>
 
                             <h4 className="text-xs font-black text-slate-800 line-clamp-1 mb-1">
@@ -717,7 +857,25 @@ export const ScratchPage: React.FC = () => {
                               <span>+{lesson.xp_reward || 100} XP</span>
                             </div>
 
-                            {!isLocked && (
+                            {isLocked ? (
+                              lesson.lockReason === 'need_purchase' ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPurchasingCourse(course);
+                                  }}
+                                  className="text-amber-600 hover:text-amber-700 font-black text-[11px] flex items-center gap-1 underline cursor-pointer"
+                                >
+                                  <span>Mở khóa ngay</span>
+                                  <Coins className="w-3 h-3 text-amber-500" />
+                                </button>
+                              ) : (
+                                <span className="text-slate-400 text-[10px] italic flex items-center gap-1">
+                                  <Lock className="w-3 h-3 text-slate-400" />
+                                  <span>Làm Bài {lesson.lesson_num - 1} trước</span>
+                                </span>
+                              )
+                            ) : (
                               <span className="text-orange-600 font-black text-[11px] flex items-center gap-1">
                                 <span>Vào học</span>
                                 <Play className="w-3 h-3 fill-orange-600" />
@@ -734,6 +892,114 @@ export const ScratchPage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Modal Mua Khóa Học Scratch */}
+      {purchasingCourse && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative text-left overflow-hidden">
+            <button
+              onClick={() => {
+                setPurchasingCourse(null);
+                setPurchaseError(null);
+              }}
+              className="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-orange-600 bg-orange-50 px-3 py-1 rounded-full border border-orange-100 inline-block mb-3">
+              MỞ KHÓA TOÀN BỘ KHÓA HỌC SCRATCH
+            </span>
+
+            <div className="flex items-center gap-3.5 my-3 p-3.5 bg-orange-50/50 rounded-2xl border border-orange-100">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-3xl shadow-2xs shrink-0 border border-orange-100">
+                {purchasingCourse.thumbnail || '🐱'}
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-black text-slate-800 line-clamp-1">{purchasingCourse.title}</h4>
+                <span className="text-xs text-slate-500 block">
+                  {purchasingCourse.lessons?.length || 11} cấp độ chuẩn CSTA/MIT quốc tế
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed mb-4">
+              Bé đã sẵn sàng khám phá thế giới lập trình đỉnh cao? Mở khóa để truy cập trọn bộ {purchasingCourse.lessons?.length || 11} bài học, thử thách game và mở khóa các danh hiệu độc quyền!
+            </p>
+
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 mb-4">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium">Giá khóa học:</span>
+                <span className="font-black text-amber-600 flex items-center gap-1">
+                  <Coins className="w-3.5 h-3.5 text-amber-500" />
+                  {(purchasingCourse.price || 0).toLocaleString()} Xu
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-medium">Số dư ví của bé:</span>
+                <span className="font-black text-slate-800 flex items-center gap-1">
+                  <Coins className="w-3.5 h-3.5 text-slate-400" />
+                  {Number(wallet?.balance || 0).toLocaleString()} Xu
+                </span>
+              </div>
+              <div className="border-t border-slate-200/80 pt-2 flex justify-between items-center text-xs font-bold">
+                <span className="text-slate-700">Số dư còn lại:</span>
+                <span className={Number(wallet?.balance || 0) >= (purchasingCourse.price || 0) ? 'text-emerald-600' : 'text-rose-600'}>
+                  {(Number(wallet?.balance || 0) - (purchasingCourse.price || 0)).toLocaleString()} Xu
+                </span>
+              </div>
+            </div>
+
+            {purchaseError && (
+              <div className="p-3 mb-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{purchaseError}</span>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setPurchasingCourse(null);
+                  setPurchaseError(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+
+              {Number(wallet?.balance || 0) >= (purchasingCourse.price || 0) ? (
+                <button
+                  onClick={handleConfirmPurchaseCourse}
+                  disabled={purchasingLoading}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>{purchasingLoading ? 'Đang xử lý...' : 'Mở Khóa Ngay'}</span>
+                </button>
+              ) : (
+                <a
+                  href="/wallet"
+                  className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center"
+                >
+                  <Coins className="w-4 h-4" />
+                  <span>Nạp Thêm Xu</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visual Level Creator Modal for Teachers & Admins */}
+      <MazeLevelCreatorModal
+        isOpen={isCreatorModalOpen}
+        onClose={() => setIsCreatorModalOpen(false)}
+        courses={courses.filter((c) => !c.course_type || c.course_type === 'algorithm_maze')}
+        onLessonCreated={() => {
+          fetchCourses();
+        }}
+      />
     </div>
   );
 };

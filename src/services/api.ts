@@ -22,13 +22,28 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
     headers,
   });
 
+  let text = '';
+  try {
+    text = await response.text();
+  } catch {
+    text = '';
+  }
+
+  let data: any = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { detail: text };
+    }
+  }
+
   if (!response.ok) {
     if (response.status === 401) {
       localStorage.removeItem('iqkids_auth_token');
       window.dispatchEvent(new CustomEvent('iqkids_auth_unauthorized'));
     }
-    const errorData = await response.json().catch(() => ({ detail: 'Đã xảy ra lỗi máy chủ!' }));
-    const raw = errorData.detail ?? errorData.message;
+    const raw = data?.detail ?? data?.message;
     let message: string;
     if (typeof raw === 'string') {
       message = raw;
@@ -39,12 +54,12 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
     } else if (raw && typeof raw === 'object') {
       message = (raw as { msg?: string }).msg || JSON.stringify(raw);
     } else {
-      message = `Lỗi HTTP ${response.status}: ${response.statusText}`;
+      message = text || `Lỗi HTTP ${response.status}: ${response.statusText}`;
     }
     throw new Error(message || `Lỗi HTTP ${response.status}`);
   }
 
-  return response.json();
+  return data as T;
 }
 
 export const api = {
@@ -262,6 +277,33 @@ export const api = {
         message: string;
         hint?: string;
       }>('/scratch/lessons/submit', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    purchaseCourse: (courseId: string) =>
+      apiRequest<{
+        success: boolean;
+        balance: number;
+        newBalance?: number;
+        courseId: string;
+        isPurchased: boolean;
+        message: string;
+      }>(`/scratch/courses/${courseId}/purchase`, {
+        method: 'POST',
+      }),
+
+    createAdminLesson: (data: {
+      course_id: string;
+      lesson_num?: number;
+      title: string;
+      content?: string;
+      target_block_sequence: string;
+      start_scene_json?: string;
+      xp_reward?: number;
+      engine_type?: string;
+    }) =>
+      apiRequest<{ success: boolean; lesson: any }>('/admin/scratch/lessons', {
         method: 'POST',
         body: JSON.stringify(data),
       }),

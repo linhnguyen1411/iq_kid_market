@@ -144,23 +144,50 @@ def get_scratch_courses(
         query = query.filter(models.ScratchCourse.course_type == course_type)
     courses = query.all()
 
-    # Nếu có target_user_id, lấy toàn bộ tiến độ của học sinh
+    is_admin_or_teacher = bool(current_user and current_user.role in ["admin", "teacher"])
+
+    # Lấy toàn bộ tiến độ và danh sách khóa học user đã mua
     user_progress_map = {}
+    purchased_course_ids = set()
     if target_user_id:
         progresses = db.query(models.UserScratchProgress).filter_by(user_id=target_user_id).all()
         for p in progresses:
             user_progress_map[(p.course_id, p.lesson_num)] = p
+        
+        course_purchases = db.query(models.CoursePurchase).filter_by(user_id=target_user_id).all()
+        purchased_course_ids = {cp.course_id for cp in course_purchases}
 
     result = []
     for c in courses:
         lessons_data = []
         previous_lesson_completed = True  # Bài 1 luôn mở khóa mặc định
+        is_course_free = (c.price or 0) <= 0
+        is_course_purchased = is_admin_or_teacher or is_course_free or (c.id in purchased_course_ids)
 
         for l in c.lessons:
             p = user_progress_map.get((c.id, l.lesson_num))
             is_completed = p.completed if p else False
             stars = p.stars_earned if p else 0
-            is_locked = not previous_lesson_completed
+
+            if is_admin_or_teacher:
+                # Bypass toàn bộ cho Admin / Giáo viên xem trước và kiểm thử
+                is_locked = False
+                lock_reason = None
+            elif l.lesson_num == 1:
+                # Bài 1 luôn mở cho học sinh học thử miễn phí (Trial)
+                is_locked = False
+                lock_reason = None
+            else:
+                # Từ Bài 2 trở đi: Bắt buộc mua khóa học VÀ hoàn thành bài trước đó
+                if not is_course_purchased:
+                    is_locked = True
+                    lock_reason = "need_purchase"
+                elif not previous_lesson_completed:
+                    is_locked = True
+                    lock_reason = "need_previous"
+                else:
+                    is_locked = False
+                    lock_reason = None
 
             lessons_data.append({
                 "id": l.id,
@@ -174,6 +201,7 @@ def get_scratch_courses(
                 "completed": is_completed,
                 "stars": stars,
                 "isLocked": is_locked,
+                "lockReason": lock_reason,
             })
 
             # Cập nhật điều kiện mở khóa cho bài tiếp theo
@@ -189,6 +217,8 @@ def get_scratch_courses(
             "thumbnail": c.thumbnail,
             "difficulty": c.difficulty,
             "course_type": getattr(c, "course_type", None) or "algorithm_maze",
+            "price": c.price or 0,
+            "isPurchased": is_course_purchased,
             "total_lessons": c.total_lessons or len(c.lessons),
             "completedLessons": completed_lessons_count,
             "progressPercent": progress_percent,
@@ -211,11 +241,19 @@ def get_scratch_course_detail(
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học Scratch!")
 
     target_user_id = userId or (current_user.id if current_user else None)
+    is_admin_or_teacher = bool(current_user and current_user.role in ["admin", "teacher"])
+
     user_progress_map = {}
+    is_course_purchased = is_admin_or_teacher or (course.price or 0) <= 0
     if target_user_id:
         progresses = db.query(models.UserScratchProgress).filter_by(user_id=target_user_id, course_id=course_id).all()
         for p in progresses:
             user_progress_map[p.lesson_num] = p
+        
+        if not is_course_purchased:
+            is_course_purchased = bool(
+                db.query(models.CoursePurchase).filter_by(user_id=target_user_id, course_id=course_id).first()
+            )
 
     lessons_data = []
     previous_completed = True
@@ -224,7 +262,23 @@ def get_scratch_course_detail(
         p = user_progress_map.get(l.lesson_num)
         is_completed = p.completed if p else False
         stars = p.stars_earned if p else 0
-        is_locked = not previous_completed
+
+        if is_admin_or_teacher:
+            is_locked = False
+            lock_reason = None
+        elif l.lesson_num == 1:
+            is_locked = False
+            lock_reason = None
+        else:
+            if not is_course_purchased:
+                is_locked = True
+                lock_reason = "need_purchase"
+            elif not previous_completed:
+                is_locked = True
+                lock_reason = "need_previous"
+            else:
+                is_locked = False
+                lock_reason = None
 
         lessons_data.append({
             "id": l.id,
@@ -238,6 +292,7 @@ def get_scratch_course_detail(
             "completed": is_completed,
             "stars": stars,
             "isLocked": is_locked,
+            "lockReason": lock_reason,
         })
         previous_completed = is_completed
 
@@ -248,6 +303,8 @@ def get_scratch_course_detail(
         "thumbnail": course.thumbnail,
         "difficulty": course.difficulty,
         "course_type": getattr(course, "course_type", None) or "algorithm_maze",
+        "price": course.price or 0,
+        "isPurchased": is_course_purchased,
         "total_lessons": course.total_lessons,
         "lessons": lessons_data,
     }
@@ -271,8 +328,35 @@ def get_scratch_lesson(
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học Scratch này!")
 
-    # Lấy trạng thái hoàn thành & sao nếu có user
     target_user_id = userId or (current_user.id if current_user else None)
+    is_admin_or_teacher = bool(current_user and current_user.role in ["admin", "teacher"])
+
+    # Kiểm tra điều kiện mở khóa cho học sinh
+    if not is_admin_or_teacher and lesson_num > 1:
+        course = db.get(models.ScratchCourse, course_id)
+        course_price = (course.price or 0) if course else 0
+        if course_price > 0:
+            has_bought = False
+            if target_user_id:
+                has_bought = bool(
+                    db.query(models.CoursePurchase).filter_by(user_id=target_user_id, course_id=course_id).first()
+                )
+            if not has_bought:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Bé cần mở khóa khóa học để xem nội dung bài học này!",
+                )
+        if target_user_id:
+            prev_prog = db.query(models.UserScratchProgress).filter_by(
+                user_id=target_user_id, course_id=course_id, lesson_num=lesson_num - 1
+            ).first()
+            if not prev_prog or not prev_prog.completed:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Bé cần hoàn thành Bài {lesson_num - 1} trước khi vào bài này!",
+                )
+
+    # Lấy trạng thái hoàn thành & sao nếu có user
     is_completed = False
     stars = 0
     if target_user_id:
@@ -300,7 +384,76 @@ def get_scratch_lesson(
     }
 
 
-# ---------- 4. Chấm điểm & Xác thực chuỗi khối lệnh Scratch ----------
+# ---------- 4. Mua khóa học Scratch bằng ví xu ----------
+@router.post("/api/scratch/courses/{course_id}/purchase")
+def purchase_scratch_course(
+    course_id: str,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    course = db.get(models.ScratchCourse, course_id)
+    if not course:
+        raise HTTPException(status_code=404, detail="Khóa học Scratch không tồn tại!")
+
+    course_price = course.price or 0
+    if course_price <= 0:
+        return {
+            "success": True,
+            "message": "Khóa học này hoàn toàn miễn phí!",
+            "courseId": course_id,
+            "isPurchased": True,
+        }
+
+    already = db.query(models.CoursePurchase).filter_by(
+        user_id=current_user.id, course_id=course_id
+    ).first()
+    if already:
+        return {
+            "success": True,
+            "message": "Bé đã sở hữu khóa học này rồi!",
+            "courseId": course_id,
+            "isPurchased": True,
+        }
+
+    wallet = (
+        db.query(models.Wallet)
+        .filter(models.Wallet.user_id == current_user.id)
+        .with_for_update()
+        .first()
+    )
+    if not wallet:
+        raise HTTPException(status_code=404, detail="Không tìm thấy ví người dùng!")
+
+    if wallet.balance < course_price:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Số dư xu trong ví ({wallet.balance:,} xu) không đủ để mua khóa học này ({course_price:,} xu). Vui lòng nạp thêm!",
+        )
+
+    wallet.balance -= course_price
+    now_ts = int(time.time() * 1000)
+    tx = models.WalletTransaction(
+        id=f"tx_crs_{now_ts}",
+        wallet_user_id=wallet.user_id,
+        amount=-course_price,
+        type="mua khóa học",
+        detail=f'Mua khóa học "{course.title}"',
+    )
+    db.add(tx)
+    db.add(models.CoursePurchase(user_id=current_user.id, course_id=course_id, purchased_price=course_price))
+    db.commit()
+
+    return {
+        "success": True,
+        "balance": wallet.balance,
+        "newBalance": wallet.balance,
+        "courseId": course_id,
+        "isPurchased": True,
+        "message": f'Chúc mừng bạn đã mở khóa thành công khóa học "{course.title}"! 🎉',
+    }
+
+
+# ---------- 5. Chấm điểm & Xác thực chuỗi khối lệnh Scratch ----------
 @router.post("/api/scratch/lessons/submit", response_model=schemas.ScratchSubmitOut)
 def submit_scratch_lesson(
     body: schemas.ScratchSubmitIn,
@@ -310,10 +463,11 @@ def submit_scratch_lesson(
     """
     Xác thực chuỗi khối lệnh học sinh kéo thả trên sân khấu:
     1. Xác thực người dùng qua JWT Token (current_user).
-    2. So sánh chuỗi với target_block_sequence.
-    3. Nếu đúng: Lưu UserScratchProgress.
+    2. Kiểm tra điều kiện mở khóa (mua khóa học và làm bài tuần tự).
+    3. So sánh chuỗi với target_block_sequence.
+    4. Nếu đúng: Lưu UserScratchProgress.
        CHỈ THƯỞNG XP & Xu LẦN ĐẦU TIÊN để chống gian lận lặp lại.
-    4. Nếu sai: Phản hồi gợi ý sửa lỗi logic.
+    5. Nếu sai: Phản hồi gợi ý sửa lỗi logic.
     """
     user = current_user
 
@@ -324,6 +478,29 @@ def submit_scratch_lesson(
     )
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học Scratch!")
+
+    # Kiểm tra điều kiện mua khóa học & hoàn thành bài trước cho học sinh
+    is_admin_or_teacher = bool(current_user.role in ["admin", "teacher"])
+    if not is_admin_or_teacher and body.lessonNum > 1:
+        course = db.get(models.ScratchCourse, body.courseId)
+        course_price = (course.price or 0) if course else 0
+        if course_price > 0:
+            has_bought = db.query(models.CoursePurchase).filter_by(
+                user_id=current_user.id, course_id=body.courseId
+            ).first()
+            if not has_bought:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Bé cần mở khóa khóa học để nộp bài học này!",
+                )
+        prev_prog = db.query(models.UserScratchProgress).filter_by(
+            user_id=current_user.id, course_id=body.courseId, lesson_num=body.lessonNum - 1
+        ).first()
+        if not prev_prog or not prev_prog.completed:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Bé cần hoàn thành Bài {body.lessonNum - 1} trước khi làm bài này!",
+            )
 
     engine_type = getattr(lesson, "engine_type", None) or "algorithm_maze"
     is_correct, eval_message, hint = evaluate_exercise(engine_type, body.submittedSequence, lesson)

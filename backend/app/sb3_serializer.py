@@ -132,6 +132,9 @@ def export_sb3_bytes(title: str, project_data: Any) -> bytes:
             inputs["CHANGE"] = [1, [4, str(fields.get("CHANGE", 10))]]
         elif b_type == "scratch_set_size_to":
             inputs["SIZE"] = [1, [4, str(fields.get("SIZE", 100))]]
+        elif b_type == "scratch_play_drum":
+            inputs["DRUM"] = [1, [4, str(fields.get("DRUM", 1))]]
+            inputs["BEATS"] = [1, [4, str(fields.get("SECS", 0.25))]]
         elif b_type == "scratch_wait_secs":
             inputs["DURATION"] = [1, [4, str(fields.get("SECS", 1))]]
         elif b_type == "scratch_repeat":
@@ -357,6 +360,13 @@ def _build_blockly_xml_from_scratch_blocks(scratch_blocks: Dict[str, Any]) -> st
                 val = _extract_input_value(inputs.get("SIZE"), "100")
                 f = ET.SubElement(b_elem, "field", {"name": "SIZE"})
                 f.text = str(val)
+            elif block_type == "scratch_play_drum":
+                drum_val = _extract_input_value(inputs.get("DRUM"), "1")
+                secs_val = _extract_input_value(inputs.get("BEATS"), "0.25")
+                fd = ET.SubElement(b_elem, "field", {"name": "DRUM"})
+                fd.text = str(drum_val)
+                fs = ET.SubElement(b_elem, "field", {"name": "SECS"})
+                fs.text = str(secs_val)
             elif block_type == "scratch_wait_secs":
                 val = _extract_input_value(inputs.get("DURATION"), "1")
                 f = ET.SubElement(b_elem, "field", {"name": "SECS"})

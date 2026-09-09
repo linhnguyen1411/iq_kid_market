@@ -114,12 +114,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: username.trim(), password }),
         });
-        const data = await res.json();
+        const text = await res.text().catch(() => '');
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { detail: text || 'Không nhận được phản hồi từ máy chủ!' };
+        }
         if (!res.ok) {
           throw new Error(data.detail || 'Đăng nhập thất bại!');
         }
         playSynthSound('victory');
-        setSuccessMsg(`Chào mừng bạn trở lại, ${data.user.name}! 🎉`);
+        setSuccessMsg(`Chào mừng bạn trở lại, ${data.user?.name || username}! 🎉`);
         setTimeout(() => {
           onAuthSuccess(data);
           onClose();
@@ -137,7 +143,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             avatar,
           }),
         });
-        const data = await res.json();
+        const text = await res.text().catch(() => '');
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { detail: text || 'Không nhận được phản hồi từ máy chủ!' };
+        }
         if (!res.ok) {
           throw new Error(data.detail || 'Đăng ký thất bại!');
         }

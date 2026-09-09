@@ -309,23 +309,27 @@ export function registerScratchBlocks() {
     },
     {
       type: 'scratch_play_drum',
-      message0: 'đánh trống nhịp %1 trong %2 giây 🥁',
+      message0: 'đánh trống %1 nhịp, mỗi nhịp %2 giây 🥁',
       args0: [
         {
           type: 'field_number',
           name: 'DRUM',
           value: 1,
+          min: 1,
+          max: 20,
         },
         {
           type: 'field_number',
           name: 'SECS',
           value: 0.25,
+          min: 0.05,
+          max: 5,
         },
       ],
       previousStatement: null,
       nextStatement: null,
       colour: SCRATCH_COLORS.sound,
-      tooltip: 'Phát âm thanh trống theo nhịp',
+      tooltip: 'Phát âm thanh tiếng trống theo số nhịp và thời gian mỗi nhịp',
     },
 
     // ==========================================

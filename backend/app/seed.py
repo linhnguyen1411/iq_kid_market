@@ -133,6 +133,7 @@ def run_seed(db: Session, force: bool = False) -> None:
                 thumbnail=c.get("thumbnail"), difficulty=c.get("difficulty", "Cơ bản"),
                 total_lessons=c.get("total_lessons", len(c.get("lessons", []))),
                 course_type=c.get("course_type", "algorithm_maze"),
+                price=c.get("price", 0),
             ))
             db.flush()
             for l in c.get("lessons", []):
@@ -289,6 +290,7 @@ def ensure_scratch_catalog(db: Session) -> None:
                 thumbnail=c.get("thumbnail"), difficulty=c.get("difficulty", "Cơ bản"),
                 total_lessons=c.get("total_lessons", len(c.get("lessons", []))),
                 course_type=c.get("course_type", "algorithm_maze"),
+                price=c.get("price", 0),
             ))
             db.flush()
             for l in c.get("lessons", []):

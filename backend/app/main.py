@@ -52,6 +52,9 @@ def ensure_scratch_columns(target_engine):
                 if "course_type" not in course_cols:
                     conn.execute(text("ALTER TABLE scratch_courses ADD COLUMN course_type VARCHAR(50) DEFAULT 'algorithm_maze'"))
                     conn.commit()
+                if "price" not in course_cols:
+                    conn.execute(text("ALTER TABLE scratch_courses ADD COLUMN price INTEGER DEFAULT 0"))
+                    conn.commit()
             if "scratch_lessons" in tables:
                 lesson_cols = [c["name"] for c in insp.get_columns("scratch_lessons")]
                 if "engine_type" not in lesson_cols:

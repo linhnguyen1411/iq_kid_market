@@ -35,6 +35,79 @@ def parse_scene_or_data(lesson: Any) -> dict:
         return {}
 
 
+def unroll_maze_sequence(seq: list[str]) -> list[str]:
+    """Bung các khối lặp như repeat_2[move_forward], repeat_3[move_forward] thành các bước nguyên tử."""
+    unrolled = []
+    for item in seq:
+        if item == "repeat_2[move_forward]":
+            unrolled.extend(["move_forward", "move_forward"])
+        elif item == "repeat_3[move_forward]":
+            unrolled.extend(["move_forward", "move_forward", "move_forward"])
+        else:
+            unrolled.append(item)
+    return unrolled
+
+
+def simulate_maze_path(
+    submitted_seq: list[str],
+    start_scene: dict,
+) -> Tuple[bool, str, Optional[str]]:
+    """Mô phỏng đường đi của nhân vật trên bản đồ mê cung 2D.
+    Trả về: (reached_target, message, hint)
+    """
+    cat_pos = start_scene.get("cat_pos")
+    star_pos = start_scene.get("star_pos")
+    if not cat_pos or not star_pos or len(cat_pos) < 2 or len(star_pos) < 2:
+        return False, "Không đủ dữ liệu bản đồ để mô phỏng đường đi.", None
+
+    grid_size = start_scene.get("grid_size", 4)
+    raw_obstacles = start_scene.get("obstacles", [])
+    obstacles = {tuple(obs) for obs in raw_obstacles if len(obs) >= 2}
+
+    cur_x, cur_y = cat_pos[0], cat_pos[1]
+    cur_dir = start_scene.get("cat_dir", "right")  # 'right', 'down', 'left', 'up'
+    order = ["right", "down", "left", "up"]
+
+    expanded_cmds = unroll_maze_sequence(submitted_seq)
+
+    for cmd in expanded_cmds:
+        if cmd == "move_forward":
+            if cur_dir == "right": cur_x += 1
+            elif cur_dir == "down": cur_y += 1
+            elif cur_dir == "left": cur_x -= 1
+            elif cur_dir == "up": cur_y -= 1
+        elif cmd == "jump_forward":
+            if cur_dir == "right": cur_x += 2
+            elif cur_dir == "down": cur_y += 2
+            elif cur_dir == "left": cur_x -= 2
+            elif cur_dir == "up": cur_y -= 2
+        elif cmd == "turn_right":
+            idx = order.index(cur_dir) if cur_dir in order else 0
+            cur_dir = order[(idx + 1) % 4]
+        elif cmd == "turn_left":
+            idx = order.index(cur_dir) if cur_dir in order else 0
+            cur_dir = order[(idx + 3) % 4]
+        elif cmd == "meow_sound":
+            pass
+
+        # Kiểm tra va chạm biên mép bản đồ
+        if not (0 <= cur_x < grid_size and 0 <= cur_y < grid_size):
+            return False, "Kịch bản chưa chính xác: Nhân vật đã đi ra ngoài mép bản đồ!", "Hãy kiểm tra hướng xoay và số bước di chuyển."
+
+        # Kiểm tra va chạm chướng ngại vật
+        if (cur_x, cur_y) in obstacles:
+            return False, "Kịch bản chưa chính xác: Nhân vật đã va phải chướng ngại vật!", "Hãy dùng lệnh rẽ hướng để tránh chướng ngại vật."
+
+    if [cur_x, cur_y] == list(star_pos):
+        return True, "Tuyệt vời! Nhân vật đã hoàn thành xuất sắc đường đi trong mê cung! 🌟", None
+
+    return (
+        False,
+        "Kịch bản chưa đưa nhân vật đến đúng vị trí Ngôi Sao!",
+        f"Nhân vật dừng lại ở ({cur_x}, {cur_y}), trong khi ngôi sao ở ({star_pos[0]}, {star_pos[1]}).",
+    )
+
+
 def evaluate_exercise(
     engine_type: str,
     submitted_value: Any,
@@ -42,7 +115,7 @@ def evaluate_exercise(
 ) -> Tuple[bool, str, Optional[str]]:
     """
     Bộ chấm điểm trung tâm cho 5 dạng bài tập lập trình:
-    1. algorithm_maze: So khớp chuỗi bước đi của nhân vật trên mê cung 2D.
+    1. algorithm_maze: So khớp chuỗi bước đi hoặc mô phỏng đường đi trên mê cung 2D.
     2. block_sequence: So khớp thứ tự khối lệnh chuẩn (Parsons problem).
     3. block_quiz: So sánh đáp án trắc nghiệm đã chọn với đáp án chuẩn.
     4. block_predict: So sánh kết quả dự đoán với hành vi chuẩn của kịch bản.
@@ -54,9 +127,61 @@ def evaluate_exercise(
     data = parse_scene_or_data(lesson)
 
     # -------------------------------------------------------------
-    # 1. ALGORITHM MAZE & 2. BLOCK SEQUENCE (So khớp chuỗi khối lệnh)
+    # 1. ALGORITHM MAZE (So khớp chuỗi bước đi hoặc mô phỏng đường đi)
     # -------------------------------------------------------------
-    if engine in ("algorithm_maze", "block_sequence"):
+    if engine == "algorithm_maze":
+        target_seq = normalize_sequence(
+            data.get("target_sequence")
+            or getattr(lesson, "target_block_sequence", None)
+        )
+        submitted_seq = normalize_sequence(submitted_value)
+
+        if not submitted_seq:
+            return (
+                False,
+                "Bạn chưa xếp khối lệnh nào vào kịch bản!",
+                "Hãy bấm chọn các khối lệnh cần thiết trước khi nhấn nộp bài.",
+            )
+
+        # Cách 1: So khớp chính xác chuỗi khối lệnh mục tiêu
+        if submitted_seq == target_seq:
+            return (True, "Tuyệt vời! Nhân vật đã hoàn thành xuất sắc đường đi trong mê cung! 🌟", None)
+
+        # Cách 2: So khớp tương đương sau khi bung vòng lặp (unroll loop equivalence)
+        unrolled_submitted = unroll_maze_sequence(submitted_seq)
+        unrolled_target = unroll_maze_sequence(target_seq)
+        if target_seq and unrolled_submitted == unrolled_target:
+            hint = "Mẹo nhỏ: Bạn có thể sử dụng khối 'Vòng lặp' để kịch bản ngắn gọn hơn nữa nhé!" if len(submitted_seq) > len(target_seq) else None
+            return (True, "Tuyệt vời! Nhân vật đã hoàn thành xuất sắc đường đi trong mê cung! 🌟", hint)
+
+        # Cách 3: Kiểm tra đường đi qua mô phỏng tọa độ mê cung 2D
+        has_coords = data.get("cat_pos") is not None and data.get("star_pos") is not None
+        if has_coords:
+            reached, sim_msg, sim_hint = simulate_maze_path(submitted_seq, data)
+            if reached:
+                hint = "Mẹo nhỏ: Bạn có thể sử dụng khối 'Vòng lặp' để kịch bản ngắn gọn hơn nữa nhé!" if target_seq and len(submitted_seq) > len(target_seq) else None
+                return (True, sim_msg, hint)
+            else:
+                return (False, sim_msg, sim_hint)
+
+        # Fallback gợi ý khi không có tọa độ bản đồ
+        if len(submitted_seq) < len(target_seq):
+            hint = f"Kịch bản còn thiếu khối lệnh. Cần có {len(target_seq)} khối lệnh cả thảy."
+        elif len(submitted_seq) > len(target_seq):
+            hint = f"Kịch bản đang có khối lệnh thừa. Bạn đang dùng {len(submitted_seq)} khối, chỉ cần {len(target_seq)} khối."
+        else:
+            hint = "Số lượng khối lệnh đã đủ nhưng vị trí chưa chính xác. Hãy kiểm tra lại thứ tự từng bước nhé!"
+
+        return (
+            False,
+            "Kịch bản khối lệnh chưa hoàn toàn chính xác. Hãy thử kiểm tra lại!",
+            hint,
+        )
+
+    # -------------------------------------------------------------
+    # 2. BLOCK SEQUENCE (Parsons problem - sắp xếp đúng thứ tự khối)
+    # -------------------------------------------------------------
+    elif engine == "block_sequence":
         target_seq = normalize_sequence(
             data.get("target_sequence")
             or getattr(lesson, "target_block_sequence", None)
@@ -71,13 +196,8 @@ def evaluate_exercise(
             )
 
         if submitted_seq == target_seq:
-            if engine == "algorithm_maze":
-                msg = "Tuyệt vời! Nhân vật đã hoàn thành xuất sắc đường đi trong mê cung! 🌟"
-            else:
-                msg = "Chính xác! Bạn đã sắp xếp kịch bản theo đúng trình tự logic thuật toán! 🧩🎉"
-            return (True, msg, None)
+            return (True, "Chính xác! Bạn đã sắp xếp kịch bản theo đúng trình tự logic thuật toán! 🧩🎉", None)
 
-        # Tạo gợi ý dựa trên sự khác biệt
         if len(submitted_seq) < len(target_seq):
             hint = f"Kịch bản còn thiếu khối lệnh. Cần có {len(target_seq)} khối lệnh cả thảy."
         elif len(submitted_seq) > len(target_seq):

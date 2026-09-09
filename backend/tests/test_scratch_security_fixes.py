@@ -223,7 +223,27 @@ def test_scratch_studio_semantic_submission(client, student_auth, db_session):
     assert data_pass["xpAwarded"] == 100
     assert data_pass["nextLessonNum"] == 2
 
-    # 3. Lesson 2 (Sự Kiện — Click Nhân Vật): Ghép khối 'khi bấm vào nhân vật' và 'phát âm thanh Meo Meo' -> Thành công!
+    # 3. Thử nộp Lesson 2 khi CHƯA mua khóa học -> Bị chặn 403!
+    res_unbought = client.post("/api/scratch/lessons/submit", json={
+        "courseId": "sc4",
+        "lessonNum": 2,
+        "submittedSequence": {
+            "blocks": [{"type": "scratch_when_sprite_clicked"}],
+            "telemetry": {"has_run": True}
+        }
+    }, headers=headers)
+    assert res_unbought.status_code == 403
+
+    # Cấp xu và Mua khóa học sc4
+    wallet = db_session.query(models.Wallet).filter_by(user_id=student_auth["user_id"]).first()
+    wallet.balance = 100000
+    db_session.commit()
+
+    res_buy = client.post("/api/scratch/courses/sc4/purchase", headers=headers)
+    assert res_buy.status_code == 200
+    assert res_buy.json()["isPurchased"] is True
+
+    # 4. Lesson 2 (Sự Kiện — Click Nhân Vật): Sau khi mua và đã hoàn thành bài 1 -> Thành công!
     res_l2 = client.post("/api/scratch/lessons/submit", json={
         "courseId": "sc4",
         "lessonNum": 2,

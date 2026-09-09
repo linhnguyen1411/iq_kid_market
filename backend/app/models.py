@@ -163,10 +163,28 @@ class ScratchCourse(Base):
     difficulty = Column(String(50), default="Cơ bản")
     total_lessons = Column(Integer, default=0)
     course_type = Column(String(50), default="algorithm_maze", nullable=True)
+    price = Column(Integer, default=0)
 
     lessons = relationship(
         "ScratchLesson", back_populates="course",
         cascade="all, delete-orphan", order_by="ScratchLesson.lesson_num"
+    )
+
+
+class CoursePurchase(Base):
+    __tablename__ = "course_purchases"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(String(30), ForeignKey("scratch_courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    purchased_price = Column(Integer, default=0)
+    purchased_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", backref="course_purchases")
+    course = relationship("ScratchCourse")
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_user_course_purchase"),
     )
 
 

@@ -3223,6 +3223,7 @@
       "difficulty": "Tiêu chuẩn (11 Cấp độ)",
       "total_lessons": 11,
       "course_type": "scratch_studio",
+      "price": 50000,
       "lessons": [
         {
           "lesson_num": 1,

@@ -617,6 +617,7 @@ class CreateScratchCourseIn(BaseModel):
     thumbnail: Optional[str] = "🐱"
     difficulty: Optional[str] = "Cơ bản"
     course_type: Optional[str] = "algorithm_maze"
+    price: Optional[int] = 0
 
 
 class CreateScratchLessonIn(BaseModel):

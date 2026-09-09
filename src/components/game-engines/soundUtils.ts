@@ -142,21 +142,36 @@ export function playSynthSound(type: SoundType) {
       osc.start(now);
       osc.stop(now + 0.48);
     } else if (type === 'drum') {
-      // Âm thanh tiếng trống nhịp điệu Scratch
+      // Âm thanh tiếng trống nhịp điệu Scratch (Bass/Snare Punch)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(180, now);
-      osc.frequency.exponentialRampToValueAtTime(45, now + 0.15);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(260, now);
+      osc.frequency.exponentialRampToValueAtTime(35, now + 0.14);
 
-      gain.gain.setValueAtTime(0.35, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+      gain.gain.setValueAtTime(0.45, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
 
       osc.start(now);
-      osc.stop(now + 0.2);
+      osc.stop(now + 0.18);
+
+      // Thêm tiếng snap của dùi trống tạo âm sắc đanh, vui tai
+      try {
+        const snapOsc = ctx.createOscillator();
+        const snapGain = ctx.createGain();
+        snapOsc.connect(snapGain);
+        snapGain.connect(ctx.destination);
+        snapOsc.type = 'sine';
+        snapOsc.frequency.setValueAtTime(450, now);
+        snapOsc.frequency.exponentialRampToValueAtTime(70, now + 0.05);
+        snapGain.gain.setValueAtTime(0.3, now);
+        snapGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        snapOsc.start(now);
+        snapOsc.stop(now + 0.05);
+      } catch {}
     }
   } catch (e) {
     // Fail silently if audio context cannot be initialised

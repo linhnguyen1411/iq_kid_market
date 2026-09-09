@@ -188,3 +188,14 @@ tests/test_wallet.py (5 tests) .......................................... PASSED
    - Thử kéo khối và đổi tên dự án $\rightarrow$ quan sát đèn báo trạng thái **"Đã lưu"** (Autosave).
    - Xuất file `.sb3` và mở trực tiếp trên [scratch.mit.edu](https://scratch.mit.edu) để thấy sự tương thích 100%.
    - Nhập một file `.sb3` từ máy tính vào để tiếp tục sáng tạo.
+
+---
+
+## 💎 Cập Nhật: Cơ Chế Mua Khóa Học Bằng Ví Xu & Quyền Bypass Giáo Viên / Admin
+
+- **Học sinh (Freemium & Tuần tự)**:
+  - **Bài 1**: Mở khóa mặc định cho phép học sinh học thử miễn phí (Free Trial).
+  - **Từ Bài 2 đến Bài 11**: Yêu cầu học sinh mở khóa khóa học bằng ví xu (`50.000 xu`) thông qua Modal mua khóa học tích hợp.
+  - Sau khi mua khóa học, học sinh tiếp tục học theo lộ trình tuần tự (hoàn thành bài $N$ mới mở khóa bài $N+1$).
+- **Admin & Giáo viên (Bypass)**:
+  - Tự động mở khóa toàn bộ các bài học ngay từ đầu (`isLocked: false`), cho phép kiểm thử và giảng dạy linh hoạt không cần làm tuần tự hay trừ xu.

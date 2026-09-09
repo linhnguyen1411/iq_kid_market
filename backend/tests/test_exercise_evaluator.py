@@ -277,3 +277,28 @@ def test_scratch_evaluator_max_blocks_limit():
     assert "vượt quá giới hạn 3 khối" in msg
     assert "vòng lặp" in (hint or "")
 
+
+def test_algorithm_maze_lesson_3_loop_and_unrolled_equivalence():
+    """Kiểm tra Bài 3 (sc1 lesson 3): Cả vòng lặp repeat_3 lẫn 3 lần move_forward đều thắng."""
+    lesson = DummyLesson(
+        target_block_sequence="repeat_3[move_forward]",
+        start_scene_json='{"cat_pos":[0,0],"star_pos":[3,0]}'
+    )
+
+    # 1. Dùng vòng lặp repeat_3[move_forward]
+    ok, msg, hint = evaluate_exercise("algorithm_maze", ["repeat_3[move_forward]"], lesson)
+    assert ok is True
+    assert "hoàn thành xuất sắc" in msg
+
+    # 2. Dùng 3 lần đi thẳng (move_forward x3)
+    ok, msg, hint = evaluate_exercise("algorithm_maze", ["move_forward", "move_forward", "move_forward"], lesson)
+    assert ok is True
+    assert "hoàn thành xuất sắc" in msg or "vượt qua mê cung" in msg
+    assert hint is not None and "Vòng lặp" in hint
+
+    # 3. Đi thiếu bước (chỉ 2 bước) -> Chưa đến đích
+    ok, msg, hint = evaluate_exercise("algorithm_maze", ["move_forward", "move_forward"], lesson)
+    assert ok is False
+    assert "(2, 0)" in (hint or "") or "thiếu" in (hint or "")
+
+

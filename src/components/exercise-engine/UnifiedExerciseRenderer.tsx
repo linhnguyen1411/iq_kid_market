@@ -47,10 +47,13 @@ export default function UnifiedExerciseRenderer({
     xp_reward: lesson.xp_reward || 100,
   };
 
+  const engineKey = `${engineType}-${lesson.course_id || 'course'}-${lesson.lesson_num}`;
+
   switch (engineType) {
     case 'block_sequence':
       return (
         <BlockSequenceExercise
+          key={engineKey}
           lesson={normalizedLesson}
           onLessonComplete={onLessonComplete}
           onBack={onBack}
@@ -60,6 +63,7 @@ export default function UnifiedExerciseRenderer({
     case 'block_quiz':
       return (
         <BlockQuizExercise
+          key={engineKey}
           lesson={normalizedLesson}
           onLessonComplete={onLessonComplete}
           onBack={onBack}
@@ -69,6 +73,7 @@ export default function UnifiedExerciseRenderer({
     case 'block_predict':
       return (
         <BlockPredictExercise
+          key={engineKey}
           lesson={normalizedLesson}
           onLessonComplete={onLessonComplete}
           onBack={onBack}
@@ -78,6 +83,7 @@ export default function UnifiedExerciseRenderer({
     case 'block_debug':
       return (
         <BlockDebugExercise
+          key={engineKey}
           lesson={normalizedLesson}
           onLessonComplete={onLessonComplete}
           onBack={onBack}
@@ -87,6 +93,7 @@ export default function UnifiedExerciseRenderer({
     case 'scratch_studio':
       return (
         <ScratchStudioEngine
+          key={engineKey}
           lesson={normalizedLesson}
           onLessonComplete={onLessonComplete}
           onBack={onBack}
@@ -97,6 +104,7 @@ export default function UnifiedExerciseRenderer({
     default:
       return (
         <AlgorithmMazeEngine
+          key={engineKey}
           lesson={{
             lesson_num: normalizedLesson.lesson_num,
             title: normalizedLesson.title,

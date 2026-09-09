@@ -18,7 +18,7 @@ export interface AlgorithmMazeLesson {
 
 export interface AlgorithmMazeProps {
   lesson: AlgorithmMazeLesson;
-  defaultTheme?: 'cat' | 'robot' | 'spaceship';
+  defaultTheme?: 'monkey' | 'cat' | 'robot' | 'spaceship';
   onLessonComplete: (submittedBlocks: string[]) => void;
   onBack: () => void;
 }
@@ -85,7 +85,7 @@ const TOOLBOX: ToolboxItem[] = [
 
 export default function AlgorithmMazeEngine({
   lesson,
-  defaultTheme = 'cat',
+  defaultTheme = 'monkey',
   onLessonComplete,
   onBack,
 }: AlgorithmMazeProps) {
@@ -103,11 +103,11 @@ export default function AlgorithmMazeEngine({
 
   const GRID_SIZE = initialScene.grid_size || 4; // 4x4
   const obstacles: [number, number][] = initialScene.obstacles || [];
+  const starPos: [number, number] = initialScene.star_pos || [3, 3];
 
-  const [spriteTheme, setSpriteTheme] = useState<'cat' | 'robot' | 'spaceship'>(defaultTheme);
+  const [spriteTheme, setSpriteTheme] = useState<'monkey' | 'cat' | 'robot' | 'spaceship'>(defaultTheme);
   const [characterPos, setCharacterPos] = useState<[number, number]>(initialScene.cat_pos || [0, 0]);
-  const [characterDir, setCharacterDir] = useState<'right' | 'down' | 'left' | 'up'>('right');
-  const [starPos] = useState<[number, number]>(initialScene.star_pos || [3, 3]);
+  const [characterDir, setCharacterDir] = useState<'right' | 'down' | 'left' | 'up'>(initialScene.cat_dir || 'right');
   const [blocksWorkplace, setBlocksWorkplace] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [activeStepIndex, setActiveStepIndex] = useState<number>(-1);
@@ -130,12 +130,12 @@ export default function AlgorithmMazeEngine({
     resetSimulation();
     setBlocksWorkplace([]);
     setSuccess(false);
-  }, [lesson]);
+  }, [lesson.lesson_num, lesson.title, lesson.start_scene_json]);
 
   const resetSimulation = () => {
     isCancelledRef.current = true;
     setCharacterPos(initialScene.cat_pos || [0, 0]);
-    setCharacterDir('right');
+    setCharacterDir(initialScene.cat_dir || 'right');
     setIsRunning(false);
     setActiveStepIndex(-1);
     setIsHitObstacle(false);
@@ -182,7 +182,7 @@ export default function AlgorithmMazeEngine({
     // Reset position
     let curX = initialScene.cat_pos?.[0] || 0;
     let curY = initialScene.cat_pos?.[1] || 0;
-    let curDir: 'right' | 'down' | 'left' | 'up' = 'right';
+    let curDir: 'right' | 'down' | 'left' | 'up' = initialScene.cat_dir || 'right';
 
     setCharacterPos([curX, curY]);
     setCharacterDir(curDir);
@@ -233,7 +233,14 @@ export default function AlgorithmMazeEngine({
         setCharacterDir(curDir);
       } else if (cmd === 'meow_sound') {
         playSynthSound('correct');
-        const soundMsg = spriteTheme === 'cat' ? 'Chú Mèo kêu: "Meo Meo! 🐱"' : spriteTheme === 'robot' ? 'Robot phát tín hiệu: "Bíp Bíp! 🤖"' : 'Phi thuyền phát tín hiệu sonar! 🚀';
+        const soundMsg =
+          spriteTheme === 'monkey'
+            ? 'Chú Khỉ con: "Khẹc Khẹc! 🐒🍌"'
+            : spriteTheme === 'cat'
+            ? 'Chú Mèo kêu: "Meo Meo! 🐱"'
+            : spriteTheme === 'robot'
+            ? 'Robot phát tín hiệu: "Bíp Bíp! 🤖"'
+            : 'Phi thuyền phát tín hiệu sonar! 🚀';
         setMessage(soundMsg);
       }
 
@@ -283,10 +290,120 @@ export default function AlgorithmMazeEngine({
     onLessonComplete(blocksWorkplace);
   };
 
-  const getSpriteIcon = () => {
-    if (spriteTheme === 'robot') return '🤖';
-    if (spriteTheme === 'spaceship') return '🚀';
-    return '🐱';
+  const renderSprite = (theme: 'monkey' | 'cat' | 'robot' | 'spaceship') => {
+    if (theme === 'monkey') {
+      return (
+        <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center select-none" title="Chú Khỉ Con Hướng Đi">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
+            {/* Tail curled at back (left) */}
+            <path
+              d="M 18 36 C 8 38 4 28 8 20 C 12 15 18 18 16 23 C 14 26 12 26 11 29"
+              stroke="#92400E"
+              strokeWidth="4"
+              strokeLinecap="round"
+              fill="none"
+            />
+            {/* Back Feet */}
+            <ellipse cx="22" cy="46" rx="4.5" ry="3" fill="#78350F" />
+            <ellipse cx="36" cy="46" rx="4.5" ry="3" fill="#78350F" />
+
+            {/* Monkey Body */}
+            <ellipse cx="28" cy="35" rx="13" ry="11" fill="#B45309" />
+            {/* Belly */}
+            <ellipse cx="30" cy="36" rx="8" ry="6" fill="#FDE68A" />
+
+            {/* Head facing forward right */}
+            <circle cx="41" cy="24" r="12" fill="#B45309" />
+
+            {/* Ears */}
+            <circle cx="34" cy="14" r="5" fill="#B45309" />
+            <circle cx="34" cy="14" r="2.5" fill="#FDE68A" />
+            <circle cx="45" cy="14" r="5" fill="#B45309" />
+            <circle cx="45" cy="14" r="2.5" fill="#FDE68A" />
+
+            {/* Face Mask */}
+            <ellipse cx="43" cy="25" rx="8.5" ry="7.5" fill="#FDE68A" />
+
+            {/* Eyes */}
+            <circle cx="42" cy="22" r="1.8" fill="#1E293B" />
+            <circle cx="42.6" cy="21.4" r="0.6" fill="#FFFFFF" />
+            <circle cx="47.5" cy="22" r="1.8" fill="#1E293B" />
+            <circle cx="48.1" cy="21.4" r="0.6" fill="#FFFFFF" />
+
+            {/* Snout & Smile */}
+            <ellipse cx="46.5" cy="27.5" rx="3.8" ry="2.2" fill="#FCD34D" />
+            <circle cx="46" cy="26.8" r="0.6" fill="#78350F" />
+            <circle cx="48" cy="26.8" r="0.6" fill="#78350F" />
+            <path d="M 44.5 28.5 Q 46.5 30.5 48.5 28.5" stroke="#78350F" strokeWidth="1" strokeLinecap="round" fill="none" />
+
+            {/* Hands holding Banana pointing forward */}
+            <path
+              d="M 40 37 C 46 34 52 38 57 33 C 55 38 48 42 41 40 Z"
+              fill="#FACC15"
+              stroke="#CA8A04"
+              strokeWidth="0.8"
+            />
+            <circle cx="39" cy="38" r="2.8" fill="#B45309" />
+            <circle cx="44" cy="39" r="2.4" fill="#B45309" />
+
+            {/* Forward Direction Sight Arrow (Mũi tên chỉ hướng nhìn) */}
+            <polygon points="57,32 63,35 57,38" fill="#EF4444" />
+          </svg>
+          {/* Subtle directional beacon dot */}
+          <span className="absolute -right-1 top-1/2 -translate-y-1/2 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          </span>
+        </div>
+      );
+    }
+    if (theme === 'robot') {
+      return (
+        <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center select-none" title="Robot">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
+            <rect x="14" y="24" width="26" height="24" rx="6" fill="#0284C7" stroke="#0369A1" strokeWidth="2" />
+            <circle cx="27" cy="36" r="6" fill="#38BDF8" />
+            <rect x="36" y="26" width="18" height="18" rx="4" fill="#0284C7" stroke="#0369A1" strokeWidth="2" />
+            <circle cx="46" cy="35" r="3" fill="#38BDF8" />
+            <circle cx="47" cy="34" r="1" fill="#FFFFFF" />
+            <line x1="45" y1="26" x2="45" y2="18" stroke="#0369A1" strokeWidth="2" />
+            <circle cx="45" cy="17" r="2.5" fill="#EF4444" />
+            <polygon points="56,32 62,35 56,38" fill="#38BDF8" />
+          </svg>
+        </div>
+      );
+    }
+    if (theme === 'spaceship') {
+      return (
+        <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center select-none" title="Phi Thuyền">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
+            <polygon points="12,32 6,28 8,32 6,36" fill="#F97316" />
+            <polygon points="14,32 8,29 10,32 8,35" fill="#FACC15" />
+            <path d="M 16 26 L 40 26 C 50 26 58 32 58 32 C 58 32 50 38 40 38 L 16 38 Z" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="2" />
+            <polygon points="16,26 24,18 28,26" fill="#EF4444" />
+            <polygon points="16,38 24,46 28,38" fill="#EF4444" />
+            <ellipse cx="40" cy="32" rx="5" ry="3.5" fill="#0284C7" stroke="#38BDF8" strokeWidth="1" />
+          </svg>
+        </div>
+      );
+    }
+    // Cat theme
+    return (
+      <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center select-none" title="Mèo Con">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-md">
+          <path d="M 18 36 C 10 38 6 28 10 22 C 14 18 18 22 14 26" stroke="#EA580C" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+          <ellipse cx="28" cy="36" rx="13" ry="11" fill="#F97316" />
+          <circle cx="41" cy="26" r="12" fill="#F97316" />
+          <polygon points="34,16 38,10 40,16" fill="#EA580C" />
+          <polygon points="43,16 47,10 49,16" fill="#EA580C" />
+          <circle cx="43" cy="24" r="1.8" fill="#1E293B" />
+          <circle cx="48" cy="24" r="1.8" fill="#1E293B" />
+          <circle cx="47" cy="28" r="1.2" fill="#BE123C" />
+          <line x1="47" y1="28" x2="55" y2="26" stroke="#1E293B" strokeWidth="1" />
+          <line x1="47" y1="29" x2="55" y2="30" stroke="#1E293B" strokeWidth="1" />
+        </svg>
+      </div>
+    );
   };
 
   return (
@@ -304,8 +421,8 @@ export default function AlgorithmMazeEngine({
             ↩️ Trở Lại
           </button>
           <div>
-            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
-              <BrainCircuit className="w-3.5 h-3.5" /> TƯ DUY THUẬT TOÁN & MÊ CUNG ROBOT
+            <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1">
+              <BrainCircuit className="w-3.5 h-3.5" /> TƯ DUY THUẬT TOÁN & MÊ CUNG CHÚ KHỈ 🐒
             </span>
             <h3 className="text-lg md:text-xl font-black text-slate-800">
               Bài {lesson.lesson_num}: {lesson.title}
@@ -316,6 +433,13 @@ export default function AlgorithmMazeEngine({
         {/* Theme Avatar Selector & XP */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600 border border-slate-200">
+            <button
+              onClick={() => setSpriteTheme('monkey')}
+              className={`px-2 py-1 rounded-lg transition-all ${spriteTheme === 'monkey' ? 'bg-amber-100 shadow-xs text-amber-800 font-black' : 'hover:bg-slate-200'}`}
+              title="Nhân vật Chú Khỉ Thông Minh (Mặc định)"
+            >
+              🐒 Khỉ Con
+            </button>
             <button
               onClick={() => setSpriteTheme('cat')}
               className={`px-2 py-1 rounded-lg transition-all ${spriteTheme === 'cat' ? 'bg-white shadow-xs text-indigo-600' : 'hover:bg-slate-200'}`}
@@ -540,9 +664,9 @@ export default function AlgorithmMazeEngine({
                     <motion.div
                       layout
                       transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                      className={`text-2xl select-none transition-transform duration-200 inline-block ${rotationClass}`}
+                      className={`select-none transition-transform duration-200 inline-block ${rotationClass}`}
                     >
-                      {getSpriteIcon()}
+                      {renderSprite(spriteTheme)}
                     </motion.div>
                   )}
 

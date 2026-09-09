@@ -116,6 +116,7 @@ export interface ScratchLesson {
   content?: string;
   start_scene_json?: string;
   isLocked?: boolean;
+  lockReason?: 'need_purchase' | 'need_previous' | null;
   completed?: boolean;
 }
 
@@ -127,6 +128,8 @@ export interface ScratchCourse {
   grade_level: number;
   difficulty: string;
   course_type?: 'algorithm_maze' | 'scratch_studio';
+  price?: number;
+  isPurchased?: boolean;
   lessons_count: number;
   lessons: ScratchLesson[];
   completed_lessons_count?: number;
