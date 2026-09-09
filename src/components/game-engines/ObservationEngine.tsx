@@ -17,19 +17,26 @@ export default function ObservationEngine({ question, onComplete }: GameEnginePr
     playSynthSound('click');
 
     const cellText = String(cell || "").trim();
-    const answerText = String(question.data.answer || "").trim();
+    const answerText = question.data?.answer ? String(question.data.answer).trim() : null;
+    const targetRow = question.data?.target_row;
+    const targetCol = question.data?.target_col;
 
-    const isCorrect = cellText === answerText || (question.data.target_row === r && question.data.target_col === c);
-    if (isCorrect) {
-      playSynthSound('correct');
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      playSynthSound('incorrect');
-      setIsObsFailed(true);
-      setTimeout(() => setIsObsFailed(false), 800);
+    if (answerText || (targetRow !== undefined && targetCol !== undefined)) {
+      const isCorrect =
+        (answerText && cellText === answerText) ||
+        (targetRow === r && targetCol === c);
+      if (!isCorrect) {
+        playSynthSound('incorrect');
+        setIsObsFailed(true);
+        setTimeout(() => setIsObsFailed(false), 800);
+        return;
+      }
     }
+
+    playSynthSound('correct');
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { row: r, col: c, cell: cellText, answer: cellText });
   };
 
   return (

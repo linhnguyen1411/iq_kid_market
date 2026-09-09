@@ -81,7 +81,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
     }, LEVEL_POPUP_MS);
   };
 
-  const handleLevelComplete = async (score: number) => {
+  const handleLevelComplete = async (score: number, submittedAnswer?: any) => {
     if (!user) {
       throw new Error('Bạn cần đăng nhập lại để ghi nhận kết quả.');
     }
@@ -95,10 +95,11 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
         levelNum: levelJustFinished,
         score,
         completed: true,
+        submittedAnswer,
       });
 
-      if (!res?.success) {
-        throw new Error('Máy chủ không xác nhận hoàn thành màn. Thử lại nhé!');
+      if (!res?.success || res?.isCorrect === false) {
+        throw new Error(res?.feedback || 'Máy chủ không xác nhận hoàn thành màn. Thử lại nhé!');
       }
 
       if (!isAdminPreview) {

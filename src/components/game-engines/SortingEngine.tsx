@@ -25,25 +25,39 @@ export default function SortingEngine({ question, onComplete }: GameEngineProps)
     const newOrder = [...sortingCurrentOrder, item];
     setSortingCurrentOrder(newOrder);
 
-    const correctSequence = question.data.correct_sequence_ids || [];
-    if (newOrder.length === correctSequence.length) {
+    const initialItems = question.data?.items || [];
+    const correctSequence = question.data?.correct_sequence_ids || [];
+    const finalIds = newOrder.map((elem: any) => String(elem.id));
+
+    if (correctSequence.length > 0 && newOrder.length === correctSequence.length) {
       const isSequenceCorrect = newOrder.every((elem, idx) => String(elem.id) === String(correctSequence[idx]));
       if (isSequenceCorrect) {
         playSynthSound('correct');
         setSolved(true);
         playSynthSound('victory');
-        onComplete(question.points);
+        onComplete(question.points, { sequence: finalIds, orderedIds: finalIds });
       } else {
         playSynthSound('incorrect');
         setIsSortingFailed(true);
         setTimeout(() => {
           setIsSortingFailed(false);
-          const initialItems = question.data.items || [];
           setSortingPool(shuffleArray([...initialItems]));
           setSortingCurrentOrder([]);
         }, 1200);
       }
+    } else if (correctSequence.length === 0 && newOrder.length === initialItems.length && initialItems.length > 0) {
+      playSynthSound('correct');
+      setSolved(true);
+      playSynthSound('victory');
+      onComplete(question.points, { sequence: finalIds, orderedIds: finalIds });
     }
+  };
+
+  const handleReturnItem = (item: any) => {
+    if (solved) return;
+    playSynthSound('click');
+    setSortingCurrentOrder(sortingCurrentOrder.filter(i => i.id !== item.id));
+    setSortingPool([...sortingPool, item]);
   };
 
   return (
@@ -53,13 +67,21 @@ export default function SortingEngine({ question, onComplete }: GameEngineProps)
       </div>
 
       <div className="w-full mb-6">
-        <p className="text-xxs font-mono text-slate-400 font-bold uppercase tracking-wider mb-2">Thứ tự sắp xếp của bé:</p>
+        <p className="text-xxs font-mono text-slate-400 font-bold uppercase tracking-wider mb-2">
+          Thứ tự sắp xếp của bé (Chạm để hoàn tác):
+        </p>
         <div className="min-h-16 w-full bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-4 flex flex-wrap items-center justify-center gap-3">
           {sortingCurrentOrder.map((item, idx) => (
-            <div key={idx} className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md">
+            <button
+              type="button"
+              key={idx}
+              onClick={() => handleReturnItem(item)}
+              className="bg-indigo-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md transition-colors cursor-pointer"
+              title="Chạm để đưa thẻ này về khay"
+            >
               <span className="bg-indigo-500 text-white w-4 h-4 rounded-full text-xxs flex items-center justify-center">{idx + 1}</span>
-              {item.label}
-            </div>
+              {item.label} ✕
+            </button>
           ))}
           {sortingCurrentOrder.length === 0 && (
             <span className="text-slate-400 text-xs font-medium">Chạm các khối bên dưới theo thứ tự chuẩn xác!</span>

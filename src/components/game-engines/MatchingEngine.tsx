@@ -44,6 +44,8 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
   const [matchedRightUids, setMatchedRightUids] = useState<Set<string>>(new Set());
   const [wrongMatch, setWrongMatch] = useState<{ leftUid: string; rightUid: string } | null>(null);
 
+  const [userMatchedPairs, setUserMatchedPairs] = useState<Array<{ left: string; right: string }>>([]);
+
   // Xáo trộn các thẻ với định danh duy nhất (UID) khi đổi câu hỏi
   useEffect(() => {
     if (rawPairs.length > 0) {
@@ -67,6 +69,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
     setSelectedRightCard(null);
     setMatchedLeftUids(new Set());
     setMatchedRightUids(new Set());
+    setUserMatchedPairs([]);
     setWrongMatch(null);
   }, [rawPairs]);
 
@@ -90,6 +93,11 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
 
       setMatchedLeftUids(nextMatchedLefts);
       setMatchedRightUids(nextMatchedRights);
+
+      const newPair = { left: selectedLeftCard.text, right: selectedRightCard.text };
+      const updatedPairs = [...userMatchedPairs, newPair];
+      setUserMatchedPairs(updatedPairs);
+
       setSelectedLeftCard(null);
       setSelectedRightCard(null);
 
@@ -97,7 +105,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
       if (nextMatchedLefts.size === rawPairs.length) {
         playSynthSound('victory');
         setTimeout(() => {
-          onComplete(question.points || 25);
+          onComplete(question.points || 25, { pairs: updatedPairs });
         }, 600);
       }
     } else {

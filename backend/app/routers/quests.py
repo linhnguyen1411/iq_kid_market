@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
-from ..auth_utils import get_current_user_optional
+from ..auth_utils import get_current_user_required, get_current_user_optional
 from .attempts import check_and_unlock_achievements
 from ..daily_quests import (
     day_start,
@@ -25,28 +25,32 @@ router = APIRouter(tags=["quests"])
 def _require_user(
     user_id: str,
     db: Session,
-    current_user: models.User | None = None,
+    current_user: models.User,
 ) -> models.User:
     """
-    Kiểm tra tồn tại của người dùng và đối chiếu token JWT:
-    Nếu có JWT token nhưng không khớp với user_id được yêu cầu (và không phải admin)
-    thì trả về 403 Forbidden.
+    Kiểm tra danh tính người dùng qua JWT token:
+    Bắt buộc phải đăng nhập. Nếu không phải chủ sở hữu hoặc admin thì 403 Forbidden.
     """
-    user = db.get(models.User, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
-    if current_user and current_user.id != user_id and current_user.role != "admin":
+    if not current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Bạn cần đăng nhập để thực hiện thao tác này!",
+        )
+    if current_user.id != user_id and current_user.role != "admin":
         raise HTTPException(
             status_code=403,
             detail="Bạn không có quyền thực hiện thao tác này cho tài khoản khác!",
         )
+    user = db.get(models.User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
     return user
 
 
 @router.get("/api/quests/daily", response_model=list[schemas.DailyQuestOut])
 def get_daily_quests(
     userId: str,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
     _require_user(userId, db, current_user)
@@ -70,7 +74,7 @@ def get_daily_quests(
 def claim_daily_quest(
     quest_id: str,
     body: schemas.ClaimQuestIn,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
     user = _require_user(body.userId, db, current_user)
@@ -115,7 +119,7 @@ def claim_daily_quest(
 @router.post("/api/gamification/login-reward")
 def claim_login_reward(
     body: schemas.LoginRewardIn,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
     user = _require_user(body.userId, db, current_user)
@@ -195,7 +199,7 @@ def claim_login_reward(
 @router.post("/api/gamification/lucky-spin")
 def lucky_spin(
     body: schemas.LuckySpinIn,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
     user = _require_user(body.userId, db, current_user)

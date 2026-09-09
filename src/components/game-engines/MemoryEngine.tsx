@@ -62,7 +62,12 @@ export default function MemoryEngine({ question, onComplete }: GameEngineProps) 
           if (isAllSolved) {
             setSolved(true);
             playSynthSound('victory');
-            onComplete(question.points);
+            const totalPairs = (question.data?.items || []).length;
+            onComplete(question.points, {
+              completed: true,
+              matchesCount: totalPairs,
+              flipsCount: Math.max(flipsCount + 1, totalPairs * 2),
+            });
           }
         }, 500);
       } else {

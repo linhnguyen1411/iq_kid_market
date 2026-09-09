@@ -11,7 +11,7 @@ export interface QuestionRendererProps {
   levelNum: number;
   xpReward: number;
   coinReward: number;
-  onSuccess: (score: number) => void | Promise<void>;
+  onSuccess: (score: number, submittedAnswer?: any) => void | Promise<void>;
   onBack: () => void;
   /**
    * true (mặc định, dùng admin preview): hiện màn thưởng local rồi mới gọi onSuccess.
@@ -31,6 +31,7 @@ export default function QuestionRenderer({
 }: QuestionRendererProps) {
   const [levelSolved, setLevelSolved] = useState(false);
   const [scoreEarned, setScoreEarned] = useState(0);
+  const [submittedAnswerPayload, setSubmittedAnswerPayload] = useState<any>(null);
   const [seconds, setSeconds] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export default function QuestionRenderer({
   useEffect(() => {
     setLevelSolved(false);
     setScoreEarned(0);
+    setSubmittedAnswerPayload(null);
     setSeconds(0);
     setSubmitting(false);
     setSubmitError(null);
@@ -51,8 +53,9 @@ export default function QuestionRenderer({
     return () => clearInterval(interval);
   }, [levelSolved, submitting]);
 
-  const handleEngineComplete = async (score: number) => {
+  const handleEngineComplete = async (score: number, submittedAnswer?: any) => {
     setScoreEarned(score);
+    setSubmittedAnswerPayload(submittedAnswer);
     setSubmitError(null);
     if (showLocalRewardScreen) {
       setLevelSolved(true);
@@ -61,7 +64,7 @@ export default function QuestionRenderer({
     if (submitting) return;
     setSubmitting(true);
     try {
-      await Promise.resolve(onSuccess(score));
+      await Promise.resolve(onSuccess(score, submittedAnswer));
       // Parent unmount khi thành công (levelCompleted). Nếu vẫn mount → giữ submitting đến khi parent đổi.
     } catch (err: any) {
       setSubmitting(false);
@@ -70,12 +73,12 @@ export default function QuestionRenderer({
   };
 
   const handleFinishLevelAndReward = () => {
-    onSuccess(scoreEarned);
+    onSuccess(scoreEarned, submittedAnswerPayload);
   };
 
   const handleRetrySubmit = () => {
     setSubmitError(null);
-    void handleEngineComplete(scoreEarned);
+    void handleEngineComplete(scoreEarned, submittedAnswerPayload);
   };
 
   const Engine = GAME_ENGINES[question.question_type];
@@ -152,7 +155,7 @@ export default function QuestionRenderer({
             className="min-h-[250px] flex items-center justify-center"
           >
             {Engine ? (
-              <Engine question={question} onComplete={(score) => { void handleEngineComplete(score); }} />
+              <Engine question={question} onComplete={(score, submittedAnswer) => { void handleEngineComplete(score, submittedAnswer); }} />
             ) : (
               <div className="text-center text-rose-500 font-bold text-sm p-8">
                 ⚠️ Chưa có game engine cho question_type: "{question.question_type}".

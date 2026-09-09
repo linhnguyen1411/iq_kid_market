@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
-from ..auth_utils import get_current_user_optional
+from ..auth_utils import get_current_user_required, get_current_user_optional
 
 router = APIRouter(tags=["wallet"])
 
@@ -19,13 +19,29 @@ DEFAULT_ACCOUNT_NAME = os.getenv("BANK_ACCOUNT_NAME", "NGUYEN PHAN HOANG LINH")
 
 # ---------- 1. Nạp tiền trực tiếp (Demo / Fast Topup) ----------
 @router.post("/api/wallet/topup")
-def topup_wallet(body: schemas.TopupIn, db: Session = Depends(get_db)):
+def topup_wallet(
+    body: schemas.TopupIn,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
+    """
+    Nạp tiền trực tiếp vào ví:
+    Chỉ dành cho Quản trị viên (Admin) để cấp tiền, hoàn tiền, hoặc thử nghiệm.
+    Học sinh / Người dùng thông thường không được phép tự tăng số dư ví.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Chức năng nạp tiền trực tiếp chỉ dành riêng cho Quản Trị Viên!",
+        )
+
     if body.amount <= 0:
         raise HTTPException(status_code=400, detail="Số tiền nạp phải lớn hơn 0!")
 
+    target_user_id = body.userId or current_user.id
     wallet = (
         db.query(models.Wallet)
-        .filter(models.Wallet.user_id == body.userId)
+        .filter(models.Wallet.user_id == target_user_id)
         .with_for_update()
         .first()
     )
@@ -65,14 +81,24 @@ def topup_wallet(body: schemas.TopupIn, db: Session = Depends(get_db)):
 
 # ---------- 2. Tạo yêu cầu nạp tiền kèm sinh mã VietQR ----------
 @router.post("/api/wallet/create-topup-intent")
-def create_topup_intent(body: schemas.CreateTopupIntentIn, db: Session = Depends(get_db)):
+def create_topup_intent(
+    body: schemas.CreateTopupIntentIn,
+    current_user: models.User = Depends(get_current_user_required),
+    db: Session = Depends(get_db),
+):
     """
     Sinh mã giao dịch nạp tiền duy nhất và URL ảnh VietQR chuẩn Napas 24/7.
     """
     if body.amount < 10000:
         raise HTTPException(status_code=400, detail="Số tiền nạp tối thiểu là 10.000đ!")
 
-    user = db.get(models.User, body.userId)
+    if body.userId and body.userId != current_user.id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn không thể tạo mã nạp tiền cho tài khoản khác!",
+        )
+
+    user = db.get(models.User, body.userId or current_user.id)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
 
@@ -100,10 +126,26 @@ def create_topup_intent(body: schemas.CreateTopupIntentIn, db: Session = Depends
 
 # ---------- 3. Xác nhận giao dịch nạp tiền thành công (Webhook / Admin) ----------
 @router.post("/api/wallet/confirm-topup")
-def confirm_topup(body: schemas.ConfirmTopupIn, db: Session = Depends(get_db)):
+def confirm_topup(
+    body: schemas.ConfirmTopupIn,
+    current_user: models.User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
     """
     Xác nhận nạp tiền tự động (giả lập Webhook thanh toán thành công từ ngân hàng).
+    Bắt buộc phải là Quản Trị Viên đăng nhập hoặc gọi từ hệ thống kiểm thử có thẩm quyền.
     """
+    if not current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Bạn cần đăng nhập để xác nhận giao dịch!",
+        )
+    if current_user.role != "admin" and current_user.id != body.userId:
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn không có quyền xác nhận nạp tiền cho tài khoản khác!",
+        )
+
     wallet = (
         db.query(models.Wallet)
         .filter(models.Wallet.user_id == body.userId)
@@ -143,15 +185,19 @@ def confirm_topup(body: schemas.ConfirmTopupIn, db: Session = Depends(get_db)):
 @router.get("/api/wallet/creator-earnings")
 def get_creator_earnings(
     creatorId: str | None = None,
-    current_user: models.User | None = Depends(get_current_user_optional),
+    current_user: models.User = Depends(get_current_user_required),
     db: Session = Depends(get_db),
 ):
     """
     Lấy tổng doanh thu, số lượt bán và chi tiết thu nhập của Creator/Teacher.
+    Bảo vệ IDOR: chỉ cho phép xem thu nhập của chính mình hoặc Quản trị viên.
     """
-    target_id = creatorId or (current_user.id if current_user else None)
-    if not target_id:
-        raise HTTPException(status_code=400, detail="Vui lòng cung cấp creatorId hoặc đăng nhập!")
+    target_id = creatorId or current_user.id
+    if current_user.id != target_id and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn không có quyền xem thu nhập của tác giả khác!",
+        )
 
     creator = db.get(models.User, target_id)
     if not creator:

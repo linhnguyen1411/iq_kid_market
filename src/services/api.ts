@@ -150,17 +150,25 @@ export const api = {
   // ---------- ATTEMPTS & GAMIFICATION ----------
   attempts: {
     submit: (data: {
-      userId: string;
+      userId?: string;
       gameId: string;
       levelNum: number;
-      score: number;
-      completed: boolean;
+      score?: number;
+      completed?: boolean;
       duration?: number;
+      submittedAnswer?: any;
+      clientAttemptId?: string;
     }) =>
       apiRequest<{
         success: boolean;
+        score?: number;
+        isCorrect?: boolean;
+        starsEarned?: number;
+        feedback?: string;
+        hint?: string | null;
         xpAwarded: number;
-        newXP: number;
+        newXp?: number;
+        newXP?: number;
         newLevel: number;
         levelUp: boolean;
         coinReward: number;

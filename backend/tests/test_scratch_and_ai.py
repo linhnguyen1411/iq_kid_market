@@ -93,17 +93,25 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     res_queue_teacher = client.get("/api/admin/review/queue?status=pending_review", headers=headers)
     assert res_queue_teacher.status_code == 403
 
-    res_detail = client.get(f"/api/games/{sample['id']}")
+    # Teacher (creator) xem chi tiết game: có đầy đủ answer
+    res_detail = client.get(f"/api/games/{sample['id']}", headers=headers)
     assert res_detail.status_code == 200
     detail = res_detail.json()
     assert len(detail["levels"]) == 20
     assert detail["review_status"] == "pending_review"
 
-    # Đáp án đã được xáo — answer vẫn khớp một option
+    # Đáp án đã được xáo — answer vẫn khớp một option đối với tác giả
     q0 = detail["levels"][0]["questions"][0]
     opts = q0["data"]["options"]
     assert isinstance(opts, list) and len(opts) >= 2
     assert q0["data"]["answer"] in opts
+
+    # Học sinh / Khách truy cập (không có quyền tác giả): đáp án bị triệt tiêu
+    res_public = client.get(f"/api/games/{sample['id']}")
+    assert res_public.status_code == 200
+    public_detail = res_public.json()
+    pub_q0 = public_detail["levels"][0]["questions"][0]
+    assert "answer" not in pub_q0["data"]
 
     # Scratch (media/scene) không cho import text-pack
     res_bad = client.get(

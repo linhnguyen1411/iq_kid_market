@@ -403,18 +403,75 @@ def _build_blockly_xml_from_scratch_blocks(scratch_blocks: Dict[str, Any]) -> st
     return ET.tostring(root, encoding="utf-8").decode("utf-8")
 
 
+MAX_SB3_COMPRESSED_BYTES = 15 * 1024 * 1024       # 15 MB
+MAX_SB3_UNCOMPRESSED_TOTAL = 50 * 1024 * 1024      # 50 MB
+MAX_SB3_UNCOMPRESSED_SINGLE = 25 * 1024 * 1024     # 25 MB
+MAX_SB3_ENTRY_COUNT = 500
+MAX_SAFE_COMPRESSION_RATIO = 100
+
+
 def import_sb3_bytes(zip_bytes: bytes, filename: str = "imported_project.sb3") -> Dict[str, Any]:
     """
     Giải nén và đọc file .sb3 (MIT Scratch hoặc Scratch Studio) thành cấu trúc dữ liệu Scratch Studio.
+    Được trang bị cơ chế bảo vệ Zip Bomb & Zip Slip nhiều lớp:
+    - Giới hạn kích thước file nén (15MB)
+    - Giới hạn tổng dung lượng giải nén (50MB) và từng file (25MB)
+    - Giới hạn số lượng tệp tin tối đa trong archive (500)
+    - Ngăn chặn tỷ lệ nén bất thường (>100x)
+    - Chặn đường dẫn thoát thư mục (Path Traversal / Zip Slip)
     """
-    buffer = io.BytesIO(zip_bytes)
-    with zipfile.ZipFile(buffer, mode="r") as zip_file:
-        file_list = zip_file.namelist()
-        if "project.json" not in file_list:
-            raise ValueError("File .sb3 không hợp lệ: Thiếu project.json trong gói nén!")
+    if not zip_bytes or len(zip_bytes) == 0:
+        raise ValueError("File .sb3 rỗng hoặc không có dữ liệu!")
 
-        raw_json = zip_file.read("project.json").decode("utf-8")
-        project_json = json.loads(raw_json)
+    if len(zip_bytes) > MAX_SB3_COMPRESSED_BYTES:
+        raise ValueError(
+            f"Kích thước file .sb3 ({len(zip_bytes) / 1024 / 1024:.1f}MB) vượt quá giới hạn cho phép ({MAX_SB3_COMPRESSED_BYTES // 1024 // 1024}MB)!"
+        )
+
+    buffer = io.BytesIO(zip_bytes)
+    try:
+        with zipfile.ZipFile(buffer, mode="r") as zip_file:
+            infolist = zip_file.infolist()
+            if len(infolist) > MAX_SB3_ENTRY_COUNT:
+                raise ValueError(
+                    f"File .sb3 chứa quá nhiều tệp con ({len(infolist)}/{MAX_SB3_ENTRY_COUNT})! Nghi ngờ Zip Bomb."
+                )
+
+            total_uncompressed = 0
+            for info in infolist:
+                # 1. Chống Path Traversal (Zip Slip)
+                fname = info.filename
+                if ".." in fname or fname.startswith(("/", "\\")):
+                    raise ValueError(f"Phát hiện đường dẫn không an toàn trong file zip: '{fname}'!")
+
+                # 2. Chống Zip Bomb: kiểm tra dung lượng từng file
+                if info.file_size > MAX_SB3_UNCOMPRESSED_SINGLE:
+                    raise ValueError(
+                        f"Tệp '{fname}' có dung lượng giải nén quá lớn ({info.file_size / 1024 / 1024:.1f}MB)!"
+                    )
+
+                # 3. Chống Zip Bomb: kiểm tra tỷ lệ nén
+                if info.file_size > 50 * 1024 and info.compress_size > 0:
+                    ratio = info.file_size / info.compress_size
+                    if ratio > MAX_SAFE_COMPRESSION_RATIO:
+                        raise ValueError(
+                            f"Phát hiện tỷ lệ nén bất thường ({ratio:.1f}x) tại tệp '{fname}'! Ngăn chặn Zip Bomb."
+                        )
+
+                total_uncompressed += info.file_size
+                if total_uncompressed > MAX_SB3_UNCOMPRESSED_TOTAL:
+                    raise ValueError(
+                        f"Tổng dung lượng giải nén ({total_uncompressed / 1024 / 1024:.1f}MB) vượt quá ngưỡng an toàn ({MAX_SB3_UNCOMPRESSED_TOTAL // 1024 // 1024}MB)!"
+                    )
+
+            file_list = [info.filename for info in infolist]
+            if "project.json" not in file_list:
+                raise ValueError("File .sb3 không hợp lệ: Thiếu project.json trong gói nén!")
+
+            raw_json = zip_file.read("project.json").decode("utf-8")
+            project_json = json.loads(raw_json)
+    except zipfile.BadZipFile:
+        raise ValueError("File tải lên không phải là định dạng PKZIP hợp lệ của Scratch .sb3!")
 
     # 1. Nếu file chứa metadata nguyên bản của Scratch Studio (100% loss-free)
     if "iqkids_studio" in project_json and isinstance(project_json["iqkids_studio"], dict):

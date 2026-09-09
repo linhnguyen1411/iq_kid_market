@@ -46,6 +46,7 @@ def test_submit_attempt_awards_only_on_full_game_clear(client, student_auth, db_
     """XP/xu chỉ cộng 1 lần khi hoàn thành hết màn; màn lẻ và chơi lại = 0."""
     _mini_game(db_session)
     uid = student_auth["user_id"]
+    headers = student_auth["headers"]
     wallet = db_session.get(models.Wallet, uid)
     balance_before = wallet.balance
     user = db_session.get(models.User, uid)
@@ -55,9 +56,8 @@ def test_submit_attempt_awards_only_on_full_game_clear(client, student_auth, db_
         "userId": uid,
         "gameId": "g_mini_xp",
         "levelNum": 1,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": "2",
+    }, headers=headers)
     assert res1.status_code == 200
     data1 = res1.json()
     assert data1["success"] is True
@@ -76,9 +76,8 @@ def test_submit_attempt_awards_only_on_full_game_clear(client, student_auth, db_
         "userId": uid,
         "gameId": "g_mini_xp",
         "levelNum": 2,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": "4",
+    }, headers=headers)
     assert res2.status_code == 200
     data2 = res2.json()
     assert data2["xpAwarded"] == 250  # 100 + 150
@@ -96,9 +95,8 @@ def test_submit_attempt_awards_only_on_full_game_clear(client, student_auth, db_
         "userId": uid,
         "gameId": "g_mini_xp",
         "levelNum": 1,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": "2",
+    }, headers=headers)
     assert res3.status_code == 200
     assert res3.json()["xpAwarded"] == 0
     assert res3.json()["coinReward"] == 0
@@ -113,14 +111,18 @@ def test_submit_attempt_awards_only_on_full_game_clear(client, student_auth, db_
 
 def test_daily_streak_progression(client, student_auth, db_session):
     uid = student_auth["user_id"]
+    headers = student_auth["headers"]
+    pairs_l1 = [{"left": "Cat 🐱", "right": "Con mèo"}, {"left": "Dog 🐶", "right": "Con chó"}, {"left": "Fish 🐟", "right": "Con cá"}, {"left": "Bird 🐦", "right": "Con chim"}]
+    pairs_l2 = [{"left": "Sun ☀️", "right": "Mặt trời"}, {"left": "Rain 🌧️", "right": "Cơn mưa"}, {"left": "Wind 💨", "right": "Cơn gió"}, {"left": "Snow ❄️", "right": "Tuyết rơi"}]
+    pairs_l3 = [{"left": "1 + 1", "right": "2"}, {"left": "2 + 1", "right": "3"}, {"left": "3 + 1", "right": "4"}, {"left": "3 + 2", "right": "5"}]
+
     # Lần 1: Streak = 1
     res1 = client.post("/api/attempts/submit", json={
         "userId": uid,
         "gameId": "g1",
         "levelNum": 1,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": {"pairs": pairs_l1},
+    }, headers=headers)
     assert res1.json()["newStreak"] == 1
 
     # Lần 2 (cùng ngày): Streak giữ nguyên 1
@@ -128,9 +130,8 @@ def test_daily_streak_progression(client, student_auth, db_session):
         "userId": uid,
         "gameId": "g1",
         "levelNum": 2,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": {"pairs": pairs_l2},
+    }, headers=headers)
     assert res2.json()["newStreak"] == 1
 
     # Giả lập ngày hôm sau
@@ -142,9 +143,8 @@ def test_daily_streak_progression(client, student_auth, db_session):
         "userId": uid,
         "gameId": "g1",
         "levelNum": 3,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": {"pairs": pairs_l3},
+    }, headers=headers)
     assert res3.json()["newStreak"] == 2
 
 
@@ -162,13 +162,14 @@ def test_leaderboard_filters(client):
 
 def test_user_achievements_not_unlocked_on_single_level(client, student_auth):
     """Chơi 1 màn không được nhận badge seed (math_pro cần clear cả g2)."""
+    headers = student_auth["headers"]
+    pairs_l1 = [{"left": "Cat 🐱", "right": "Con mèo"}, {"left": "Dog 🐶", "right": "Con chó"}, {"left": "Fish 🐟", "right": "Con cá"}, {"left": "Bird 🐦", "right": "Con chim"}]
     client.post("/api/attempts/submit", json={
         "userId": student_auth["user_id"],
         "gameId": "g1",
         "levelNum": 1,
-        "score": 100,
-        "completed": True,
-    })
+        "submittedAnswer": {"pairs": pairs_l1},
+    }, headers=headers)
 
     res = client.get(f"/api/achievements/user/{student_auth['user_id']}")
     assert res.status_code == 200

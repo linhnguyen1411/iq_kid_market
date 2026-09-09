@@ -5,72 +5,96 @@ from app.daily_quests import VIETNAM_TZ, update_daily_streak, vietnam_date
 
 def test_daily_quests_are_created_and_progressed(client, student_auth, db_session):
     uid = student_auth["user_id"]
-    response = client.get(f"/api/quests/daily?userId={uid}")
+    headers = student_auth["headers"]
+
+    pairs_l1 = [{"left": "Cat 🐱", "right": "Con mèo"}, {"left": "Dog 🐶", "right": "Con chó"}, {"left": "Fish 🐟", "right": "Con cá"}, {"left": "Bird 🐦", "right": "Con chim"}]
+    pairs_l2 = [{"left": "Sun ☀️", "right": "Mặt trời"}, {"left": "Rain 🌧️", "right": "Cơn mưa"}, {"left": "Wind 💨", "right": "Cơn gió"}, {"left": "Snow ❄️", "right": "Tuyết rơi"}]
+
+    response = client.get(f"/api/quests/daily?userId={uid}", headers=headers)
     assert response.status_code == 200
     quests = response.json()
     assert len(quests) == 4
     assert {quest["type"] for quest in quests} == {"play_count", "score_reach", "scratch_complete", "scratch_project_save"}
 
     # Hoàn thành 1 màn chơi -> play_count = 1, chưa COMPLETED
-    res1 = client.post("/api/attempts/submit", json={"userId": uid, "gameId": "g1", "levelNum": 1, "score": 90, "completed": True})
+    res1 = client.post("/api/attempts/submit", json={
+        "userId": uid,
+        "gameId": "g1",
+        "levelNum": 1,
+        "submittedAnswer": {"pairs": pairs_l1},
+    }, headers=headers)
     assert res1.status_code == 200
 
-    quests = client.get(f"/api/quests/daily?userId={uid}").json()
+    quests = client.get(f"/api/quests/daily?userId={uid}", headers=headers).json()
     play_quest = next(quest for quest in quests if quest["type"] == "play_count")
     assert play_quest["current_progress"] == 1
     assert play_quest["status"] == "IN_PROGRESS"
 
     # Thử claim khi chưa hoàn thành -> 400 Bad Request
-    claim_incomplete = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid})
+    claim_incomplete = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid}, headers=headers)
     assert claim_incomplete.status_code == 400
 
-    # Hoàn thành màn 2 với 100 điểm -> play_count đạt 2 và score_reach đạt 1 -> cả 2 COMPLETED
-    res2 = client.post("/api/attempts/submit", json={"userId": uid, "gameId": "g1", "levelNum": 2, "score": 100, "completed": True})
+    # Hoàn thành màn 2 -> play_count đạt 2 và score_reach đạt 1 -> cả 2 COMPLETED
+    res2 = client.post("/api/attempts/submit", json={
+        "userId": uid,
+        "gameId": "g1",
+        "levelNum": 2,
+        "submittedAnswer": {"pairs": pairs_l2},
+    }, headers=headers)
     assert res2.status_code == 200
 
-    quests = client.get(f"/api/quests/daily?userId={uid}").json()
+    quests = client.get(f"/api/quests/daily?userId={uid}", headers=headers).json()
     play_quest = next(quest for quest in quests if quest["type"] == "play_count")
     score_quest = next(quest for quest in quests if quest["type"] == "score_reach")
     assert play_quest["status"] == "COMPLETED"
     assert score_quest["status"] == "COMPLETED"
 
     # Claim phần thưởng thành công
-    claim = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid})
+    claim = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid}, headers=headers)
     assert claim.status_code == 200
     assert claim.json()["coinAwarded"] > 0
 
     # Claim trùng lặp -> 409 Conflict
-    duplicate = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid})
+    duplicate = client.post(f"/api/quests/{play_quest['id']}/claim", json={"userId": uid}, headers=headers)
     assert duplicate.status_code == 409
 
 
 def test_lucky_spin_requires_play_and_is_idempotent(client, student_auth, db_session):
     uid = student_auth["user_id"]
+    headers = student_auth["headers"]
+    pairs_l1 = [{"left": "Cat 🐱", "right": "Con mèo"}, {"left": "Dog 🐶", "right": "Con chó"}, {"left": "Fish 🐟", "right": "Con cá"}, {"left": "Bird 🐦", "right": "Con chim"}]
+
     # Chưa chơi game hôm nay -> 400
-    blocked = client.post("/api/gamification/lucky-spin", json={"userId": uid})
+    blocked = client.post("/api/gamification/lucky-spin", json={"userId": uid}, headers=headers)
     assert blocked.status_code == 400
 
     # Chơi xong 1 màn -> mở khóa lượt quay
-    client.post("/api/attempts/submit", json={"userId": uid, "gameId": "g1", "levelNum": 1, "score": 80, "completed": True})
-    spin = client.post("/api/gamification/lucky-spin", json={"userId": uid})
+    client.post("/api/attempts/submit", json={
+        "userId": uid,
+        "gameId": "g1",
+        "levelNum": 1,
+        "submittedAnswer": {"pairs": pairs_l1},
+    }, headers=headers)
+    spin = client.post("/api/gamification/lucky-spin", json={"userId": uid}, headers=headers)
     assert spin.status_code == 200
     assert spin.json()["spun"] is True
     assert spin.json()["rewardCode"] is not None
 
     # Quay lần 2 trong cùng ngày -> 409
-    duplicate = client.post("/api/gamification/lucky-spin", json={"userId": uid})
+    duplicate = client.post("/api/gamification/lucky-spin", json={"userId": uid}, headers=headers)
     assert duplicate.status_code == 409
 
 
 def test_login_reward_7day_cycle_and_streak(client, student_auth, db_session):
     uid = student_auth["user_id"]
+    headers = student_auth["headers"]
     u = db_session.get(models.User, uid)
     u.streak = 1
     u.last_active_date = None
     db_session.commit()
 
     # Ngày 1: Nhận thưởng 10 xu, streak = 1
-    first = client.post("/api/gamification/login-reward", json={"userId": uid})
+    first = client.post("/api/gamification/login-reward", json={"userId": uid}, headers=headers)
     assert first.status_code == 200
     data1 = first.json()
     assert data1["claimed"] is True
@@ -79,7 +103,7 @@ def test_login_reward_7day_cycle_and_streak(client, student_auth, db_session):
     assert data1["streak"] == 1
 
     # Cùng ngày claim tiếp -> claimed = False
-    second = client.post("/api/gamification/login-reward", json={"userId": uid})
+    second = client.post("/api/gamification/login-reward", json={"userId": uid}, headers=headers)
     assert second.status_code == 200
     assert second.json()["claimed"] is False
     assert db_session.query(models.LoginRewardClaim).filter_by(user_id=uid).count() == 1
@@ -91,7 +115,7 @@ def test_login_reward_7day_cycle_and_streak(client, student_auth, db_session):
     db_session.query(models.LoginRewardClaim).delete()
     db_session.commit()
 
-    day7_claim = client.post("/api/gamification/login-reward", json={"userId": uid})
+    day7_claim = client.post("/api/gamification/login-reward", json={"userId": uid}, headers=headers)
     assert day7_claim.status_code == 200
     data7 = day7_claim.json()
     assert data7["claimed"] is True
@@ -106,7 +130,7 @@ def test_login_reward_7day_cycle_and_streak(client, student_auth, db_session):
     db_session.query(models.LoginRewardClaim).delete()
     db_session.commit()
 
-    day8_claim = client.post("/api/gamification/login-reward", json={"userId": uid})
+    day8_claim = client.post("/api/gamification/login-reward", json={"userId": uid}, headers=headers)
     assert day8_claim.status_code == 200
     data8 = day8_claim.json()
     assert data8["claimed"] is True
@@ -158,11 +182,13 @@ def test_quest_authorization_forbidden_mismatch(client, student_auth, teacher_au
 
 def test_scratch_quest_progress(client, student_auth, db_session):
     uid = student_auth["user_id"]
+    headers = student_auth["headers"]
+
     # Khởi tạo quest
-    client.get(f"/api/quests/daily?userId={uid}")
+    client.get(f"/api/quests/daily?userId={uid}", headers=headers)
 
     # Lấy thông tin bài học 1
-    courses = client.get(f"/api/scratch/courses?userId={uid}").json()
+    courses = client.get(f"/api/scratch/courses?userId={uid}", headers=headers).json()
     c_id = courses[0]["id"]
     target_seq = courses[0]["lessons"][0]["target_block_sequence"]
 
@@ -175,11 +201,11 @@ def test_scratch_quest_progress(client, student_auth, db_session):
             "lessonNum": 1,
             "submittedSequence": target_seq,
         },
-        headers=student_auth["headers"],
+        headers=headers,
     )
     assert res.status_code == 200
 
-    quests = client.get(f"/api/quests/daily?userId={uid}").json()
+    quests = client.get(f"/api/quests/daily?userId={uid}", headers=headers).json()
     scratch_quest = next(q for q in quests if q["type"] == "scratch_complete")
     assert scratch_quest["current_progress"] == 1
     assert scratch_quest["status"] == "COMPLETED"

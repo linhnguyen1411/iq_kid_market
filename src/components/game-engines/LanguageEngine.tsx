@@ -5,14 +5,24 @@ import type { GameEngineProps } from "./types";
 // data schema, 2 sub-type qua data.type:
 // a) unscramble: { type: "unscramble"; scrambled_words: string[]; correct_order: string[] }
 // b) fill_blank:  { type?: "fill_blank"; sentence: string; options: string[]; answer: string }
+interface WordToken {
+  id: number;
+  text: string;
+}
+
 export default function LanguageEngine({ question, onComplete }: GameEngineProps) {
-  const [langSelectedWords, setLangSelectedWords] = useState<string[]>([]);
+  const [selectedTokens, setSelectedTokens] = useState<WordToken[]>([]);
   const [langBlankValue, setLangBlankValue] = useState<string | null>(null);
   const [isLangFailed, setIsLangFailed] = useState(false);
   const [solved, setSolved] = useState(false);
 
+  const availableTokens: WordToken[] = (question.data?.scrambled_words || []).map((w: string, idx: number) => ({
+    id: idx,
+    text: w,
+  }));
+
   useEffect(() => {
-    setLangSelectedWords([]);
+    setSelectedTokens([]);
     setLangBlankValue(null);
     setIsLangFailed(false);
     setSolved(false);
@@ -23,44 +33,57 @@ export default function LanguageEngine({ question, onComplete }: GameEngineProps
     playSynthSound('click');
     setLangBlankValue(val);
 
-    const targetAnswer = String(question.data?.answer || "").trim().toLowerCase();
-    const isCorrect = val.trim().toLowerCase() === targetAnswer;
-    if (isCorrect) {
-      playSynthSound('correct');
-      setSolved(true);
-      playSynthSound('victory');
-      onComplete(question.points);
-    } else {
-      playSynthSound('incorrect');
-      setIsLangFailed(true);
-      setTimeout(() => setIsLangFailed(false), 800);
+    const targetAnswer = question.data?.answer ? String(question.data.answer).trim().toLowerCase() : null;
+    if (targetAnswer) {
+      if (val.trim().toLowerCase() !== targetAnswer) {
+        playSynthSound('incorrect');
+        setIsLangFailed(true);
+        setTimeout(() => setIsLangFailed(false), 800);
+        return;
+      }
     }
+
+    playSynthSound('correct');
+    setSolved(true);
+    playSynthSound('victory');
+    onComplete(question.points, { answer: val });
   };
 
-  const handleUnscrambleTap = (word: string) => {
+  const handleUnscrambleTap = (token: WordToken) => {
     if (solved) return;
     playSynthSound('click');
 
-    const updated = [...langSelectedWords, word];
-    setLangSelectedWords(updated);
+    const updated = [...selectedTokens, token];
+    setSelectedTokens(updated);
 
-    const correctOrder = question.data.correct_order || [];
-    if (updated.length === correctOrder.length) {
-      const isOk = updated.every((w, i) => w.trim().toLowerCase() === correctOrder[i].trim().toLowerCase());
+    const correctOrder: string[] = question.data?.correct_order || [];
+    if (correctOrder.length > 0 && updated.length === correctOrder.length) {
+      const isOk = updated.every((t, i) => t.text.trim().toLowerCase() === String(correctOrder[i]).trim().toLowerCase());
       if (isOk) {
         playSynthSound('correct');
         setSolved(true);
         playSynthSound('victory');
-        onComplete(question.points);
+        onComplete(question.points, { tokens: updated.map(t => t.text) });
       } else {
         playSynthSound('incorrect');
         setIsLangFailed(true);
         setTimeout(() => {
           setIsLangFailed(false);
-          setLangSelectedWords([]);
+          setSelectedTokens([]);
         }, 1200);
       }
+    } else if (correctOrder.length === 0 && updated.length === availableTokens.length) {
+      playSynthSound('correct');
+      setSolved(true);
+      playSynthSound('victory');
+      onComplete(question.points, { tokens: updated.map(t => t.text) });
     }
+  };
+
+  const handleRemoveToken = (tokenId: number) => {
+    if (solved) return;
+    playSynthSound('click');
+    setSelectedTokens(selectedTokens.filter(t => t.id !== tokenId));
   };
 
   return (
@@ -71,31 +94,43 @@ export default function LanguageEngine({ question, onComplete }: GameEngineProps
 
       {question.data?.type === "unscramble" ? (
         <div className="w-full flex flex-col items-center">
-          <p className="text-xxs font-mono text-slate-400 font-bold uppercase tracking-wider mb-2">Các từ đã chọn ghép thành câu:</p>
+          <p className="text-xxs font-mono text-slate-400 font-bold uppercase tracking-wider mb-2">
+            Các từ đã chọn (Chạm từ để hoàn tác):
+          </p>
           <div className="min-h-14 w-full bg-slate-100 border-2 border-dashed border-slate-300 rounded-xl p-3 flex flex-wrap items-center justify-center gap-2 mb-6">
-            {langSelectedWords.map((word, idx) => (
-              <span key={idx} className="bg-kids-purple text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md">
-                {word}
-              </span>
-            ))}
+            {selectedTokens.length === 0 ? (
+              <span className="text-xs text-slate-400 font-semibold italic">Chạm các từ bên dưới theo đúng thứ tự…</span>
+            ) : (
+              selectedTokens.map((token) => (
+                <button
+                  type="button"
+                  key={token.id}
+                  onClick={() => handleRemoveToken(token.id)}
+                  className="bg-kids-purple text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md hover:bg-rose-500 transition-colors cursor-pointer"
+                  title="Chạm để bỏ từ này"
+                >
+                  {token.text} ✕
+                </button>
+              ))
+            )}
           </div>
 
           <p className="text-xxs font-mono text-slate-400 font-bold uppercase tracking-wider mb-2">Từ khoá xáo trộn (Chạm để ghép):</p>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {(question.data?.scrambled_words || []).map((word: string, idx: number) => {
-              const isUsed = langSelectedWords.includes(word);
+            {availableTokens.map((token) => {
+              const isUsed = selectedTokens.some(t => t.id === token.id);
               return (
                 <button
-                  key={idx}
+                  key={token.id}
                   disabled={isUsed}
-                  onClick={() => handleUnscrambleTap(word)}
+                  onClick={() => handleUnscrambleTap(token)}
                   className={`px-4 py-2 rounded-xl text-xs font-black shadow transition-all ${
                     isUsed
                     ? "bg-slate-200 text-slate-400 border border-slate-200 scale-95 opacity-50 cursor-not-allowed"
-                    : "bg-white border-2 border-slate-200 text-slate-700 hover:border-kids-purple hover:-translate-y-0.5"
+                    : "bg-white border-2 border-slate-200 text-slate-700 hover:border-kids-purple hover:-translate-y-0.5 cursor-pointer"
                   }`}
                 >
-                  {word}
+                  {token.text}
                 </button>
               );
             })}
@@ -120,7 +155,7 @@ export default function LanguageEngine({ question, onComplete }: GameEngineProps
                     ? "bg-emerald-50 border-emerald-400 text-emerald-800"
                     : isWrong
                     ? "bg-rose-50 border-rose-400 text-rose-800"
-                    : "bg-white border-slate-200 text-slate-700 hover:border-kids-blue hover:-translate-y-0.5 shadow-sm"
+                    : "bg-white border-slate-200 text-slate-700 hover:border-kids-blue hover:-translate-y-0.5 shadow-sm cursor-pointer"
                   }`}
                 >
                   {opt}
