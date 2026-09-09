@@ -361,9 +361,9 @@ export default function AlgorithmMazeEngine({
       </div>
 
       {/* 2. Main 3-Column Studio Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Column 1: Toolbox Block Palette (4 Cols) */}
-        <div className="lg:col-span-4 bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+        <div className="lg:col-span-4 order-3 lg:order-1 bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
           <h4 className="text-xs font-black text-slate-700 mb-3 uppercase tracking-wider flex items-center justify-between pb-2 border-b border-slate-200">
             <span>📦 KHO LỆNH THUẬT TOÁN</span>
             <span className="text-[10px] text-slate-400 font-normal">Bấm để thêm</span>
@@ -389,7 +389,7 @@ export default function AlgorithmMazeEngine({
         </div>
 
         {/* Column 2: Scripting Workspace (4 Cols) */}
-        <div className="lg:col-span-4 bg-purple-50/40 rounded-2xl p-4 border-2 border-dashed border-purple-200 min-h-[380px] flex flex-col justify-between">
+        <div className="lg:col-span-4 order-2 lg:order-2 bg-purple-50/40 rounded-2xl p-4 border-2 border-dashed border-purple-200 min-h-[300px] flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-3 pb-2 border-b border-purple-100">
               <h4 className="text-xs font-black text-purple-900 uppercase tracking-wider">
@@ -408,8 +408,8 @@ export default function AlgorithmMazeEngine({
             </div>
 
             {blocksWorkplace.length === 0 ? (
-              <div className="text-center py-20 text-xs text-slate-400 font-medium">
-                Bấm các bước lệnh ở cột bên trái để lập trình đường đi! 🧭
+              <div className="text-center py-12 sm:py-20 text-xs text-slate-400 font-medium">
+                Bấm các bước lệnh ở mục "KHO LỆNH" để lập trình đường đi! 🧭
               </div>
             ) : (
               <div className="space-y-2">
@@ -481,7 +481,7 @@ export default function AlgorithmMazeEngine({
         </div>
 
         {/* Column 3: Live 2D Stage Canvas Arena (4 Cols) */}
-        <div className="lg:col-span-4 bg-slate-900 rounded-3xl p-5 border-4 border-slate-800 text-white flex flex-col items-center">
+        <div className="lg:col-span-4 order-1 lg:order-3 bg-slate-900 rounded-3xl p-4 sm:p-5 border-4 border-slate-800 text-white flex flex-col items-center">
           <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-1">
             <span>SÂN KHẤU MÊ CUNG 2D ({GRID_SIZE}x{GRID_SIZE})</span>
           </div>

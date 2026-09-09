@@ -221,9 +221,9 @@ DEFAULT_GAME_CATEGORIES = [
     },
     {
         "code": "scratch",
-        "label": "Lập Trình Robot Scratch",
-        "icon": "🐱",
-        "description": "Lập trình kéo thả, robot Scratch và STEM.",
+        "label": "Lập Trình & Thuật Toán",
+        "icon": "💻",
+        "description": "Học tư duy thuật toán, mê cung logic và lập trình kéo thả khối lệnh Scratch.",
         "sort_order": 3,
     },
     {

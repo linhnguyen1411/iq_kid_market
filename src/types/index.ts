@@ -113,6 +113,8 @@ export interface ScratchLesson {
   coin_reward: number;
   hint_text?: string;
   engine_type?: 'algorithm_maze' | 'scratch_studio';
+  content?: string;
+  start_scene_json?: string;
   isLocked?: boolean;
   completed?: boolean;
 }

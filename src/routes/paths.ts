@@ -13,6 +13,8 @@ export const paths = {
     root: '/admin',
     users: '/admin/nguoi-dung',
     games: '/admin/kho-game',
+    builder: '/admin/thiet-ke-man',
+    scratch: '/admin/scratch',
     categories: '/admin/the-loai',
   },
 } as const;
@@ -28,6 +30,8 @@ export const pageTitles: Record<string, string> = {
   [paths.admin.root]: 'CMS Dashboard — IQ Kids Market',
   [paths.admin.users]: 'Quản trị người dùng — IQ Kids Market',
   [paths.admin.games]: 'Kho game & kiểm duyệt — IQ Kids Market',
+  [paths.admin.builder]: 'Thiết kế màn chơi — IQ Kids Market',
+  [paths.admin.scratch]: 'Quản trị Lập Trình Scratch — IQ Kids Market',
   [paths.admin.categories]: 'Quản lý thể loại game — IQ Kids Market',
 };
 

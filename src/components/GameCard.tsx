@@ -30,7 +30,7 @@ export const GameCard: React.FC<GameCardProps> = ({
       case 'iq':
         return { label: 'Tư Duy IQ', bg: 'bg-purple-50 text-purple-700 border-purple-200' };
       case 'scratch':
-        return { label: 'Lập Trình Robot', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
+        return { label: 'Lập Trình & Thuật Toán', bg: 'bg-amber-50 text-amber-700 border-amber-200' };
       case 'vietnamese':
         return { label: 'Tiếng Việt', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
       default:
@@ -43,40 +43,40 @@ export const GameCard: React.FC<GameCardProps> = ({
   return (
     <div
       onClick={() => onSelectDetail(game)}
-      className="bg-white rounded-3xl border border-slate-200/80 hover:border-indigo-400 p-5 shadow-xs hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between text-left group relative overflow-hidden"
+      className="bg-white rounded-3xl border border-slate-200/80 hover:border-indigo-400 p-4 sm:p-5 shadow-xs hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between text-left group relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-indigo-500/5 to-pink-500/5 rounded-bl-full pointer-events-none" />
 
       <div>
-        <div className="flex items-start justify-between gap-2 mb-3.5">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-slate-50 via-indigo-50 to-pink-50 flex items-center justify-center text-3xl border border-slate-100 shadow-2xs group-hover:scale-110 transition-transform duration-300">
+        <div className="flex items-start justify-between gap-2 mb-3">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-slate-50 via-indigo-50 to-pink-50 flex items-center justify-center text-2xl sm:text-3xl border border-slate-100 shadow-2xs group-hover:scale-110 transition-transform duration-300 shrink-0">
             {game.thumbnail || '🎮'}
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${catMeta.bg}`}>
+            <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${catMeta.bg}`}>
               {catMeta.label}
             </span>
-            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md">
               Lớp {game.grade_from}-{game.grade_to}
             </span>
           </div>
         </div>
 
-        <h4 className="text-sm md:text-base font-black text-slate-800 line-clamp-1 mb-1.5 group-hover:text-indigo-600 transition-colors">
+        <h4 className="text-sm sm:text-base font-black text-slate-800 line-clamp-1 mb-1 group-hover:text-indigo-600 transition-colors">
           {game.title}
         </h4>
-        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">
+        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-3">
           {game.description}
         </p>
       </div>
 
-      <div className="pt-3 border-t border-slate-100 flex flex-col gap-3">
+      <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs text-amber-500 font-bold">
             <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
             <span>{game.rating_avg ? game.rating_avg.toFixed(1) : '5.0'}</span>
-            <span className="text-[11px] text-slate-400 font-normal">({game.plays_count || 0} lượt)</span>
+            <span className="text-[10px] sm:text-[11px] text-slate-400 font-normal">({game.plays_count || 0} lượt)</span>
           </div>
 
           <div>
@@ -100,7 +100,7 @@ export const GameCard: React.FC<GameCardProps> = ({
             playSynthSound('click');
             onPlayDirect(game);
           }}
-          className="w-full py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
+          className="w-full py-2.5 min-h-[44px] bg-gradient-to-r from-emerald-500 to-green-600 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
         >
           <Play className="w-3.5 h-3.5 fill-white" />
           <span>
@@ -118,7 +118,7 @@ export const GameCard: React.FC<GameCardProps> = ({
               playSynthSound('click');
               onBuyDirect(game);
             }}
-            className="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
+            className="w-full py-2.5 min-h-[44px] bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-xl font-black text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
           >
             <Unlock className="w-3.5 h-3.5 text-amber-200" />
             <span>

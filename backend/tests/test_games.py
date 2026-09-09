@@ -94,11 +94,15 @@ def test_review_queue_approve_reject(client, teacher_auth, admin_auth, db_sessio
     assert game.is_published is True
 
 
-def test_delete_game_safe(client, admin_auth):
-    # Cấm xóa game gốc (seed)
+def test_delete_game_safe(client, teacher_auth, admin_auth):
+    # Giáo viên cấm xóa game gốc (seed)
+    res_teacher = client.delete("/api/admin/games/g1", headers=teacher_auth["headers"])
+    assert res_teacher.status_code in [400, 403]
+
+    # Admin có toàn quyền xóa game gốc (seed)
     res_del_seed = client.delete("/api/admin/games/g1", headers=admin_auth["headers"])
-    assert res_del_seed.status_code == 400
-    assert "không thể xóa" in res_del_seed.json()["detail"].lower()
+    assert res_del_seed.status_code == 200
+    assert res_del_seed.json()["success"] is True
 
 
 def test_update_game_metadata_and_permissions(client, teacher_auth, admin_auth, db_session):

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, NavLink, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Gamepad2, Tags,
-  ArrowLeft, CheckCircle2, XCircle, RefreshCw, Search, Eye, X, Pencil, Plus, Trash2,
+  LayoutDashboard, Users, Gamepad2, Tags, BookOpen, Code,
+  ArrowLeft, CheckCircle2, XCircle, RefreshCw, Search, Eye, X, Pencil, Plus, Trash2, ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
@@ -11,8 +11,10 @@ import { paths } from '../../routes/paths';
 import QuestionRenderer from '../../components/QuestionRenderer';
 import { FREE_LEVEL_COUNT } from '../../lib/gameAccess';
 import { useAppData } from '../../layouts/AppShell';
+import { AdminLevelBuilderTab } from './AdminLevelBuilderTab';
+import { AdminScratchTab } from './AdminScratchTab';
 
-type CmsTab = 'dashboard' | 'users' | 'games' | 'categories';
+type CmsTab = 'dashboard' | 'users' | 'games' | 'builder' | 'scratch' | 'categories';
 
 const ROLE_OPTIONS = ['admin', 'teacher', 'creator', 'student', 'member'] as const;
 
@@ -25,10 +27,10 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const GAME_CATEGORIES: Array<{ value: string; label: string }> = [
-  { value: 'iq', label: 'Tư Duy IQ' },
+  { value: 'iq', label: 'Tư Duy IQ Não Bộ' },
   { value: 'math', label: 'Toán Học Logic' },
-  { value: 'scratch', label: 'Lập Trình Robot Scratch' },
-  { value: 'vietnamese', label: 'Tiếng Việt' },
+  { value: 'scratch', label: 'Lập Trình & Thuật Toán' },
+  { value: 'vietnamese', label: 'Tiếng Việt & Ngôn Ngữ' },
 ];
 
 const categoryLabel = (cat: string, categories?: GameCategory[]) => {
@@ -40,6 +42,8 @@ const categoryLabel = (cat: string, categories?: GameCategory[]) => {
 function tabFromPath(pathname: string): CmsTab {
   if (pathname.startsWith(paths.admin.users)) return 'users';
   if (pathname.startsWith(paths.admin.games)) return 'games';
+  if (pathname.startsWith(paths.admin.builder)) return 'builder';
+  if (pathname.startsWith(paths.admin.scratch)) return 'scratch';
   if (pathname.startsWith(paths.admin.categories)) return 'categories';
   return 'dashboard';
 }
@@ -150,10 +154,36 @@ export default function AdminCmsPage() {
     }
   }, [selectedGame]);
 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const handleDeleteGame = async (gameId: string, gameTitle: string) => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa trò chơi "${gameTitle}"?\nHành động này sẽ xóa vĩnh viễn dữ liệu liên quan và không thể hoàn tác!`)) {
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      const res = await api.admin.deleteGame(gameId);
+      setMsg({ type: 'ok', text: res.message || `Đã xóa trò chơi "${gameTitle}" thành công!` });
+      if (selectedGameId === gameId) {
+        setSelectedGameId(null);
+      }
+      await loadGames();
+      await refreshGames();
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message || 'Lỗi khi xóa trò chơi' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const navItems: Array<{ to: string; id: CmsTab; label: string; icon: React.ReactNode }> = [
     { to: paths.admin.root, id: 'dashboard', label: 'Tổng quan', icon: <LayoutDashboard className="w-4 h-4" /> },
     { to: paths.admin.users, id: 'users', label: 'Người dùng', icon: <Users className="w-4 h-4" /> },
-    { to: paths.admin.games, id: 'games', label: 'Kho game / Duyệt', icon: <Gamepad2 className="w-4 h-4" /> },
+    { to: paths.admin.games, id: 'games', label: 'Kho game & Duyệt', icon: <Gamepad2 className="w-4 h-4" /> },
+    { to: paths.admin.builder, id: 'builder', label: 'Thiết kế màn chơi', icon: <BookOpen className="w-4 h-4" /> },
+    { to: paths.admin.scratch, id: 'scratch', label: 'Lập trình Scratch', icon: <Code className="w-4 h-4" /> },
     { to: paths.admin.categories, id: 'categories', label: 'Thể loại game', icon: <Tags className="w-4 h-4" /> },
   ];
 
@@ -542,7 +572,7 @@ export default function AdminCmsPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => openPreview(g)}
@@ -554,6 +584,23 @@ export default function AdminCmsPage() {
                       >
                         <Eye className="w-3.5 h-3.5" /> {isSelected ? 'Đang xem' : 'Xem nhanh'}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`${paths.admin.builder}?gameId=${g.id}`)}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100"
+                        title="Thiết kế và sửa các màn chơi cho game này"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" /> Thiết kế màn
+                      </button>
+                      {(g.id === 'g_scratch_studio' || g.category === 'scratch') && (
+                        <Link
+                          to={paths.scratch}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white"
+                          title="Hệ sinh thái Lập Trình & Thuật Toán"
+                        >
+                          <Code className="w-3.5 h-3.5" /> Lập Trình Scratch
+                        </Link>
+                      )}
                       {!g.is_seed && g.review_status === 'pending_review' && (
                         <>
                           <button
@@ -571,6 +618,16 @@ export default function AdminCmsPage() {
                             <XCircle className="w-3.5 h-3.5" /> Từ chối
                           </button>
                         </>
+                      )}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGame(g.id, g.title)}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold"
+                          title="Xóa vĩnh viễn trò chơi này"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Xóa
+                        </button>
                       )}
                     </div>
                   </div>
@@ -691,28 +748,73 @@ export default function AdminCmsPage() {
                   <p className="text-sm text-slate-400 text-center py-10">Game chưa có màn chơi.</p>
                 )}
 
-                {!selectedGame.is_seed && selectedGame.review_status === 'pending_review' && (
-                  <div className="flex gap-2 p-4 border-t border-slate-100 bg-white">
+                <div className="flex flex-wrap items-center gap-2 p-4 border-t border-slate-100 bg-slate-50/60">
+                  <button
+                    type="button"
+                    onClick={() => navigate(`${paths.admin.builder}?gameId=${selectedGame.id}`)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-xs"
+                  >
+                    <BookOpen className="w-3.5 h-3.5" /> Soạn thảo màn chơi này
+                  </button>
+
+                  {(selectedGame.id === 'g_scratch_studio' || selectedGame.category === 'scratch') && (
+                    <Link
+                      to={paths.scratch}
+                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold"
+                    >
+                      <Code className="w-3.5 h-3.5" /> Mở Scratch Studio
+                    </Link>
+                  )}
+
+                  {!selectedGame.is_seed && selectedGame.review_status === 'pending_review' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleReview(selectedGame.id, 'approve')}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Duyệt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleReview(selectedGame.id, 'reject')}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> Từ chối
+                      </button>
+                    </>
+                  )}
+
+                  {isAdmin && (
                     <button
                       type="button"
-                      onClick={() => handleReview(selectedGame.id, 'approve')}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                      onClick={() => handleDeleteGame(selectedGame.id, selectedGame.title)}
+                      className="px-3 py-2.5 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold"
+                      title="Xóa vĩnh viễn trò chơi này"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Duyệt
+                      <Trash2 className="w-3.5 h-3.5" /> Xóa game
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => handleReview(selectedGame.id, 'reject')}
-                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
-                    >
-                      <XCircle className="w-3.5 h-3.5" /> Từ chối
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
+      )}
+
+      {tab === 'builder' && (
+        <AdminLevelBuilderTab
+          games={games}
+          onRefreshGames={async () => {
+            await loadGames();
+            await refreshGames();
+          }}
+          initialGameId={searchParams.get('gameId')}
+        />
+      )}
+
+      {tab === 'scratch' && (
+        <AdminScratchTab />
       )}
 
       {tab === 'categories' && (

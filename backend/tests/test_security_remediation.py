@@ -1,4 +1,4 @@
-﻿import io
+import io
 import zipfile
 import pytest
 from app import models
@@ -79,7 +79,7 @@ def test_learner_game_detail_answer_sanitization(client, student_auth, teacher_a
             assert "answer" not in q_data
             assert "solution" not in q_data
 
-def test_teacher_cannot_edit_system_seed_game(client, teacher_auth, db_session):
+def test_teacher_cannot_edit_system_seed_game(client, teacher_auth, admin_auth, db_session):
     # 1. Không thể sửa game hệ thống (is_seed = True)
     res = client.put("/api/admin/games/g1", json={
         "title": "Hacked System Game",
@@ -103,6 +103,15 @@ def test_teacher_cannot_edit_system_seed_game(client, teacher_auth, db_session):
         "title": "Tampered Title",
     }, headers=teacher_auth["headers"])
     assert res_idor.status_code == 403
+
+    # 3. Giáo viên KHÔNG THỂ xóa game seed gốc
+    res_del_teacher = client.delete("/api/admin/games/g1", headers=teacher_auth["headers"])
+    assert res_del_teacher.status_code == 400
+
+    # 4. Admin CÓ THỂ xóa game seed gốc
+    res_del_admin = client.delete("/api/admin/games/g1", headers=admin_auth["headers"])
+    assert res_del_admin.status_code == 200
+    assert db_session.get(models.Game, "g1") is None
 
 def test_sb3_zip_slip_and_zip_bomb_protection():
     # 1. Zip Slip (Path traversal)

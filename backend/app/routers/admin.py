@@ -33,10 +33,10 @@ CATEGORY_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,48}$")
 
 
 def _assert_can_edit_game(game: models.Game, current_user: models.User) -> None:
-    if game.is_seed:
-        raise HTTPException(status_code=400, detail="Không thể sửa trò chơi gốc mặc định của hệ thống!")
     if current_user.role == "admin":
         return
+    if game.is_seed:
+        raise HTTPException(status_code=400, detail="Không thể sửa trò chơi gốc mặc định của hệ thống!")
     if not game.creator_id or game.creator_id != current_user.id:
         raise HTTPException(
             status_code=403,
@@ -358,7 +358,7 @@ def delete_game(
     if not game:
         raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi để xóa!")
 
-    if game.is_seed:
+    if game.is_seed and current_user.role != "admin":
         raise HTTPException(status_code=400, detail="Không thể xóa trò chơi gốc mặc định của hệ thống!")
 
     if game.creator_id and game.creator_id != current_user.id and current_user.role != "admin":
@@ -453,7 +453,7 @@ def upload_games(
 
             game_id = (g.get("id") or "").strip() or f"pack_{current_user.id}_{int(time.time() * 1000)}"
             existing = db.get(models.Game, game_id)
-            if existing and existing.is_seed:
+            if existing and existing.is_seed and current_user.role != "admin":
                 raise HTTPException(status_code=400, detail="Không được ghi đè game seed gốc của hệ thống!")
             if (
                 existing

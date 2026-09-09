@@ -57,16 +57,16 @@ export default function QuizEngine({ question, onComplete }: GameEngineProps) {
               id={`quiz_choice_${choice.replace(/\s+/g, '')}`}
               key={choice}
               onClick={() => handleChoice(choice)}
-              className={`p-4 text-left font-display text-xs md:text-sm font-bold rounded-2xl border-2 transition-all transform active:scale-98 flex items-center justify-between ${
+              className={`p-4 min-h-[52px] text-left font-display text-sm sm:text-base font-bold rounded-2xl border-2 transition-all transform active:scale-98 flex items-center justify-between cursor-pointer ${
                 isSelected && solved
                 ? "bg-emerald-50 border-emerald-500 text-emerald-800 shadow-none ring-4 ring-emerald-100"
                 : isWrong
                 ? "bg-rose-50 border-rose-500 text-rose-800 animate-shake"
-                : "bg-white border-slate-200 text-slate-700 hover:border-kids-blue shadow-md hover:-translate-y-0.5"
+                : "bg-white border-slate-200 text-slate-700 hover:border-kids-blue shadow-sm hover:-translate-y-0.5"
               }`}
             >
               <span>{choice}</span>
-              {isSelected && solved && <Check className="w-5 h-5 text-emerald-500 stroke-[3]" />}
+              {isSelected && solved && <Check className="w-5 h-5 text-emerald-500 stroke-[3] shrink-0 ml-2" />}
             </button>
           );
         })}
