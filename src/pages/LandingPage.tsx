@@ -45,9 +45,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div className="flex flex-col gap-10">
       {/* Playful Banner Hero Slider */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-3xl p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 shadow-xl relative overflow-hidden text-white">
-        <div className="flex-1 text-center md:text-left z-10">
-          <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md font-bold text-xs px-4 py-1.5 rounded-full mb-3 tracking-wide shadow-xs border border-white/20">
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-3xl p-4 sm:p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 shadow-xl relative overflow-hidden text-white">
+        <div className="flex-1 text-center md:text-left z-10 w-full">
+          <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md font-bold text-xs px-3.5 py-1.5 rounded-full mb-3 tracking-wide shadow-xs border border-white/20">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             HỆ THỐNG EDTECH THÔNG THÁI 2026
           </span>
@@ -59,7 +59,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </p>
           <button
             onClick={onExplore}
-            className="px-8 py-3.5 bg-white text-indigo-600 hover:bg-slate-50 font-black text-sm rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-2 mx-auto md:mx-0"
+            className="w-full sm:w-auto px-8 py-3.5 min-h-[48px] bg-white text-indigo-600 hover:bg-slate-50 font-black text-sm rounded-2xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer flex items-center justify-center gap-2 mx-auto md:mx-0"
           >
             <span>Khám Phá Sàn Game Ngay</span>
             <ArrowRight className="w-4 h-4" />

@@ -282,8 +282,8 @@ export const WalletPage: React.FC = () => {
 
       {/* VietQR Modal */}
       {showQRModal && topupIntent && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 text-center relative animate-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-4 sm:p-6 shadow-2xl border border-slate-100 text-center relative max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-150">
             <button
               onClick={() => setShowQRModal(false)}
               className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
@@ -295,21 +295,21 @@ export const WalletPage: React.FC = () => {
               VIETQR CHUYỂN KHOẢN 24/7
             </span>
 
-            <h3 className="text-lg font-black text-slate-800 mt-2 mb-1">
+            <h3 className="text-base sm:text-lg font-black text-slate-800 mt-2 mb-1">
               Quét Mã Để Nạp {topupIntent.amount.toLocaleString('vi-VN')} Xu
             </h3>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-[11px] sm:text-xs text-slate-400 mb-3">
               Mở App Ngân hàng bất kỳ để quét mã QR Napas thanh toán tức thì
             </p>
 
-            <div className="bg-white p-3 rounded-2xl border border-slate-200 inline-block mb-4 shadow-sm">
+            <div className="bg-white p-2 sm:p-3 rounded-2xl border border-slate-200 inline-block mb-3 shadow-xs">
               <img
                 src={topupIntent.static_qr_url || '/techcombank_qr.png'}
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = topupIntent.qr_url;
                 }}
                 alt="VietQR Techcombank Napas"
-                className="w-56 h-auto mx-auto rounded-xl"
+                className="w-44 sm:w-56 h-auto mx-auto rounded-xl"
               />
             </div>
 

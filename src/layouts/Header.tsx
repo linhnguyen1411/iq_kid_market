@@ -39,35 +39,35 @@ export const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-indigo-100 shadow-sm transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
-        <Link to={paths.home} className="flex items-center gap-3 cursor-pointer group select-none">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
-            <Brain className="w-6 h-6 animate-pulse" />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-18 flex items-center justify-between">
+        <Link to={paths.home} className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none">
+          <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform shrink-0">
+            <Brain className="w-5 h-5 sm:w-6 sm:h-6 animate-pulse" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-xl bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600 bg-clip-text text-transparent tracking-tight">
-                IQ Kid Market
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <span className="font-extrabold text-base sm:text-xl bg-gradient-to-r from-indigo-700 via-purple-700 to-pink-600 bg-clip-text text-transparent tracking-tight">
+                IQ Kids
               </span>
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wider border border-amber-200">
+              <span className="hidden sm:inline-block px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 uppercase tracking-wider border border-amber-200">
                 AI 2.0
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium hidden sm:block">
+            <p className="text-[10px] sm:text-xs text-slate-500 font-medium hidden sm:block">
               Sàn Đổi Game Trí Tuệ & Lập Trình Nhí
             </p>
           </div>
         </Link>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-4">
           {isLoggedIn && (
             <>
               <div
                 title="Chuỗi ngày học liên tục"
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-xs font-bold shadow-xs hover:bg-orange-100 transition-colors"
+                className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-[11px] sm:text-xs font-bold shadow-xs hover:bg-orange-100 transition-colors"
               >
-                <span className="text-sm">🔥</span>
-                <span>{user!.streak || 0} ngày</span>
+                <span className="text-xs sm:text-sm">🔥</span>
+                <span>{user!.streak || 0}<span className="hidden xs:inline"> ngày</span></span>
               </div>
 
               <Link
@@ -84,11 +84,11 @@ export const Header: React.FC = () => {
                 <Link
                   to={paths.wallet}
                   title="Ví xu của bạn - Bấm để nạp thêm"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-extrabold shadow-xs hover:bg-amber-100 transition-colors cursor-pointer"
+                  className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] sm:text-xs font-extrabold shadow-xs hover:bg-amber-100 transition-colors cursor-pointer"
                 >
-                  <Coins className="w-4 h-4 text-amber-600 animate-bounce" />
-                  <span>{(wallet?.balance || 0).toLocaleString('vi-VN')} xu</span>
-                  <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[11px] font-black">
+                  <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 animate-bounce" />
+                  <span>{(wallet?.balance || 0).toLocaleString('vi-VN')}<span className="hidden xs:inline"> xu</span></span>
+                  <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] sm:text-[11px] font-black">
                     +
                   </span>
                 </Link>

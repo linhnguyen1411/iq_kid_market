@@ -71,6 +71,18 @@ export default function ScratchStudioEngine({
   const [showGrid, setShowGrid] = useState(false);
   const [activeTab, setActiveTab] = useState<'code' | 'guide'>('code');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [mobileStudioTab, setMobileStudioTab] = useState<'workspace' | 'stage'>('workspace');
+
+  const handleSwitchMobileTab = (tab: 'workspace' | 'stage') => {
+    setMobileStudioTab(tab);
+    if (tab === 'workspace') {
+      setTimeout(() => {
+        if (workspaceRef.current) {
+          Blockly.svgResize(workspaceRef.current);
+        }
+      }, 100);
+    }
+  };
 
   // Trạng thái Quản lý Dự Án & Tự Động Lưu (Phase 6)
   const [projectId, setProjectId] = useState<string | null>(initialProjectId || null);
@@ -1184,10 +1196,40 @@ export default function ScratchStudioEngine({
         </div>
       )}
 
+      {/* Mobile Segmented Switcher for Workspace vs Stage */}
+      <div className="lg:hidden flex items-center bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs">
+        <button
+          type="button"
+          onClick={() => handleSwitchMobileTab('workspace')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            mobileStudioTab === 'workspace'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Code2 className="w-4 h-4" />
+          <span>🧱 Khối Lệnh (Code)</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSwitchMobileTab('stage')}
+          className={`flex-1 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            mobileStudioTab === 'stage'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Play className="w-4 h-4" />
+          <span>🎬 Sân Khấu (Stage)</span>
+        </button>
+      </div>
+
       {/* 2. Khung Làm Việc Chính: Chia Cột Workspace (Trái) & Sân Khấu (Phải) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {/* Cột Trái / Giữa: Blockly Workspace (7 hoặc 8 cột trên màn lớn) */}
-        <div className="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col h-[520px]">
+        <div className={`lg:col-span-7 xl:col-span-8 bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col h-[520px] ${
+          mobileStudioTab === 'workspace' ? 'flex' : 'hidden lg:flex'
+        }`}>
           <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
             <div className="flex items-center gap-2">
               <Code2 className="w-4 h-4 text-indigo-600" />
@@ -1208,7 +1250,9 @@ export default function ScratchStudioEngine({
         </div>
 
         {/* Cột Phải: Sân Khấu 480x360 (5 hoặc 4 cột) */}
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+        <div className={`lg:col-span-5 xl:col-span-4 flex flex-col gap-4 ${
+          mobileStudioTab === 'stage' ? 'flex' : 'hidden lg:flex'
+        }`}>
           <ScratchStage
             sprite={sprite}
             isRunning={isRunning}

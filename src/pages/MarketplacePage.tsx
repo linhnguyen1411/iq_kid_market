@@ -57,6 +57,7 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
   // Modals state
   const [detailGame, setDetailGame] = useState<Game | null>(null);
   const [purchaseGame, setPurchaseGame] = useState<Game | null>(null);
+  const [showMobileFilter, setShowMobileFilter] = useState(false);
 
   const categoryFilterOptions = useMemo(() => {
     const list = (gameCategories?.length ? gameCategories : FALLBACK_CATEGORIES)
@@ -169,42 +170,86 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       )}
 
       {/* 2. Search & Toolbar Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white rounded-2xl p-4.5 shadow-xs border border-slate-200/80">
-        <div>
-          <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
-            <Gamepad2 className="w-5 h-5 text-pink-600" />
-            <span>DANH MỤC TRÒ CHƠI GIÁO DỤC</span>
-          </h3>
-          <p className="text-slate-400 text-xs">
-            Tìm kiếm theo từ khóa hoặc tùy chọn khối lớp phù hợp với bé
-          </p>
+      <div className="flex flex-col gap-3 bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="text-base sm:text-lg font-black text-slate-800 flex items-center gap-2">
+              <Gamepad2 className="w-5 h-5 text-pink-600" />
+              <span>DANH MỤC TRÒ CHƠI GIÁO DỤC</span>
+            </h3>
+            <p className="text-slate-400 text-[11px] sm:text-xs">
+              Tìm kiếm theo từ khóa hoặc tùy chọn khối lớp phù hợp với bé
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Real-time Debounced Search Input */}
+            <div className="relative flex-1 sm:w-72">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Tìm tên trò chơi, chủ đề..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-hidden rounded-xl py-2 pl-9 pr-8 text-xs font-semibold text-slate-800 transition-all"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Mobile Filter Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setShowMobileFilter((v) => !v)}
+              className={`lg:hidden flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer shrink-0 ${
+                showMobileFilter || selectedGrade !== 'all' || selectedType !== 'all'
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                  : 'bg-slate-50 border-slate-200 text-slate-700'
+              }`}
+            >
+              <Filter className="w-3.5 h-3.5" />
+              <span>Bộ lọc</span>
+              {(selectedGrade !== 'all' || selectedType !== 'all') && (
+                <span className="w-2 h-2 rounded-full bg-indigo-600" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Real-time Debounced Search Input */}
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Tìm theo tên trò chơi, chủ đề..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white outline-hidden rounded-xl py-2.5 pl-9 pr-8 text-xs font-semibold text-slate-800 transition-all"
-          />
-          {searchTerm && (
+        {/* Category Horizontal Quick-Filter Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pt-1 pb-0.5 -mx-1 px-1">
+          {categoryFilterOptions.map((cat) => (
             <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              key={cat.code}
+              onClick={() => {
+                setSelectedCategory(cat.code);
+                playSynthSound('click');
+              }}
+              className={`shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                selectedCategory === cat.code
+                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xs scale-102'
+                  : 'bg-slate-100 hover:bg-slate-200/80 text-slate-700'
+              }`}
             >
-              <X className="w-3.5 h-3.5" />
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
             </button>
-          )}
+          ))}
         </div>
       </div>
 
       {/* 3. Main Layout: Filters Sidebar (Left) + Games Grid (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Filters Sidebar (3 Cols) */}
-        <div className="lg:col-span-3 bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs flex flex-col gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Filters Sidebar (3 Cols on Desktop, Collapsible on Mobile) */}
+        <div className={`lg:col-span-3 bg-white rounded-2xl p-4.5 border border-slate-200/80 shadow-xs flex-col gap-5 ${
+          showMobileFilter ? 'flex' : 'hidden lg:flex'
+        }`}>
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-1.5 text-slate-800 text-xs font-black uppercase tracking-wide">
               <Filter className="w-4 h-4 text-indigo-600" />

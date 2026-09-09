@@ -160,10 +160,10 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
       </div>
 
       {/* Bảng ghép cặp 2 cột */}
-      <div className="grid grid-cols-2 gap-4 md:gap-8">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-6">
         {/* CỘT A */}
-        <div className="flex flex-col gap-3">
-          <div className="text-center text-xs font-black text-slate-500 uppercase tracking-wider py-1 bg-slate-100 rounded-xl">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
+          <div className="text-center text-[11px] sm:text-xs font-black text-slate-500 uppercase tracking-wider py-1 bg-slate-100 rounded-xl">
             CỘT A
           </div>
 
@@ -179,7 +179,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
                 whileTap={{ scale: isMatched ? 1 : 0.96 }}
                 onClick={() => handleLeftClick(leftCard)}
                 disabled={isMatched}
-                className={`p-4 text-xs md:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
+                className={`p-3 sm:p-4 min-h-[50px] text-xs sm:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
                   isMatched
                     ? 'bg-emerald-50 border-emerald-400 text-emerald-800 opacity-90 cursor-default shadow-none'
                     : isWrong
@@ -191,9 +191,9 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
               >
                 <span className="line-clamp-2">{leftCard.text}</span>
                 {isMatched ? (
-                  <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-2" />
+                  <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-1.5" />
                 ) : isSelected ? (
-                  <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping shrink-0 ml-2" />
+                  <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping shrink-0 ml-1.5" />
                 ) : null}
               </motion.button>
             );
@@ -201,8 +201,8 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
         </div>
 
         {/* CỘT B */}
-        <div className="flex flex-col gap-3">
-          <div className="text-center text-xs font-black text-slate-500 uppercase tracking-wider py-1 bg-slate-100 rounded-xl">
+        <div className="flex flex-col gap-2.5 sm:gap-3">
+          <div className="text-center text-[11px] sm:text-xs font-black text-slate-500 uppercase tracking-wider py-1 bg-slate-100 rounded-xl">
             CỘT B
           </div>
 
@@ -218,7 +218,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
                 whileTap={{ scale: isMatched ? 1 : 0.96 }}
                 onClick={() => handleRightClick(rightCard)}
                 disabled={isMatched}
-                className={`p-4 text-xs md:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
+                className={`p-3 sm:p-4 min-h-[50px] text-xs sm:text-sm font-black rounded-2xl border-2 transition-all duration-150 text-left flex items-center justify-between shadow-xs cursor-pointer ${
                   isMatched
                     ? 'bg-emerald-50 border-emerald-400 text-emerald-800 opacity-90 cursor-default shadow-none'
                     : isWrong
@@ -230,9 +230,9 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
               >
                 <span className="line-clamp-2">{rightCard.text}</span>
                 {isMatched ? (
-                  <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-2" />
+                  <Check className="w-4 h-4 text-emerald-600 stroke-[3] shrink-0 ml-1.5" />
                 ) : isSelected ? (
-                  <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping shrink-0 ml-2" />
+                  <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping shrink-0 ml-1.5" />
                 ) : null}
               </motion.button>
             );

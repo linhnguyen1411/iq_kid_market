@@ -34,7 +34,7 @@ export const NavigationTabs: React.FC = () => {
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-18 z-30 shadow-2xs">
+    <div className="hidden md:block bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-18 z-30 shadow-2xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex items-center gap-1.5 overflow-x-auto py-2.5 no-scrollbar" aria-label="Điều hướng chính">
           {tabs.map((tab) => (

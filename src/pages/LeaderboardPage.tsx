@@ -172,21 +172,21 @@ export const LeaderboardPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex justify-center items-end gap-3 md:gap-8 pt-6 pb-2">
+              <div className="flex justify-center items-end gap-1.5 sm:gap-4 md:gap-8 pt-4 sm:pt-6 pb-2">
                 {/* Hạng 2 (Bạc) */}
                 {top3[1] && (
-                  <div className="flex flex-col items-center flex-1 max-w-[140px]">
-                    <div className="text-2xl mb-1">🥈</div>
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 text-3xl flex items-center justify-center border-3 border-slate-300 shadow-md">
+                  <div className="flex flex-col items-center flex-1 max-w-[95px] sm:max-w-[140px]">
+                    <div className="text-xl sm:text-2xl mb-1">🥈</div>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 text-2xl sm:text-3xl flex items-center justify-center border-2 sm:border-3 border-slate-300 shadow-md">
                       {renderAvatarEmoji(top3[1].avatar)}
                     </div>
-                    <p className="font-black text-xs text-slate-200 mt-2 line-clamp-1 text-center">
+                    <p className="font-black text-[11px] sm:text-xs text-slate-200 mt-1.5 line-clamp-1 text-center">
                       {top3[1].name || top3[1].username}
                     </p>
-                    <span className="text-[11px] font-mono font-bold text-slate-400">
+                    <span className="text-[9px] sm:text-[11px] font-mono font-bold text-slate-400">
                       {top3[1].score.toLocaleString('vi-VN')} XP
                     </span>
-                    <div className="w-full h-24 bg-gradient-to-t from-slate-700 to-slate-500 rounded-t-2xl mt-2 flex items-center justify-center font-black text-slate-200 text-2xl shadow-lg border-t-2 border-slate-300">
+                    <div className="w-full h-16 sm:h-24 bg-gradient-to-t from-slate-700 to-slate-500 rounded-t-2xl mt-2 flex items-center justify-center font-black text-slate-200 text-lg sm:text-2xl shadow-lg border-t-2 border-slate-300">
                       2
                     </div>
                   </div>
@@ -194,18 +194,18 @@ export const LeaderboardPage: React.FC = () => {
 
                 {/* Hạng 1 (Vàng - Ở Giữa, Cao Nhất) */}
                 {top3[0] && (
-                  <div className="flex flex-col items-center flex-1 max-w-[160px] -mt-6">
-                    <div className="text-4xl mb-1 animate-bounce">👑</div>
-                    <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-300 to-yellow-100 text-4xl flex items-center justify-center border-4 border-amber-400 shadow-2xl ring-4 ring-amber-400/40">
+                  <div className="flex flex-col items-center flex-1 max-w-[110px] sm:max-w-[160px] -mt-4 sm:-mt-6">
+                    <div className="text-3xl sm:text-4xl mb-1 animate-bounce">👑</div>
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-300 to-yellow-100 text-3xl sm:text-4xl flex items-center justify-center border-3 sm:border-4 border-amber-400 shadow-2xl ring-2 sm:ring-4 ring-amber-400/40">
                       {renderAvatarEmoji(top3[0].avatar)}
                     </div>
-                    <p className="font-black text-sm text-yellow-300 mt-2 line-clamp-1 text-center">
+                    <p className="font-black text-xs sm:text-sm text-yellow-300 mt-1.5 line-clamp-1 text-center">
                       {top3[0].name || top3[0].username}
                     </p>
-                    <span className="text-xs font-mono font-black text-amber-400">
+                    <span className="text-[10px] sm:text-xs font-mono font-black text-amber-400">
                       {top3[0].score.toLocaleString('vi-VN')} XP
                     </span>
-                    <div className="w-full h-36 bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-950 text-4xl shadow-xl border-t-2 border-yellow-200">
+                    <div className="w-full h-24 sm:h-36 bg-gradient-to-t from-amber-500 to-yellow-400 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-950 text-2xl sm:text-4xl shadow-xl border-t-2 border-yellow-200">
                       1
                     </div>
                   </div>
@@ -213,18 +213,18 @@ export const LeaderboardPage: React.FC = () => {
 
                 {/* Hạng 3 (Đồng) */}
                 {top3[2] && (
-                  <div className="flex flex-col items-center flex-1 max-w-[140px]">
-                    <div className="text-2xl mb-1">🥉</div>
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-700 to-amber-600 text-3xl flex items-center justify-center border-3 border-amber-600 shadow-md">
+                  <div className="flex flex-col items-center flex-1 max-w-[95px] sm:max-w-[140px]">
+                    <div className="text-xl sm:text-2xl mb-1">🥉</div>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-amber-700 to-amber-600 text-2xl sm:text-3xl flex items-center justify-center border-2 sm:border-3 border-amber-600 shadow-md">
                       {renderAvatarEmoji(top3[2].avatar)}
                     </div>
-                    <p className="font-black text-xs text-amber-200 mt-2 line-clamp-1 text-center">
+                    <p className="font-black text-[11px] sm:text-xs text-amber-200 mt-1.5 line-clamp-1 text-center">
                       {top3[2].name || top3[2].username}
                     </p>
-                    <span className="text-[11px] font-mono font-bold text-amber-300">
+                    <span className="text-[9px] sm:text-[11px] font-mono font-bold text-amber-300">
                       {top3[2].score.toLocaleString('vi-VN')} XP
                     </span>
-                    <div className="w-full h-18 bg-gradient-to-t from-amber-800 to-amber-600 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-100 text-2xl shadow-lg border-t-2 border-amber-500">
+                    <div className="w-full h-12 sm:h-18 bg-gradient-to-t from-amber-800 to-amber-600 rounded-t-2xl mt-2 flex items-center justify-center font-black text-amber-100 text-base sm:text-2xl shadow-lg border-t-2 border-amber-500">
                       3
                     </div>
                   </div>

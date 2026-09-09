@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Outlet, useNavigate } from 'react-router-dom';
 import Header from '../layouts/Header';
 import NavigationTabs from '../layouts/NavigationTabs';
+import MobileBottomNav from '../layouts/MobileBottomNav';
 import Footer from '../layouts/Footer';
 import { AuthModal } from '../components/AuthModal';
 import { PurchaseModal } from '../components/PurchaseModal';
@@ -122,10 +123,11 @@ export function AppShell() {
         {!hideChrome && <Header />}
         {!hideChrome && <NavigationTabs />}
 
-        <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 md:pb-8">
           <Outlet context={outletContext} />
         </main>
 
+        {!hideChrome && <MobileBottomNav />}
         {!hideChrome && <Footer />}
 
         {isAuthModalOpen && (
