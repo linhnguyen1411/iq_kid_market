@@ -32,10 +32,10 @@ export function registerScratchBlocks() {
     },
     {
       type: 'scratch_when_sprite_clicked',
-      message0: 'khi bấm vào nhân vật 🐱',
+      message0: 'khi bấm vào nhân vật 🐒',
       nextStatement: null,
       colour: SCRATCH_COLORS.events,
-      tooltip: 'Chạy kịch bản khi học sinh nhấp chuột vào chú Mèo',
+      tooltip: 'Chạy kịch bản khi học sinh nhấp chuột vào Chú Khỉ',
       helpUrl: '',
     },
     {
@@ -301,11 +301,11 @@ export function registerScratchBlocks() {
     // ==========================================
     {
       type: 'scratch_play_sound_meow',
-      message0: 'phát âm thanh Meo Meo 🐱',
+      message0: 'phát âm thanh vui nhộn 🐒🎶',
       previousStatement: null,
       nextStatement: null,
       colour: SCRATCH_COLORS.sound,
-      tooltip: 'Phát tiếng kêu Meo Meo vui nhộn',
+      tooltip: 'Phát âm thanh sinh động vui nhộn của Chú Khỉ',
     },
     {
       type: 'scratch_play_drum',

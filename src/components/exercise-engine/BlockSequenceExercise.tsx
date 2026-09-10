@@ -28,13 +28,13 @@ interface BlockDefinition {
 
 const DEFAULT_BLOCKS_MAP: Record<string, BlockDefinition> = {
   when_flag: { code: 'when_flag', label: 'Khi bấm Cờ Xanh ⛳', color: 'bg-amber-500 border-amber-600', category: 'event' },
-  when_clicked: { code: 'when_clicked', label: 'Khi bấm vào Nhân Vật 🐱', color: 'bg-amber-500 border-amber-600', category: 'event' },
+  when_clicked: { code: 'when_clicked', label: 'Khi bấm vào Nhân Vật 🐒', color: 'bg-amber-500 border-amber-600', category: 'event' },
   move_forward: { code: 'move_forward', label: 'Di chuyển 1 bước ➡️', color: 'bg-blue-600 border-blue-700', category: 'motion' },
   move_10_steps: { code: 'move_10_steps', label: 'Di chuyển 10 bước ➡️', color: 'bg-blue-600 border-blue-700', category: 'motion' },
   turn_right: { code: 'turn_right', label: 'Quay phải 90° ↪️', color: 'bg-indigo-600 border-indigo-700', category: 'motion' },
   turn_left: { code: 'turn_left', label: 'Quay trái 90° ↩️', color: 'bg-purple-600 border-purple-700', category: 'motion' },
   say_hello: { code: 'say_hello', label: 'Nói "Xin chào!" trong 2 giây 💬', color: 'bg-violet-600 border-violet-700', category: 'looks' },
-  say_meow: { code: 'say_meow', label: 'Phát tiếng kêu Meo Meo 🐱', color: 'bg-pink-600 border-pink-700', category: 'sound' },
+  say_meow: { code: 'say_meow', label: 'Phát tiếng kêu vui nhộn 🐒🎶', color: 'bg-pink-600 border-pink-700', category: 'sound' },
   play_drum: { code: 'play_drum', label: 'Đánh trống nhịp 1 🥁', color: 'bg-pink-600 border-pink-700', category: 'sound' },
   repeat_2: { code: 'repeat_2', label: 'Lặp lại 2 lần 🔄', color: 'bg-orange-500 border-orange-600', category: 'control' },
   repeat_3: { code: 'repeat_3', label: 'Lặp lại 3 lần 🔄', color: 'bg-orange-500 border-orange-600', category: 'control' },

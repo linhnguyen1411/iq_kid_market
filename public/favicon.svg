@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <!-- Circular Background with subtle shadow/gradient -->
+  <circle cx="64" cy="64" r="62" fill="url(#bgGrad)" stroke="#3B82F6" stroke-width="4"/>
+  <defs>
+    <linearGradient id="bgGrad" x1="64" y1="2" x2="64" y2="126" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFF6FF"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+    <linearGradient id="monkeyFur" x1="30" y1="20" x2="98" y2="108" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D97706"/>
+      <stop offset="1" stop-color="#B45309"/>
+    </linearGradient>
+    <linearGradient id="monkeyFace" x1="40" y1="40" x2="88" y2="90" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FEF3C7"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Monkey Ears -->
+  <!-- Left Outer Ear -->
+  <circle cx="28" cy="54" r="18" fill="url(#monkeyFur)" stroke="#78350F" stroke-width="3"/>
+  <!-- Left Inner Ear -->
+  <circle cx="28" cy="54" r="10" fill="#FDE68A"/>
+
+  <!-- Right Outer Ear -->
+  <circle cx="100" cy="54" r="18" fill="url(#monkeyFur)" stroke="#78350F" stroke-width="3"/>
+  <!-- Right Inner Ear -->
+  <circle cx="100" cy="54" r="10" fill="#FDE68A"/>
+
+  <!-- Monkey Head Base -->
+  <ellipse cx="64" cy="66" rx="42" ry="38" fill="url(#monkeyFur)" stroke="#78350F" stroke-width="3"/>
+
+  <!-- Top Hair Tuft -->
+  <path d="M58 28 C60 18 68 18 64 29 C68 20 74 22 68 31 Z" fill="#B45309"/>
+
+  <!-- Face Mask (Peach / Cream Heart-like Shape) -->
+  <path d="M64 56 C54 40 36 44 36 62 C36 78 50 92 64 92 C78 92 92 78 92 62 C92 44 74 40 64 56 Z" fill="url(#monkeyFace)"/>
+
+  <!-- Cheeks Blush -->
+  <ellipse cx="44" cy="74" rx="6" ry="3.5" fill="#FCA5A5" opacity="0.6"/>
+  <ellipse cx="84" cy="74" rx="6" ry="3.5" fill="#FCA5A5" opacity="0.6"/>
+
+  <!-- Eyes -->
+  <ellipse cx="48" cy="58" rx="6" ry="7.5" fill="#1E293B"/>
+  <ellipse cx="80" cy="58" rx="6" ry="7.5" fill="#1E293B"/>
+  <!-- Eye Highlights -->
+  <circle cx="46" cy="55" r="2.5" fill="#FFFFFF"/>
+  <circle cx="78" cy="55" r="2.5" fill="#FFFFFF"/>
+  <circle cx="50.5" cy="61" r="1.2" fill="#FFFFFF"/>
+  <circle cx="82.5" cy="61" r="1.2" fill="#FFFFFF"/>
+
+  <!-- Cute Snout & Nose -->
+  <ellipse cx="64" cy="75" rx="5" ry="3.5" fill="#F59E0B" opacity="0.25"/>
+  <circle cx="61.5" cy="74" r="1.4" fill="#78350F"/>
+  <circle cx="66.5" cy="74" r="1.4" fill="#78350F"/>
+
+  <!-- Cheerful Smile -->
+  <path d="M54 78 Q64 88 74 78" stroke="#78350F" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

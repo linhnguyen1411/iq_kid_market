@@ -103,7 +103,7 @@ export default function ScratchStage({
     }
   }, [showGrid]);
 
-  // Góc xoay của sprite: mặc định hình vẽ mèo nhìn sang phải (90 độ)
+  // Góc xoay của sprite: mặc định hình vẽ Chú Khỉ nhìn sang phải (90 độ)
   const rotationDegrees = sprite.direction - 90;
   const scale = (sprite.size || 100) / 100;
 
@@ -182,7 +182,7 @@ export default function ScratchStage({
           className="absolute inset-0 w-full h-full pointer-events-none"
         />
 
-        {/* Sprite Nhân Vật (Chú Mèo Scratch) */}
+        {/* Sprite Nhân Vật (Chú Khỉ Thông Thái Scratch) */}
         {sprite.visible && (
           <div
             onClick={onSpriteClick}
@@ -197,75 +197,94 @@ export default function ScratchStage({
               zIndex: 10,
             }}
             className="group"
+            title="Nhân vật Chú Khỉ Thông Thái (Bấm để tương tác!)"
           >
-            {/* Vector SVG Chú Mèo Scratch */}
+            {/* Vector SVG Chú Khỉ Thông Thái IQ Kids */}
             <svg
-              width="64"
-              height="64"
+              width="68"
+              height="68"
               viewBox="0 0 100 100"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="drop-shadow-md group-hover:scale-105 transition-transform"
+              className="drop-shadow-lg group-hover:scale-105 transition-transform"
             >
-              {/* Đuôi Mèo */}
+              <defs>
+                <linearGradient id="stageMonkeyFur" x1="20" y1="20" x2="80" y2="80" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#D97706" />
+                  <stop offset="1" stopColor="#B45309" />
+                </linearGradient>
+                <linearGradient id="stageMonkeyFace" x1="45" y1="30" x2="75" y2="60" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#FEF3C7" />
+                  <stop offset="1" stopColor="#FDE68A" />
+                </linearGradient>
+              </defs>
+
+              {/* Curled Monkey Tail */}
               <path
-                d="M20 60 C10 65 5 45 15 40 C20 38 25 48 20 60 Z"
-                fill="#FFAB19"
-                stroke="#000"
-                strokeWidth="2.5"
+                d="M 28 62 C 14 66 8 48 18 38 C 24 32 32 38 28 46 C 25 51 22 52 20 58"
+                stroke="#92400E"
+                strokeWidth="5"
+                strokeLinecap="round"
+                fill="none"
               />
-              {/* Thân Mèo */}
-              <ellipse
-                cx="48"
-                cy="62"
-                rx="24"
-                ry="18"
-                fill="#FFAB19"
-                stroke="#000"
-                strokeWidth="2.5"
+
+              {/* Back Feet */}
+              <ellipse cx="36" cy="80" rx="9" ry="5.5" fill="#78350F" />
+              <ellipse cx="58" cy="80" rx="9" ry="5.5" fill="#78350F" />
+
+              {/* Monkey Body */}
+              <ellipse cx="46" cy="62" rx="22" ry="18" fill="url(#stageMonkeyFur)" stroke="#78350F" strokeWidth="2.5" />
+              {/* Light Belly */}
+              <ellipse cx="50" cy="63" rx="13" ry="11" fill="url(#stageMonkeyFace)" />
+
+              {/* Ears */}
+              {/* Left Ear */}
+              <circle cx="43" cy="22" r="8" fill="url(#stageMonkeyFur)" stroke="#78350F" strokeWidth="2" />
+              <circle cx="43" cy="22" r="4.5" fill="#FDE68A" />
+              {/* Right Ear */}
+              <circle cx="77" cy="22" r="8" fill="url(#stageMonkeyFur)" stroke="#78350F" strokeWidth="2" />
+              <circle cx="77" cy="22" r="4.5" fill="#FDE68A" />
+
+              {/* Monkey Head (Facing forward-right) */}
+              <circle cx="60" cy="36" r="20" fill="url(#stageMonkeyFur)" stroke="#78350F" strokeWidth="2.5" />
+
+              {/* Top Hair Tuft */}
+              <path d="M 54 17 C 57 9 65 9 62 18 C 66 11 71 13 66 20 Z" fill="#92400E" />
+
+              {/* Face Mask (Heart-rounded muzzle) */}
+              <path
+                d="M 62 26 C 54 18 44 24 46 36 C 46 47 56 53 66 53 C 76 53 82 45 80 36 C 78 24 70 18 62 26 Z"
+                fill="url(#stageMonkeyFace)"
               />
-              <ellipse
-                cx="48"
-                cy="64"
-                rx="14"
-                ry="11"
-                fill="#FFFFFF"
+
+              {/* Cheeks Blush */}
+              <ellipse cx="50" cy="42" rx="4" ry="2.5" fill="#FCA5A5" opacity="0.7" />
+              <ellipse cx="74" cy="42" rx="4" ry="2.5" fill="#FCA5A5" opacity="0.7" />
+
+              {/* Eyes (Looking playfully forward/right) */}
+              <ellipse cx="55" cy="33" rx="4.5" ry="6" fill="#1E293B" />
+              <circle cx="53.5" cy="31" r="2" fill="#FFFFFF" />
+              <circle cx="56.5" cy="35" r="1" fill="#FFFFFF" />
+
+              <ellipse cx="69" cy="33" rx="4.5" ry="6" fill="#1E293B" />
+              <circle cx="67.5" cy="31" r="2" fill="#FFFFFF" />
+              <circle cx="70.5" cy="35" r="1" fill="#FFFFFF" />
+
+              {/* Cute Nose & Snout */}
+              <ellipse cx="63" cy="42" rx="4" ry="2.5" fill="#F59E0B" opacity="0.3" />
+              <circle cx="61.5" cy="41.5" r="1" fill="#78350F" />
+              <circle cx="64.5" cy="41.5" r="1" fill="#78350F" />
+
+              {/* Happy Smile */}
+              <path d="M 58 45 Q 63 49 68 45" stroke="#78350F" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+              {/* Front Hands/Arms waving or pointing */}
+              <path
+                d="M 62 64 C 70 60 78 64 84 59 C 82 65 74 69 64 68 Z"
+                fill="#FDE68A"
+                stroke="#78350F"
+                strokeWidth="1.5"
               />
-              {/* Chân Mèo */}
-              <ellipse cx="34" cy="78" rx="8" ry="5" fill="#FFFFFF" stroke="#000" strokeWidth="2.5" />
-              <ellipse cx="58" cy="78" rx="8" ry="5" fill="#FFFFFF" stroke="#000" strokeWidth="2.5" />
-              {/* Tai Mèo */}
-              <polygon points="42,22 32,8 54,16" fill="#FFAB19" stroke="#000" strokeWidth="2.5" />
-              <polygon points="44,20 37,12 50,17" fill="#FF8C1A" />
-              <polygon points="68,22 80,8 76,20" fill="#FFAB19" stroke="#000" strokeWidth="2.5" />
-              <polygon points="69,20 76,12 73,19" fill="#FF8C1A" />
-              {/* Đầu Mèo */}
-              <ellipse
-                cx="56"
-                cy="32"
-                rx="24"
-                ry="20"
-                fill="#FFAB19"
-                stroke="#000"
-                strokeWidth="2.5"
-              />
-              {/* Mõm trắng */}
-              <ellipse cx="64" cy="38" rx="12" ry="9" fill="#FFFFFF" />
-              <ellipse cx="50" cy="38" rx="10" ry="9" fill="#FFFFFF" />
-              {/* Mũi hồng */}
-              <polygon points="56,35 53,38 59,38" fill="#FF6680" stroke="#000" strokeWidth="1" />
-              {/* Mắt to */}
-              <ellipse cx="48" cy="28" rx="5" ry="7" fill="#FFFFFF" stroke="#000" strokeWidth="2" />
-              <circle cx="50" cy="28" r="3" fill="#000" />
-              <circle cx="51" cy="26" r="1" fill="#FFF" />
-              <ellipse cx="62" cy="28" rx="5" ry="7" fill="#FFFFFF" stroke="#000" strokeWidth="2" />
-              <circle cx="64" cy="28" r="3" fill="#000" />
-              <circle cx="65" cy="26" r="1" fill="#FFF" />
-              {/* Râu Mèo */}
-              <line x1="68" y1="36" x2="84" y2="34" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-              <line x1="68" y1="40" x2="84" y2="42" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-              <line x1="44" y1="36" x2="28" y2="34" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-              <line x1="44" y1="40" x2="28" y2="42" stroke="#000" strokeWidth="2" strokeLinecap="round" />
             </svg>
 
             {/* Bong bóng thoại (Speech Bubble) */}
@@ -279,7 +298,7 @@ export default function ScratchStage({
                 >
                   <div className="relative bg-white text-slate-800 text-xs font-bold px-3.5 py-2 rounded-2xl shadow-xl border-2 border-indigo-500 whitespace-nowrap min-w-[60px] text-center">
                     {sprite.speechBubble.text}
-                    {/* Mũi nhọn bóng thoại trỏ xuống miệng Mèo */}
+                    {/* Mũi nhọn bóng thoại trỏ xuống miệng Khỉ */}
                     <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-indigo-500"></div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-[2px] w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[7px] border-t-white"></div>
                   </div>

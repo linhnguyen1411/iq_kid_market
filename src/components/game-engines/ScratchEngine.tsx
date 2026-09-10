@@ -137,7 +137,7 @@ export default function ScratchEngine({ question, onComplete }: GameEngineProps)
                     : "border-slate-800/80 bg-slate-900/60"
                 }`}
               >
-                {hasCat && <span className="animate-bounce select-none">🐱</span>}
+                {hasCat && <span className="animate-bounce select-none" title="Chú Khỉ Thông Thái">🐒</span>}
                 {!hasCat && hasStar && <span className="animate-pulse select-none">⭐</span>}
                 {!hasCat && !hasStar && <span className="text-[10px] text-slate-700 font-mono select-none">{r},{c}</span>}
               </div>

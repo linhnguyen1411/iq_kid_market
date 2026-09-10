@@ -183,7 +183,7 @@ export const ScratchPage: React.FC = () => {
       if (lesson.lockReason === 'need_purchase') {
         setPurchasingCourse(course);
       } else if (lesson.lockReason === 'need_previous') {
-        alert(`Bé hãy hoàn thành Bài ${lesson.lesson_num - 1} trước để mở khóa bài học này nhé! 🐱🚀`);
+        alert(`Bé hãy hoàn thành Bài ${lesson.lesson_num - 1} trước để mở khóa bài học này nhé! 🐒🚀`);
       }
       return;
     }
@@ -346,7 +346,7 @@ export const ScratchPage: React.FC = () => {
             HỌC VIỆN LẬP TRÌNH & THUẬT TOÁN CHO BÉ
           </span>
           <h2 className="text-2xl md:text-3xl font-black mb-2">
-            Rèn Luyện Tư Duy Thuật Toán & Lập Trình 🐱🤖
+            Rèn Luyện Tư Duy Thuật Toán & Lập Trình 🐒🤖
           </h2>
           <p className="text-xs md:text-sm text-white/80 leading-relaxed">
             Học lập trình theo lộ trình sư phạm chuẩn quốc tế: Khởi đầu với Mê Cung Thuật Toán trực quan cho bé nhỏ, tiến tới Scratch Studio sáng tạo game và phim hoạt hình cho bé lớn.
@@ -555,7 +555,7 @@ export const ScratchPage: React.FC = () => {
                   Scratch Studio — Lập Trình Kéo Thả Khối Thực Thụ
                 </h3>
                 <p className="text-xs md:text-sm text-white/90 leading-relaxed mb-4">
-                  Môi trường lập trình hoàn chỉnh ứng dụng công nghệ Google Blockly: Kéo thả 6 nhóm khối lệnh, điều khiển Sprite Chú Mèo trên Sân Khấu 480x360 theo thời gian thực!
+                  Môi trường lập trình hoàn chỉnh ứng dụng công nghệ Google Blockly: Kéo thả 6 nhóm khối lệnh, điều khiển Sprite Chú Khỉ Thông Thái trên Sân Khấu 480x360 theo thời gian thực!
                 </p>
 
                 <button
@@ -568,8 +568,8 @@ export const ScratchPage: React.FC = () => {
                 </button>
               </div>
 
-              <div className="w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-5xl shrink-0 shadow-lg select-none">
-                🐱
+              <div className="w-24 h-24 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-5xl shrink-0 shadow-lg select-none" title="Linh vật Khỉ Thông Thái">
+                🐒
               </div>
             </div>
 
@@ -578,7 +578,7 @@ export const ScratchPage: React.FC = () => {
               <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-100">
                 <span className="text-2xl mb-2 block">🏃‍♂️</span>
                 <h4 className="text-xs font-black text-blue-900 uppercase tracking-wider mb-1">Chuyển Động & Tọa Độ</h4>
-                <p className="text-xs text-slate-600">Điều khiển Mèo di chuyển theo trục X/Y (-240 đến 240, -180 đến 180) và quay góc.</p>
+                <p className="text-xs text-slate-600">Điều khiển Chú Khỉ di chuyển theo trục X/Y (-240 đến 240, -180 đến 180) và quay góc.</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-purple-50/60 border border-purple-100">
@@ -654,7 +654,7 @@ export const ScratchPage: React.FC = () => {
             ) : userProjects.length === 0 ? (
               <div className="py-10 px-4 text-center flex flex-col items-center justify-center bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
                 <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-3xl mb-3">
-                  🐱
+                  🐒
                 </div>
                 <h4 className="text-sm font-black text-slate-700 mb-1">Bé chưa có dự án Scratch nào</h4>
                 <p className="text-xs text-slate-500 max-w-md mb-4">
@@ -689,7 +689,7 @@ export const ScratchPage: React.FC = () => {
                       <div>
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-400 text-white flex items-center justify-center text-xl shadow-xs">
-                            {p.thumbnail || '🐱'}
+                            {p.thumbnail || '🐒'}
                           </div>
                           <span className="text-[10px] font-mono font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-200">
                             Scratch 3.0
@@ -913,7 +913,7 @@ export const ScratchPage: React.FC = () => {
 
             <div className="flex items-center gap-3.5 my-3 p-3.5 bg-orange-50/50 rounded-2xl border border-orange-100">
               <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-3xl shadow-2xs shrink-0 border border-orange-100">
-                {purchasingCourse.thumbnail || '🐱'}
+                {purchasingCourse.thumbnail || '🐒'}
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-black text-slate-800 line-clamp-1">{purchasingCourse.title}</h4>

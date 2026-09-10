@@ -363,7 +363,7 @@ export default function ScratchStudioEngine({
     setStatusMessage('Đã dừng kịch bản.');
   };
 
-  // Đặt lại vị trí Mèo về ban đầu
+  // Đặt lại vị trí Chú Khỉ về ban đầu
   const handleResetStage = () => {
     handleStop();
     setSprite(INITIAL_SPRITE_STATE);
@@ -377,7 +377,7 @@ export default function ScratchStudioEngine({
         sounds_played: [],
       },
     };
-    setStatusMessage('Đã đưa Mèo về tâm sân khấu (0, 0).');
+    setStatusMessage('Đã đưa Chú Khỉ về tâm sân khấu (0, 0).');
   };
 
   // Helper chờ theo mili giây có hỗ trợ hủy
@@ -742,7 +742,7 @@ export default function ScratchStudioEngine({
     }
   };
 
-  // Xử lý khi bấm vào chú Mèo trên Sân Khấu
+  // Xử lý khi bấm vào chú Khỉ trên Sân Khấu
   const handleSpriteClick = async () => {
     // Mở khóa AudioContext ngay trong click event
     getAudioContext();
@@ -773,14 +773,14 @@ export default function ScratchStudioEngine({
         telemetryRef.current.final_state = { ...currentSpriteRef.current };
       }
     } else {
-      // Mặc định kêu meo và rung nhẹ nếu không có khối gắn
+      // Mặc định chào vui nhộn và rung nhẹ nếu không có khối gắn
       telemetryRef.current.actions.sounds_played.push('meow');
-      telemetryRef.current.actions.messages_said.push('Meo meo! 🐱');
+      telemetryRef.current.actions.messages_said.push('Khỉ con chào bạn! 🐒');
       telemetryRef.current.final_state = { ...currentSpriteRef.current };
-      playSynthSound('meow');
+      playSynthSound('powerup');
       setSprite((prev) => ({
         ...prev,
-        speechBubble: { text: 'Meo meo! 🐱', type: 'say' },
+        speechBubble: { text: 'Khỉ con chào bạn! 🐒', type: 'say' },
       }));
       setTimeout(() => {
         setSprite((prev) => ({ ...prev, speechBubble: null }));
@@ -1015,8 +1015,8 @@ export default function ScratchStudioEngine({
           )}
 
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center font-black text-xl shadow-md select-none shrink-0">
-              🐱
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center font-black text-xl shadow-md select-none shrink-0" title="Linh vật Khỉ Thông Thái">
+              🐒
             </div>
             <div>
               {lesson ? (
@@ -1177,7 +1177,7 @@ export default function ScratchStudioEngine({
             <button
               onClick={handleResetStage}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
-              title="Đặt lại Mèo về tâm sân khấu"
+              title="Đặt lại Chú Khỉ về tâm sân khấu"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Làm Lại</span>
@@ -1276,8 +1276,8 @@ export default function ScratchStudioEngine({
             <ul className="list-disc list-inside space-y-1.5 text-slate-500 text-[11px] leading-relaxed">
               <li>Mỗi kịch bản bắt đầu bằng khối <strong className="text-amber-600">khi bấm cờ xanh ⛳</strong></li>
               <li>Thử nối khối <strong className="text-blue-600">di chuyển 10 bước</strong> và <strong className="text-purple-600">nói Xin chào</strong></li>
-              <li>Bấm vào hình chú Mèo trên Sân Khấu để tương tác trực tiếp!</li>
-              <li>Bật <strong className="text-indigo-600">Lưới X-Y 📐</strong> để xem vị trí tọa độ của Mèo con.</li>
+              <li>Bấm vào hình Chú Khỉ trên Sân Khấu để tương tác trực tiếp!</li>
+              <li>Bật <strong className="text-indigo-600">Lưới X-Y 📐</strong> để xem vị trí tọa độ của Chú Khỉ con.</li>
             </ul>
           </div>
         </div>

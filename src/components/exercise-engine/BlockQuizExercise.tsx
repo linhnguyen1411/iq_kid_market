@@ -59,7 +59,7 @@ export default function BlockQuizExercise({
       { code: 'move_10_steps', label: 'Di chuyển 10 bước ➡️', blockCategory: 'motion' },
       { code: 'turn_right_15', label: 'Quay phải 15 độ ↪️', blockCategory: 'motion' },
       { code: 'say_hello', label: 'Nói "Xin chào!" trong 2 giây 💬', blockCategory: 'looks' },
-      { code: 'play_sound_meow', label: 'Phát âm thanh Meo 🐱', blockCategory: 'sound' },
+      { code: 'play_sound_meow', label: 'Phát âm thanh vui nhộn 🐒🎶', blockCategory: 'sound' },
     ];
   })();
 

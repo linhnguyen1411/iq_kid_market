@@ -224,7 +224,7 @@ export const AdminScratchTab: React.FC = () => {
                   : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80'
               }`}
             >
-              <span>{c.thumbnail || '🐱'}</span>
+              <span>{c.thumbnail || '🐒'}</span>
               <span>{c.title}</span>
               <span className={`px-2 py-0.5 rounded-md text-[10px] ${
                 isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-600'
