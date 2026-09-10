@@ -485,7 +485,7 @@ def evaluate_game_answer(
                 is_correct=True,
                 score=max_points,
                 stars=3,
-                feedback="Tuyet voi! Ban da sap xep thuat toan dieu khien meo thanh cong! 🐱⭐",
+                feedback="Tuyet voi! Ban da sap xep thuat toan dieu khien chu khi thanh cong! 🐒⭐",
             )
         return EvaluationResult(
             is_correct=False,

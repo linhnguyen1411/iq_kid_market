@@ -333,8 +333,8 @@ export const SEED_GAMES: Game[] = [
   {
     id: "g_scratch_studio",
     title: "Lập Trình Robot Scratch",
-    description: "Lắp ráp các khối thuật toán logic tư duy để chỉ huy phi thuyền hoặc chuyển động chú mèo.",
-    detailed_description: "Chào mừng con đến với Studio Lập Trình Robot Scratch cực đỉnh! Tại đây con sẽ được làm quen với tư duy thuật toán máy tính, học cách lắp ghép các khối lệnh tuần tự, vòng lặp lặp lại, hay xoay góc rẽ hướng linh hoạt để dắt đường chú mèo lập trình và chiếc phi thuyền giải quyết 9 thử thách mê cung từ dễ đến nâng cao. Nhận ngay huy hiệu danh giá và hàng trăm XP thưởng nhé!",
+    description: "Lắp ráp các khối thuật toán logic tư duy để chỉ huy phi thuyền hoặc chuyển động Chú Khỉ con.",
+    detailed_description: "Chào mừng con đến với Studio Lập Trình Robot Scratch cực đỉnh! Tại đây con sẽ được làm quen với tư duy thuật toán máy tính, học cách lắp ghép các khối lệnh tuần tự, vòng lặp lặp lại, hay xoay góc rẽ hướng linh hoạt để dắt đường Chú Khỉ lập trình và chiếc phi thuyền giải quyết 9 thử thách mê cung từ dễ đến nâng cao. Nhận ngay huy hiệu danh giá và hàng trăm XP thưởng nhé!",
     thumbnail: "🤖",
     price: 0,
     grade_from: 1,
@@ -602,7 +602,7 @@ export const SEED_SCRATCH_COURSES = [
       {
         lesson_num: 1,
         title: "Khởi Động Động Cơ",
-        content: "Giúp chú mèo Scratch tiến về tinh vân lấp lánh bằng cách sử dụng khối lệnh 'Di chuyển'.",
+        content: "Giúp Chú Khỉ Scratch tiến về tinh vân lấp lánh bằng cách sử dụng khối lệnh 'Di chuyển'.",
         target_block_sequence: "move_forward,move_forward",
         start_scene_json: "{\"cat_pos\":[0,2],\"star_pos\":[2,2]}",
         xp_reward: 100
@@ -610,7 +610,7 @@ export const SEED_SCRATCH_COURSES = [
       {
         lesson_num: 2,
         title: "Bẻ Lái Tránh Chướng Ngại Vật",
-        content: "Để tránh đám mây bụi vũ trụ, hãy điều khiển chú mèo rẽ phải trước khi đi tiếp.",
+        content: "Để tránh đám mây bụi vũ trụ, hãy điều khiển Chú Khỉ rẽ phải trước khi đi tiếp.",
         target_block_sequence: "move_forward,turn_right,move_forward",
         start_scene_json: "{\"cat_pos\":[0,1],\"star_pos\":[1,2]}",
         xp_reward: 120
@@ -618,7 +618,7 @@ export const SEED_SCRATCH_COURSES = [
       {
         lesson_num: 3,
         title: "Chu Kỳ Lặp Vô Tận",
-        content: "Sử dụng khối 'Vòng lặp' để mèo tự động di chuyển 3 bước mà không cần nối nhiều khối.",
+        content: "Sử dụng khối 'Vòng lặp' để Chú Khỉ tự động di chuyển 3 bước mà không cần nối nhiều khối.",
         target_block_sequence: "repeat_3[move_forward]",
         start_scene_json: "{\"cat_pos\":[0,0],\"star_pos\":[3,0]}",
         xp_reward: 150
@@ -652,7 +652,7 @@ export const SEED_SCRATCH_COURSES = [
       {
         lesson_num: 1,
         title: "Quay Đầu Đi Tìm Sao",
-        content: "Ngôi sao ở ngay phía sau con tại (0,1). Hãy xoay chú mèo quay ngược lại (Quay trái 2 lần) và tiến lên 2 bước!",
+        content: "Ngôi sao ở ngay phía sau con tại (0,1). Hãy xoay Chú Khỉ quay ngược lại (Quay trái 2 lần) và tiến lên 2 bước!",
         target_block_sequence: "turn_left,turn_left,move_forward,move_forward",
         start_scene_json: "{\"cat_pos\":[2,1],\"star_pos\":[0,1]}",
         xp_reward: 220

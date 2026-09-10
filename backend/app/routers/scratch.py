@@ -746,7 +746,7 @@ def create_scratch_course(
         id=course_id,
         title=body.title,
         description=body.description,
-        thumbnail=body.thumbnail or "🐱",
+        thumbnail=body.thumbnail or "🐒",
         difficulty=body.difficulty or "Cơ bản",
         course_type=body.course_type or "algorithm_maze",
         total_lessons=0,

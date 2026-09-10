@@ -3,6 +3,15 @@ import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+# Đảm bảo mã hoá utf-8 an toàn trên Windows console
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 # Đọc cấu hình từ biến môi trường
 DEFAULT_PG_URL = "postgresql+psycopg2://iqkids_user:iqkids_password@localhost:5432/iqkids_db"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_PG_URL)

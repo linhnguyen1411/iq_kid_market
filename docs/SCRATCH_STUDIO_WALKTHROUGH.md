@@ -20,7 +20,7 @@
 ## 🚀 Chi Tiết Triển Khai Trong Phase 7: Giáo Trình Chuẩn Hóa 11 Cấp Độ (CSTA/MIT Standard)
 
 ### 1. Khung Năng Lực Lập Trình 11 Cấp Độ ([`seed_data.json`](file:///Users/linhnguyen21/workspace/iq-kids-market/backend/app/seed_data.json))
-Khóa học `sc4` (*"Scratch Studio: Lộ Trình 11 Cấp Độ Chuẩn Quốc Tế 🐱🚀"*) được xây dựng dựa trên tiêu chuẩn **CSTA K-12 Computer Science Standards** và triết lý đào tạo của MIT Media Lab:
+Khóa học `sc4` (*"Scratch Studio: Lộ Trình 11 Cấp Độ Chuẩn Quốc Tế 🐒🚀"*) được xây dựng dựa trên tiêu chuẩn **CSTA K-12 Computer Science Standards** và triết lý đào tạo của MIT Media Lab:
 
 1. **Level 1: Tuần Tự (Sequence) — Lời Chào Đầu Tiên**:
    - Khối lệnh: `scratch_when_flag_clicked` + `scratch_say_for_secs`.

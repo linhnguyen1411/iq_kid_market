@@ -614,7 +614,7 @@ class CreateScratchCourseIn(BaseModel):
     id: Optional[str] = None
     title: str
     description: Optional[str] = None
-    thumbnail: Optional[str] = "🐱"
+    thumbnail: Optional[str] = "🐒"
     difficulty: Optional[str] = "Cơ bản"
     course_type: Optional[str] = "algorithm_maze"
     price: Optional[int] = 0
@@ -644,7 +644,7 @@ class UpdateScratchLessonIn(BaseModel):
 class ScratchProjectIn(BaseModel):
     title: str = "Dự Án Scratch Của Bé"
     description: Optional[str] = None
-    thumbnail: Optional[str] = "🐱"
+    thumbnail: Optional[str] = "🐒"
     project_data: Any
     is_public: Optional[bool] = False
 

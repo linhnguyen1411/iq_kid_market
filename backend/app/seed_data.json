@@ -2636,8 +2636,8 @@
     {
       "id": "g_scratch_studio",
       "title": "Lập Trình Robot Scratch",
-      "description": "Lắp ráp các khối thuật toán logic tư duy để chỉ huy phi thuyền hoặc chuyển động chú mèo.",
-      "detailed_description": "Chào mừng con đến với Studio Lập Trình Robot Scratch cực đỉnh! Tại đây con sẽ được làm quen với tư duy thuật toán máy tính, học cách lắp ghép các khối lệnh tuần tự, vòng lặp lặp lại, hay xoay góc rẽ hướng linh hoạt để dắt đường chú mèo lập trình và chiếc phi thuyền giải quyết 9 thử thách mê cung từ dễ đến nâng cao. Nhận ngay huy hiệu danh giá và hàng trăm XP thưởng nhé!",
+      "description": "Lắp ráp các khối thuật toán logic tư duy để chỉ huy phi thuyền hoặc chuyển động Chú Khỉ con.",
+      "detailed_description": "Chào mừng con đến với Studio Lập Trình Robot Scratch cực đỉnh! Tại đây con sẽ được làm quen với tư duy thuật toán máy tính, học cách lắp ghép các khối lệnh tuần tự, vòng lặp lặp lại, hay xoay góc rẽ hướng linh hoạt để dắt đường Chú Khỉ lập trình và chiếc phi thuyền giải quyết 9 thử thách mê cung từ dễ đến nâng cao. Nhận ngay huy hiệu danh giá và hàng trăm XP thưởng nhé!",
       "thumbnail": "🤖",
       "price": 0,
       "grade_from": 1,
@@ -3087,7 +3087,7 @@
         {
           "lesson_num": 1,
           "title": "Khởi Động Động Cơ",
-          "content": "Giúp chú mèo Scratch tiến về tinh vân lấp lánh bằng cách sử dụng khối lệnh 'Di chuyển'.",
+          "content": "Giúp Chú Khỉ Scratch tiến về tinh vân lấp lánh bằng cách sử dụng khối lệnh 'Di chuyển'.",
           "target_block_sequence": "move_forward,move_forward",
           "start_scene_json": "{\"cat_pos\":[0,2],\"star_pos\":[2,2]}",
           "xp_reward": 100
@@ -3095,7 +3095,7 @@
         {
           "lesson_num": 2,
           "title": "Bẻ Lái Tránh Chướng Ngại Vật",
-          "content": "Để tránh đám mây bụi vũ trụ, hãy điều khiển chú mèo rẽ phải trước khi đi tiếp.",
+          "content": "Để tránh đám mây bụi vũ trụ, hãy điều khiển Chú Khỉ rẽ phải trước khi đi tiếp.",
           "target_block_sequence": "move_forward,turn_right,move_forward",
           "start_scene_json": "{\"cat_pos\":[0,1],\"star_pos\":[1,2]}",
           "xp_reward": 120
@@ -3103,7 +3103,7 @@
         {
           "lesson_num": 3,
           "title": "Chu Kỳ Lặp Vô Tận",
-          "content": "Sử dụng khối 'Vòng lặp' để mèo tự động di chuyển 3 bước mà không cần nối nhiều khối.",
+          "content": "Sử dụng khối 'Vòng lặp' để Chú Khỉ tự động di chuyển 3 bước mà không cần nối nhiều khối.",
           "target_block_sequence": "repeat_3[move_forward]",
           "start_scene_json": "{\"cat_pos\":[0,0],\"star_pos\":[3,0]}",
           "xp_reward": 150
@@ -3137,7 +3137,7 @@
         {
           "lesson_num": 1,
           "title": "Quay Đầu Đi Tìm Sao",
-          "content": "Ngôi sao ở ngay phía sau con tại (0,1). Hãy xoay chú mèo quay ngược lại (Quay trái 2 lần) và tiến lên 2 bước!",
+          "content": "Ngôi sao ở ngay phía sau con tại (0,1). Hãy xoay Chú Khỉ quay ngược lại (Quay trái 2 lần) và tiến lên 2 bước!",
           "target_block_sequence": "turn_left,turn_left,move_forward,move_forward",
           "start_scene_json": "{\"cat_pos\":[2,1],\"star_pos\":[0,1]}",
           "xp_reward": 220
@@ -3179,7 +3179,7 @@
       "lessons": [
         {
           "lesson_num": 1,
-          "title": "Sắp Xếp Kịch Bản Mèo Chào Bạn",
+          "title": "Sắp Xếp Kịch Bản Khỉ Con Chào Bạn",
           "content": "Hãy ghép các khối lệnh theo thứ tự chuẩn: Khi bấm cờ xanh ⛳ -> Di chuyển 10 bước ➡️ -> Nói 'Xin chào!' 💬",
           "engine_type": "block_sequence",
           "target_block_sequence": "when_flag,move_10_steps,say_hello",
@@ -3197,7 +3197,7 @@
         },
         {
           "lesson_num": 3,
-          "title": "Đoán Vị Trí Của Mèo Con",
+          "title": "Đoán Vị Trí Của Khỉ Con",
           "content": "Hãy lần vết kịch bản mã nguồn từ trên xuống dưới và dự đoán vị trí cuối cùng của nhân vật.",
           "engine_type": "block_predict",
           "target_block_sequence": "x20_down",
@@ -3207,7 +3207,7 @@
         {
           "lesson_num": 4,
           "title": "Bắt Bọ & Sửa Lỗi Góc Quay",
-          "content": "Mèo muốn quay phải 90 độ để đi xuống nhưng kịch bản bị gắn nhầm khối lệnh. Hãy tìm và thay thế khối bị lỗi!",
+          "content": "Chú Khỉ muốn quay phải 90 độ để đi xuống nhưng kịch bản bị gắn nhầm khối lệnh. Hãy tìm và thay thế khối bị lỗi!",
           "engine_type": "block_debug",
           "target_block_sequence": "Khi bấm cờ xanh ⛳,Di chuyển 10 bước ➡️,Quay phải 90° ↪️,Nói \"Chào bạn!\" 💬",
           "start_scene_json": "{\"buggy_script\":[\"Khi bấm cờ xanh ⛳\",\"Di chuyển 10 bước ➡️\",\"Quay trái 180° ↩️\",\"Nói \\\"Chào bạn!\\\" 💬\"],\"target_sequence\":[\"Khi bấm cờ xanh ⛳\",\"Di chuyển 10 bước ➡️\",\"Quay phải 90° ↪️\",\"Nói \\\"Chào bạn!\\\" 💬\"],\"bug_index\":2,\"replacements\":[\"Quay phải 90° ↪️\",\"Quay trái 90° ↩️\",\"Nhảy 50 bước 🦘\"],\"hint\":\"Nhân vật cần quay phải 90 độ (góc vuông) chứ không phải quay ngược lại 180 độ!\"}",
@@ -3217,9 +3217,9 @@
     },
     {
       "id": "sc4",
-      "title": "Scratch Studio: Lộ Trình 11 Cấp Độ Chuẩn Quốc Tế 🐱🚀",
+      "title": "Scratch Studio: Lộ Trình 11 Cấp Độ Chuẩn Quốc Tế 🐒🚀",
       "description": "Giáo trình lập trình Scratch 3.0 chuẩn hóa CSTA/MIT: Từ tuần tự, sự kiện, chuyển động, vòng lặp đến điều kiện, biến số, cảm biến, phát tin và dự án game hoàn chỉnh.",
-      "thumbnail": "🐱",
+      "thumbnail": "🐒",
       "difficulty": "Tiêu chuẩn (11 Cấp độ)",
       "total_lessons": 11,
       "course_type": "scratch_studio",
@@ -3228,34 +3228,34 @@
         {
           "lesson_num": 1,
           "title": "Level 1: Tuần Tự — Lời Chào Đầu Tiên",
-          "content": "Lập trình tuần tự (Sequence) là thực hiện các câu lệnh theo trình tự từ trên xuống dưới. Hãy ghép khối 'khi bấm vào cờ xanh ⛳' và 'nói trong 2 giây 💬' chứa từ khóa 'chào' để chú Mèo gửi lời chào thân thiện!",
+          "content": "Lập trình tuần tự (Sequence) là thực hiện các câu lệnh theo trình tự từ trên xuống dưới. Hãy ghép khối 'khi bấm vào cờ xanh ⛳' và 'nói trong 2 giây 💬' chứa từ khóa 'chào' để Chú Khỉ gửi lời chào thân thiện!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_say_for_secs",
-          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_say_for_secs\"],\"runtime_assertions\":{\"said_message\":\"chào\"},\"custom_success_message\":\"Xuất sắc! Bạn đã làm chủ khái niệm Tuần Tự (Sequence) đầu tiên trong lập trình! 🐱💬\"}}",
+          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_say_for_secs\"],\"runtime_assertions\":{\"said_message\":\"chào\"},\"custom_success_message\":\"Xuất sắc! Bạn đã làm chủ khái niệm Tuần Tự (Sequence) đầu tiên trong lập trình! 🐒💬\"}}",
           "xp_reward": 100
         },
         {
           "lesson_num": 2,
           "title": "Level 2: Sự Kiện — Tương Tác Click Nhân Vật",
-          "content": "Sự kiện (Events) là ngòi nổ kích hoạt kịch bản. Hãy gắn khối 'khi bấm vào nhân vật 🐱' với khối 'phát âm thanh Meo Meo 🐱' để chú Mèo kêu meo khi học sinh nhấp chuột vào Mèo!",
+          "content": "Sự kiện (Events) là ngòi nổ kích hoạt kịch bản. Hãy gắn khối 'khi bấm vào nhân vật 🐒' với khối 'phát âm thanh vui nhộn 🐒🎶' để Chú Khỉ phát âm thanh khi học sinh nhấp chuột vào Khỉ!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_sprite_clicked,scratch_play_sound_meow",
-          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_sprite_clicked\"],\"required_blocks\":[\"scratch_play_sound_meow\"],\"runtime_assertions\":{\"sound_played\":\"meow\"},\"custom_success_message\":\"Tuyệt vời! Bạn đã tạo tương tác sự kiện (Event-driven) thành công! 🐱🎶\"}}",
+          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_sprite_clicked\"],\"required_blocks\":[\"scratch_play_sound_meow\"],\"runtime_assertions\":{\"sound_played\":\"meow\"},\"custom_success_message\":\"Tuyệt vời! Bạn đã tạo tương tác sự kiện (Event-driven) thành công! 🐒🎶\"}}",
           "xp_reward": 120
         },
         {
           "lesson_num": 3,
           "title": "Level 3: Chuyển Động & Ngoại Hình — Vươn Tới Đích",
-          "content": "Khám phá tọa độ Descartes trên sân khấu: Cho Mèo di chuyển ít nhất 80 bước và tăng kích thước thêm 10% khi bấm Cờ Xanh ⛳!",
+          "content": "Khám phá tọa độ Descartes trên sân khấu: Cho Chú Khỉ di chuyển ít nhất 80 bước và tăng kích thước thêm 10% khi bấm Cờ Xanh ⛳!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_move_steps,scratch_change_size_by",
-          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_move_steps\",\"scratch_change_size_by\"],\"runtime_assertions\":{\"min_steps_moved\":80,\"target_position\":{\"min_x\":70}},\"custom_success_message\":\"Tuyệt vời! Chú Mèo vừa bước đi vừa lớn dần trên Sân Khấu! 🐾🌟\"}}",
+          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_move_steps\",\"scratch_change_size_by\"],\"runtime_assertions\":{\"min_steps_moved\":80,\"target_position\":{\"min_x\":70}},\"custom_success_message\":\"Tuyệt vời! Chú Khỉ vừa bước đi vừa lớn dần trên Sân Khấu! 🐒🌟\"}}",
           "xp_reward": 140
         },
         {
           "lesson_num": 4,
           "title": "Level 4: Vòng Lặp — Vũ Điệu Hình Vuông Tối Ưu",
-          "content": "Thay vì dùng 8 khối lệnh rời rạc, hãy dùng khối 'lặp lại 🔄' 4 lần kết hợp 'di chuyển' và 'quay phải ↷' để Mèo đi thành hình vuông trong tối đa 5 khối lệnh!",
+          "content": "Thay vì dùng 8 khối lệnh rời rạc, hãy dùng khối 'lặp lại 🔄' 4 lần kết hợp 'di chuyển' và 'quay phải ↷' để Chú Khỉ đi thành hình vuông trong tối đa 5 khối lệnh!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_repeat,scratch_move_steps,scratch_turn_right",
           "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_repeat\",\"scratch_move_steps\",\"scratch_turn_right\"],\"max_blocks\":5,\"runtime_assertions\":{\"min_steps_moved\":40},\"custom_success_message\":\"Đỉnh cao tư duy tối ưu! Bạn đã làm chủ Vòng Lặp (Loops) trong Scratch! 🔄✨\"}}",
@@ -3264,7 +3264,7 @@
         {
           "lesson_num": 5,
           "title": "Level 5: Cấu Trúc Điều Kiện — Phản Xạ Khi Chạm Cạnh",
-          "content": "Dùng khối 'nếu ❓ thì' kết hợp cảm biến 'đang chạm cạnh sân khấu? 🔲' để nếu Mèo đi chạm biên sân khấu thì 'bật lại nếu chạm cạnh 🔲'!",
+          "content": "Dùng khối 'nếu ❓ thì' kết hợp cảm biến 'đang chạm cạnh sân khấu? 🔲' để nếu Chú Khỉ đi chạm biên sân khấu thì 'bật lại nếu chạm cạnh 🔲'!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_move_steps,scratch_if,scratch_touching_edge,scratch_bounce_on_edge",
           "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_if\",\"scratch_touching_edge\",\"scratch_bounce_on_edge\"],\"runtime_assertions\":{\"min_steps_moved\":10},\"custom_success_message\":\"Chúc mừng bạn đã chinh phục cấu trúc rẽ nhánh điều kiện (Conditionals / If-Then)! 🔲🎯\"}}",
@@ -3282,16 +3282,16 @@
         {
           "lesson_num": 7,
           "title": "Level 7: Cảm Biến — Dò Tìm Va Chạm & Báo Động",
-          "content": "Sử dụng cảm biến 'đang chạm cạnh sân khấu? 🔲' kết hợp khối điều kiện 'nếu ... thì' để khi chạm mép thì Mèo phát âm thanh 'Meo Meo 🐱' cảnh báo!",
+          "content": "Sử dụng cảm biến 'đang chạm cạnh sân khấu? 🔲' kết hợp khối điều kiện 'nếu ... thì' để khi chạm mép thì Chú Khỉ phát âm thanh cảnh báo 🐒!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_if,scratch_touching_edge,scratch_play_sound_meow",
-          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_if\",\"scratch_touching_edge\",\"scratch_play_sound_meow\"],\"runtime_assertions\":{\"sound_played\":\"meow\"},\"custom_success_message\":\"Tuyệt hảo! Hệ thống cảm biến (Sensing) va chạm đã hoạt động chuẩn xác! 🔲🐱\"}}",
+          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_if\",\"scratch_touching_edge\",\"scratch_play_sound_meow\"],\"runtime_assertions\":{\"sound_played\":\"meow\"},\"custom_success_message\":\"Tuyệt hảo! Hệ thống cảm biến (Sensing) va chạm đã hoạt động chuẩn xác! 🔲🐒\"}}",
           "xp_reward": 220
         },
         {
           "lesson_num": 8,
           "title": "Level 8: Giao Tiếp Phát & Nhận Tin — Đồng Bộ Sự Kiện",
-          "content": "Phát tin (Broadcast) giúp các chuỗi lệnh trao đổi tín hiệu với nhau. Hãy dùng 'khi bấm cờ xanh ⛳' để 'phát tin nhắn chien_thang 📢', và dùng 'khi nhận tin nhắn chien_thang 📨' để Mèo 'nói Chiến thắng 💬'!",
+          "content": "Phát tin (Broadcast) giúp các chuỗi lệnh trao đổi tín hiệu với nhau. Hãy dùng 'khi bấm cờ xanh ⛳' để 'phát tin nhắn chien_thang 📢', và dùng 'khi nhận tin nhắn chien_thang 📨' để Chú Khỉ 'nói Chiến thắng 💬'!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_broadcast_message,scratch_when_receive_message,scratch_say_for_secs",
           "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\",\"scratch_when_receive_message\"],\"required_blocks\":[\"scratch_broadcast_message\",\"scratch_say_for_secs\"],\"runtime_assertions\":{\"broadcast_message\":\"chien_thang\",\"said_message\":\"thắng\"},\"custom_success_message\":\"Kỹ năng truyền thông điệp (Broadcast Messaging) tuyệt vời! 📢📨🎉\"}}",
@@ -3300,7 +3300,7 @@
         {
           "lesson_num": 9,
           "title": "Level 9: Cơ Chế Game — Vòng Lặp Trò Chơi (Game Loop)",
-          "content": "Xây dựng vòng lặp game hoàn chỉnh: Dùng 'liên tục 🔁' để Mèo liên tục 'di chuyển 10 bước', 'bật lại nếu chạm cạnh 🔲', và 'thay đổi [điểm] một lượng 1 ➕'!",
+          "content": "Xây dựng vòng lặp game hoàn chỉnh: Dùng 'liên tục 🔁' để Chú Khỉ liên tục 'di chuyển 10 bước', 'bật lại nếu chạm cạnh 🔲', và 'thay đổi [điểm] một lượng 1 ➕'!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_flag_clicked,scratch_forever,scratch_move_steps,scratch_bounce_on_edge,scratch_change_variable_by",
           "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_flag_clicked\"],\"required_blocks\":[\"scratch_forever\",\"scratch_move_steps\",\"scratch_bounce_on_edge\",\"scratch_change_variable_by\"],\"runtime_assertions\":{\"min_steps_moved\":30,\"min_variable_value\":{\"điểm\":3}},\"custom_success_message\":\"Quá tuyệt! Bạn đã tạo ra một Game Loop thực thụ với chuyển động và ghi điểm liên tục! 🎮🔁\"}}",
@@ -3308,11 +3308,11 @@
         },
         {
           "lesson_num": 10,
-          "title": "Level 10: Mini Project — Mèo Bắt Mồi Điều Khiển Bàn Phím",
-          "content": "Dự án nhỏ tương tác bàn phím: Khi bấm phím trên bàn phím 'khi bấm phím ⌨️', chú Mèo di chuyển về phía trước, kêu meo meo và tăng 5 điểm thưởng!",
+          "title": "Level 10: Mini Project — Khỉ Con Nhặt Chuối Điều Khiển Bàn Phím",
+          "content": "Dự án nhỏ tương tác bàn phím: Khi bấm phím trên bàn phím 'khi bấm phím ⌨️', Chú Khỉ di chuyển về phía trước, phát âm thanh vui nhộn và tăng 5 điểm thưởng!",
           "engine_type": "scratch_studio",
           "target_block_sequence": "scratch_when_key_pressed,scratch_move_steps,scratch_play_sound_meow,scratch_change_variable_by",
-          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_key_pressed\"],\"required_blocks\":[\"scratch_move_steps\",\"scratch_play_sound_meow\",\"scratch_change_variable_by\"],\"runtime_assertions\":{\"min_steps_moved\":10,\"sound_played\":\"meow\",\"min_variable_value\":{\"điểm\":5}},\"custom_success_message\":\"Chúc mừng bạn đã hoàn thành Mini Project game điều khiển bàn phím đầu tiên! ⌨️🐱🎮\"}}",
+          "start_scene_json": "{\"evaluation_config\":{\"required_events\":[\"scratch_when_key_pressed\"],\"required_blocks\":[\"scratch_move_steps\",\"scratch_play_sound_meow\",\"scratch_change_variable_by\"],\"runtime_assertions\":{\"min_steps_moved\":10,\"sound_played\":\"meow\",\"min_variable_value\":{\"điểm\":5}},\"custom_success_message\":\"Chúc mừng bạn đã hoàn thành Mini Project game điều khiển bàn phím đầu tiên! ⌨️🐒🎮\"}}",
           "xp_reward": 280
         },
         {

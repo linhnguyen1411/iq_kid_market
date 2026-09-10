@@ -112,7 +112,7 @@ export default function ScratchEngine({ question, onComplete }: GameEngineProps)
   return (
     <div className="w-full max-w-lg mx-auto flex flex-col items-center font-sans">
       <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 mb-4 text-center text-slate-700 font-bold text-xs md:text-sm w-full">
-        🤖 {question.prompt || "Lập trình các bước di chuyển đưa Mèo đến Ngôi Sao!"}
+        🤖 {question.prompt || "Lập trình các bước di chuyển đưa Khỉ con đến Ngôi Sao!"}
       </div>
 
       {/* Grid 4x4 */}
@@ -167,7 +167,7 @@ export default function ScratchEngine({ question, onComplete }: GameEngineProps)
         <div className="min-h-12 flex flex-wrap items-center gap-1.5 p-1">
           {sequence.length === 0 ? (
             <span className="text-xs text-slate-400 font-medium italic">
-              Chạm các nút mũi tên bên dưới để nạp lệnh cho Mèo robot…
+              Chạm các nút mũi tên bên dưới để nạp lệnh cho Khỉ robot…
             </span>
           ) : (
             sequence.map((cmdId, idx) => {
@@ -229,7 +229,7 @@ export default function ScratchEngine({ question, onComplete }: GameEngineProps)
         <Play className="w-4 h-4 fill-white" />
         <span>
           {isRunning
-            ? "Mèo robot đang di chuyển…"
+            ? "Khỉ robot đang di chuyển…"
             : solved
             ? "Đã giải cứu thành công! 🎉"
             : isFailed

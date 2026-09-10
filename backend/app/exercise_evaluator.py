@@ -309,7 +309,7 @@ def evaluate_exercise(
 
 BLOCK_NAMES_VN = {
     "scratch_when_flag_clicked": "Khi bấm vào cờ xanh ⛳",
-    "scratch_when_sprite_clicked": "Khi bấm vào nhân vật 🐱",
+    "scratch_when_sprite_clicked": "Khi bấm vào nhân vật 🐒",
     "scratch_when_key_pressed": "Khi bấm phím ⌨️",
     "scratch_broadcast_message": "Phát tin nhắn 📢",
     "scratch_when_receive_message": "Khi nhận tin nhắn 📨",
@@ -327,7 +327,7 @@ BLOCK_NAMES_VN = {
     "scratch_set_size_to": "Đặt kích thước",
     "scratch_show": "Hiện 👁️",
     "scratch_hide": "Ẩn 🙈",
-    "scratch_play_sound_meow": "Phát âm thanh Meo Meo 🐱",
+    "scratch_play_sound_meow": "Phát âm thanh vui nhộn 🐒🎶",
     "scratch_play_drum": "Đánh trống nhịp 🥁",
     "scratch_wait_secs": "Đợi giây ⏳",
     "scratch_repeat": "Lặp lại N lần 🔄",
@@ -419,7 +419,7 @@ def evaluate_scratch_studio(
             return (
                 False,
                 f"Kịch bản còn thiếu khối sự kiện '{name_vn}'!",
-                "Mọi kịch bản Scratch cần bắt đầu bằng khối sự kiện (như Cờ Xanh ⛳ hoặc Nhấp vào Sprite 🐱).",
+                "Mọi kịch bản Scratch cần bắt đầu bằng khối sự kiện (như Cờ Xanh ⛳ hoặc Nhấp vào Sprite 🐒).",
             )
 
     # 4. Kiểm tra các khái niệm / khối lệnh bắt buộc (required_blocks)
@@ -523,7 +523,7 @@ def evaluate_scratch_studio(
         expected_sound = str(runtime_assertions["sound_played"]).strip().lower()
         sounds = [str(s).strip().lower() for s in actions.get("sounds_played", [])]
         if expected_sound not in sounds:
-            sound_name = "tiếng Meo Meo 🐱" if expected_sound == "meow" else f"âm thanh {expected_sound}"
+            sound_name = "âm thanh vui nhộn 🐒" if expected_sound == "meow" else f"âm thanh {expected_sound}"
             return (
                 False,
                 f"Chưa nghe thấy {sound_name} được phát ra trong kịch bản.",
@@ -571,7 +571,7 @@ def evaluate_scratch_studio(
 
     success_msg = (
         eval_cfg.get("custom_success_message")
-        or "Tuyệt vời! Bạn đã hoàn thành xuất sắc thử thách Scratch Studio! 🐱🎉🚀"
+        or "Tuyệt vời! Bạn đã hoàn thành xuất sắc thử thách Scratch Studio! 🐒🎉🚀"
     )
     return (True, success_msg, None)
 

@@ -233,7 +233,7 @@ class ScratchProject(Base):
     user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String(200), nullable=False, default="Dự Án Scratch Của Bé")
     description = Column(Text, nullable=True)
-    thumbnail = Column(String(20), default="🐱")
+    thumbnail = Column(String(20), default="🐒")
     project_data = Column(Text, nullable=False)  # JSON string lưu workspace XML, sprite state, telemetry
     is_public = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)

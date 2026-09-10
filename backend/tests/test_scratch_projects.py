@@ -28,9 +28,9 @@ def test_scratch_project_crud(client, student_auth):
     create_res = client.post(
         "/api/scratch/projects",
         json={
-            "title": "Mèo Con Nhảy Múa 🐱",
+            "title": "Khỉ Con Nhảy Múa 🐒",
             "description": "Dự án Scratch đầu tay",
-            "thumbnail": "🐱",
+            "thumbnail": "🐒",
             "project_data": sample_data,
             "is_public": False,
         },
@@ -38,7 +38,7 @@ def test_scratch_project_crud(client, student_auth):
     )
     assert create_res.status_code == 200
     proj = create_res.json()
-    assert proj["title"] == "Mèo Con Nhảy Múa 🐱"
+    assert proj["title"] == "Khỉ Con Nhảy Múa 🐒"
     assert proj["user_id"] == user_id
     assert proj["project_data"]["sprite"]["x"] == 50
     proj_id = proj["id"]
