@@ -52,72 +52,78 @@ export default function UnifiedExerciseRenderer({
   switch (engineType) {
     case 'block_sequence':
       return (
-        <BlockSequenceExercise
-          key={engineKey}
-          lesson={normalizedLesson}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <BlockSequenceExercise
+            lesson={normalizedLesson}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
 
     case 'block_quiz':
       return (
-        <BlockQuizExercise
-          key={engineKey}
-          lesson={normalizedLesson}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <BlockQuizExercise
+            lesson={normalizedLesson}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
 
     case 'block_predict':
       return (
-        <BlockPredictExercise
-          key={engineKey}
-          lesson={normalizedLesson}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <BlockPredictExercise
+            lesson={normalizedLesson}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
 
     case 'block_debug':
       return (
-        <BlockDebugExercise
-          key={engineKey}
-          lesson={normalizedLesson}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <BlockDebugExercise
+            lesson={normalizedLesson}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
 
     case 'scratch_studio':
       return (
-        <ScratchStudioEngine
-          key={engineKey}
-          lesson={normalizedLesson}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <ScratchStudioEngine
+            lesson={normalizedLesson}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
 
     case 'algorithm_maze':
     default:
       return (
-        <AlgorithmMazeEngine
-          key={engineKey}
-          lesson={{
-            lesson_num: normalizedLesson.lesson_num,
-            title: normalizedLesson.title,
-            content: normalizedLesson.content,
-            target_block_sequence: Array.isArray(normalizedLesson.target_block_sequence)
-              ? normalizedLesson.target_block_sequence.join(',')
-              : String(normalizedLesson.target_block_sequence || ''),
-            start_scene_json: normalizedLesson.start_scene_json,
-            xp_reward: normalizedLesson.xp_reward,
-          }}
-          onLessonComplete={onLessonComplete}
-          onBack={onBack}
-        />
+        <React.Fragment key={engineKey}>
+          <AlgorithmMazeEngine
+            lesson={{
+              lesson_num: normalizedLesson.lesson_num,
+              title: normalizedLesson.title,
+              content: normalizedLesson.content,
+              target_block_sequence: Array.isArray(normalizedLesson.target_block_sequence)
+                ? normalizedLesson.target_block_sequence.join(',')
+                : String(normalizedLesson.target_block_sequence || ''),
+              start_scene_json: normalizedLesson.start_scene_json,
+              xp_reward: normalizedLesson.xp_reward,
+            }}
+            onLessonComplete={onLessonComplete}
+            onBack={onBack}
+          />
+        </React.Fragment>
       );
   }
 }
