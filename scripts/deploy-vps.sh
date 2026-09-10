@@ -125,8 +125,18 @@ echo "   Kết quả API Health: $HEALTH_STATUS"
 
 # 7.2 Kiểm tra API Wallet thông tin Techcombank
 echo "👉 Kiểm tra thông tin thụ hưởng Techcombank trên API mới..."
+AUTH_TOKEN=$(curl -s -k -X POST "https://iqkids.odxpo.com/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "kid_binh", "password": "password123"}' | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4 || true)
+if [ -z "$AUTH_TOKEN" ]; then
+  AUTH_TOKEN=$(curl -s -k -X POST "https://iqkids.odxpo.com/api/auth/login" \
+    -H "Content-Type: application/json" \
+    -d '{"username": "admin", "password": "password123"}' | grep -o '"access_token":"[^"]*"' | cut -d'"' -f4 || true)
+fi
+
 WALLET_TEST=$(curl -s -k -X POST "https://iqkids.odxpo.com/api/wallet/create-topup-intent" \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ${AUTH_TOKEN}" \
   -d '{"userId": "u1", "amount": 50000}' || true)
 echo "   Phản hồi API Ví:"
 echo "$WALLET_TEST" | grep -o '"bank_name":"[^"]*"' || true
