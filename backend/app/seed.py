@@ -42,9 +42,9 @@ DEFAULT_USERS = [
 ]
 
 DEFAULT_WALLETS = {
-    "u1": {"balance": 90000, "tx": [("tx_1", 90000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
-    "u2": {"balance": 500000, "tx": [("tx_2", 500000, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
-    "u3": {"balance": 1000000, "tx": [("tx_3", 1000000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T07:15:00Z")]},
+    "u1": {"balance": 90, "tx": [("tx_1", 90, "nạp tiền", "Được tặng ban đầu", "2026-06-22T10:00:00Z")]},
+    "u2": {"balance": 500, "tx": [("tx_2", 500, "nạp tiền", "Nạp qua QR", "2026-06-22T08:00:00Z")]},
+    "u3": {"balance": 1000, "tx": [("tx_3", 1000, "nạp tiền", "Được tặng ban đầu", "2026-06-22T07:15:00Z")]},
     "u_admin": {"balance": 0, "tx": []},
 }
 

@@ -21,7 +21,7 @@ export const NavigationTabs: React.FC = () => {
   ];
 
   if (isStudent) {
-    tabs.push({ to: paths.wallet, label: 'Ví Xu', icon: <CreditCard className="w-4 h-4" /> });
+    tabs.push({ to: paths.wallet, label: 'Ví Sao IQ', icon: <CreditCard className="w-4 h-4" /> });
   }
 
   if (isTeacherStudio) {

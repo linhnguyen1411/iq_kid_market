@@ -2,8 +2,8 @@
 
 DEFAULT_LEVEL_COUNT = 20
 FREE_LEVEL_COUNT = 5
-# Giá mở khóa 15 màn còn lại khi AI tạo game (xu)
-DEFAULT_UNLOCK_PRICE = 15000
+# Giá mở khóa 15 màn còn lại khi AI tạo game (Sao IQ)
+DEFAULT_UNLOCK_PRICE = 15
 
 # Thể loại chỉ dùng text/emoji/JSON — giáo viên import pack không cần upload media
 TEXT_PACK_TEMPLATES = frozenset({

@@ -3,11 +3,11 @@ from app import models
 
 
 def test_insufficient_balance_error(client, student_auth, teacher_auth, db_session):
-    # Giáo viên tạo game 150.000 xu (vượt số dư 90k của học sinh)
+    # Học sinh mới có 0 Token, giáo viên tạo game 50 Token -> Không đủ số dư
     game = models.Game(
         id="expensive_game_1",
         title="Toán Học Siêu Cấp 💎",
-        price=150000,
+        price=50,
         template_code="math",
         creator_id=teacher_auth["user_id"],
         creator_name="Cô Lan Pytest",
@@ -26,11 +26,16 @@ def test_insufficient_balance_error(client, student_auth, teacher_auth, db_sessi
 
 
 def test_purchase_game_and_revenue_sharing(client, student_auth, teacher_auth, db_session):
-    # Tạo game 30.000 xu
+    # Cấp 90 Token cho học sinh để test mua game
+    w_student = db_session.get(models.Wallet, student_auth["user_id"])
+    w_student.balance = 90
+    db_session.commit()
+
+    # Tạo game 30 Token
     game = models.Game(
         id="share_game_1",
         title="Khám Phá Vũ Trụ 🚀",
-        price=30000,
+        price=30,
         template_code="quiz",
         creator_id=teacher_auth["user_id"],
         creator_name="Cô Lan Pytest",
@@ -39,7 +44,6 @@ def test_purchase_game_and_revenue_sharing(client, student_auth, teacher_auth, d
     db_session.add(game)
     db_session.commit()
 
-    # Học sinh ví 90.000, Giáo viên ví 500.000
     res = client.post("/api/games/purchase", json={
         "userId": student_auth["user_id"],
         "gameId": "share_game_1",
@@ -49,15 +53,20 @@ def test_purchase_game_and_revenue_sharing(client, student_auth, teacher_auth, d
     assert res.json()["success"] is True
 
     # Kiểm tra số dư ví
-    w_student = db_session.get(models.Wallet, student_auth["user_id"])
+    db_session.refresh(w_student)
     w_teacher = db_session.get(models.Wallet, teacher_auth["user_id"])
 
-    assert w_student.balance == 60000  # 90k - 30k
-    assert w_teacher.balance == 524000  # 500k + (30k * 80% = 24k)
+    assert w_student.balance == 60  # 90 - 30
+    assert w_teacher.balance == 24  # 0 + (30 * 80% = 24)
 
 
 def test_prevent_duplicate_purchase(client, student_auth, db_session):
-    # Game g2 trong seed giá 25k
+    # Cấp 50 Token cho học sinh
+    w_student = db_session.get(models.Wallet, student_auth["user_id"])
+    w_student.balance = 50
+    db_session.commit()
+
+    # Game g2 trong seed giá 15 Token
     res1 = client.post("/api/games/purchase", json={
         "userId": student_auth["user_id"],
         "gameId": "g2",
@@ -73,7 +82,7 @@ def test_prevent_duplicate_purchase(client, student_auth, db_session):
 
 
 def test_create_and_confirm_topup(client, student_auth, db_session):
-    # Sinh mã nạp tiền VietQR
+    # Sinh mã nạp tiền VietQR 50.000 VND
     res_intent = client.post("/api/wallet/create-topup-intent", json={
         "userId": student_auth["user_id"],
         "amount": 50000,
@@ -82,14 +91,14 @@ def test_create_and_confirm_topup(client, student_auth, db_session):
     tx_id = res_intent.json()["tx_id"]
     assert "vietqr.io" in res_intent.json()["qr_url"]
 
-    # Xác nhận nạp tiền
+    # Xác nhận nạp tiền: 50.000 VND -> 50 Token
     res_confirm = client.post("/api/wallet/confirm-topup", json={
         "userId": student_auth["user_id"],
         "amount": 50000,
         "tx_id": tx_id,
     }, headers=student_auth["headers"])
     assert res_confirm.status_code == 200
-    assert res_confirm.json()["balance"] == 140000  # 90k + 50k
+    assert res_confirm.json()["balance"] == 50  # 0 + 50 Token
 
     # Xác nhận trùng lặp -> Chặn 400
     res_duplicate = client.post("/api/wallet/confirm-topup", json={

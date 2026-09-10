@@ -178,7 +178,7 @@ def purchase_game(
     if wallet.balance < game.price:
         raise HTTPException(
             status_code=400,
-            detail=f"Số dư xu trong ví ({wallet.balance:,} xu) không đủ để mua game này ({game.price:,} xu). Vui lòng nạp thêm!",
+            detail=f"Số dư trong ví ({wallet.balance:,} Sao IQ) không đủ để mua game này ({game.price:,} Sao IQ). Vui lòng nạp thêm!",
         )
 
     # 4. Trừ tiền người mua & Lưu transaction log

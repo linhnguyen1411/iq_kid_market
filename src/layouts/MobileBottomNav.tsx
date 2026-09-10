@@ -27,7 +27,7 @@ export const MobileBottomNav: React.FC = () => {
     : isTeacherOrCreator
     ? { to: paths.studio, label: 'Studio', icon: <Settings className="w-5 h-5" /> }
     : isStudent
-    ? { to: paths.wallet, label: 'Ví xu', icon: <Coins className="w-5 h-5" /> }
+    ? { to: paths.wallet, label: 'Ví Sao IQ', icon: <Coins className="w-5 h-5" /> }
     : { to: paths.profile, label: 'Tài khoản', icon: <UserIcon className="w-5 h-5" /> };
 
   const navItems: MobileNavItem[] = [

@@ -15,6 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .database import Base, engine, SessionLocal
 from .routers import session, games, wallet, attempts, admin, misc, auth, scratch, quests, projects
 from . import seed as seed_module
+from .migrate_currency import run_currency_migration
 
 app = FastAPI(title="IQ Kids Market API", version="1.0.0")
 
@@ -75,6 +76,7 @@ def on_startup():
         seed_module.ensure_admin_user(db)
         seed_module.ensure_game_categories(db)
         seed_module.ensure_scratch_catalog(db)
+        run_currency_migration(db)
 
 
 @app.get("/api/health")

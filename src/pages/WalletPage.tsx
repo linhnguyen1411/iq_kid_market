@@ -42,7 +42,7 @@ export const WalletPage: React.FC = () => {
     return (
       <div className="mx-auto max-w-lg rounded-3xl border border-amber-100 bg-white p-8 text-center shadow-sm">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl">🪙</div>
-        <h2 className="mb-2 text-xl font-black text-slate-800">Đăng nhập để mở ví xu</h2>
+        <h2 className="mb-2 text-xl font-black text-slate-800">Đăng nhập để mở ví Sao IQ</h2>
         <p className="mb-5 text-sm text-slate-500">
           Ví và lịch sử giao dịch chỉ khả dụng sau khi xác thực JWT.
         </p>
@@ -58,11 +58,11 @@ export const WalletPage: React.FC = () => {
   }
 
   const topupOptions = [
-    { amount: 20000, label: '20.000 xu', bonus: '+0%' },
-    { amount: 50000, label: '50.000 xu', bonus: '+10% bonus', popular: true },
-    { amount: 100000, label: '100.000 xu', bonus: '+20% bonus' },
-    { amount: 200000, label: '200.000 xu', bonus: '+25% bonus' },
-    { amount: 500000, label: '500.000 xu', bonus: '+30% bonus' },
+    { amount: 10000, label: '10 Sao IQ', vnd: '10.000đ', bonus: '+0%' },
+    { amount: 20000, label: '20 Sao IQ', vnd: '20.000đ', bonus: '+0%' },
+    { amount: 50000, label: '50 Sao IQ', vnd: '50.000đ', bonus: '+10% bonus', popular: true },
+    { amount: 100000, label: '100 Sao IQ', vnd: '100.000đ', bonus: '+20% bonus' },
+    { amount: 200000, label: '200 Sao IQ', vnd: '200.000đ', bonus: '+25% bonus' },
   ];
 
   const handleCreateIntent = async () => {
@@ -126,7 +126,7 @@ export const WalletPage: React.FC = () => {
           <div className="z-10 my-auto">
             <span className="text-xs text-slate-400 block mb-1">Số dư khả dụng</span>
             <div className="text-3xl md:text-4xl font-black text-amber-400 font-mono tracking-tight">
-              {(wallet?.balance || 0).toLocaleString('vi-VN')} <span className="text-lg text-white font-sans">xu</span>
+              {(wallet?.balance || 0).toLocaleString('vi-VN')} <span className="text-lg text-white font-sans">Sao IQ</span>
             </div>
           </div>
 
@@ -145,10 +145,10 @@ export const WalletPage: React.FC = () => {
           <div>
             <h3 className="text-base font-black text-slate-800 mb-1 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-indigo-600" />
-              <span>NẠP XU VÀO VÍ</span>
+              <span>NẠP SAO IQ VÀO VÍ</span>
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Chọn mệnh giá nạp qua quét mã VietQR ngân hàng Napas 24/7 tự động
+              Chọn mệnh giá nạp qua quét mã VietQR ngân hàng Napas 24/7 tự động (1 Sao IQ = 1.000đ)
             </p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
@@ -163,6 +163,7 @@ export const WalletPage: React.FC = () => {
                   }`}
                 >
                   <span className="text-xs font-black text-slate-800 block">{opt.label}</span>
+                  <span className="text-[11px] text-slate-500 font-medium block">{opt.vnd}</span>
                   <span className="text-[10px] text-indigo-600 font-bold block mt-0.5">{opt.bonus}</span>
                 </button>
               ))}
@@ -175,7 +176,7 @@ export const WalletPage: React.FC = () => {
             className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all"
           >
             <QrCode className="w-4 h-4" />
-            <span>SINH MÃ VIETQR ({topupAmount.toLocaleString('vi-VN')} Đ)</span>
+            <span>SINH MÃ VIETQR ({topupAmount.toLocaleString('vi-VN')} đ → {topupAmount / 1000} SAO IQ)</span>
           </button>
         </div>
       </div>
@@ -212,7 +213,7 @@ export const WalletPage: React.FC = () => {
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
               <span className="text-[10px] text-slate-300 font-bold uppercase block mb-1">Tổng Thu Nhập</span>
               <span className="text-2xl font-black text-amber-300 font-mono">
-                {(creatorEarnings.totalRevenue || 0).toLocaleString('vi-VN')} xu
+                {(creatorEarnings.totalRevenue || 0).toLocaleString('vi-VN')} Sao IQ
               </span>
             </div>
 
@@ -267,7 +268,7 @@ export const WalletPage: React.FC = () => {
                   tx.amount > 0 ? 'text-emerald-600' : 'text-slate-800'
                 }`}
               >
-                {tx.amount > 0 ? `+${tx.amount.toLocaleString('vi-VN')}` : `${tx.amount.toLocaleString('vi-VN')}`} xu
+                {tx.amount > 0 ? `+${tx.amount.toLocaleString('vi-VN')}` : `${tx.amount.toLocaleString('vi-VN')}`} Sao IQ
               </span>
             </div>
           ))}
@@ -296,7 +297,7 @@ export const WalletPage: React.FC = () => {
             </span>
 
             <h3 className="text-base sm:text-lg font-black text-slate-800 mt-2 mb-1">
-              Quét Mã Để Nạp {topupIntent.amount.toLocaleString('vi-VN')} Xu
+              Quét Mã Để Nhận {(topupIntent.amount / 1000).toLocaleString('vi-VN')} Sao IQ ({topupIntent.amount.toLocaleString('vi-VN')}đ)
             </h3>
             <p className="text-[11px] sm:text-xs text-slate-400 mb-3">
               Mở App Ngân hàng bất kỳ để quét mã QR Napas thanh toán tức thì

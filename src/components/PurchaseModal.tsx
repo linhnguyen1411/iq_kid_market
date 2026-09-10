@@ -99,7 +99,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 <h4 className="text-sm font-black text-slate-800 line-clamp-1">{game.title}</h4>
                 <span className="text-xs text-slate-500 block">5 màn đầu miễn phí · mở khóa phần còn lại</span>
                 <span className="text-xs font-mono font-black text-pink-600">
-                  {game.price.toLocaleString('vi-VN')} xu
+                  {game.price.toLocaleString('vi-VN')} Sao IQ
                 </span>
               </div>
             </div>
@@ -108,22 +108,22 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-2 text-xs mb-4">
               <div className="flex items-center justify-between text-slate-600">
                 <span>Số dư ví hiện tại:</span>
-                <span className="font-mono font-bold text-slate-800">{safeBalance.toLocaleString('vi-VN')} xu</span>
+                <span className="font-mono font-bold text-slate-800">{safeBalance.toLocaleString('vi-VN')} Sao IQ</span>
               </div>
 
               <div className="flex items-center justify-between text-slate-600">
                 <span>Giá mở khóa màn còn lại:</span>
-                <span className="font-mono font-bold text-pink-600">-{game.price.toLocaleString('vi-VN')} xu</span>
+                <span className="font-mono font-bold text-pink-600">-{game.price.toLocaleString('vi-VN')} Sao IQ</span>
               </div>
 
               <div className="pt-2 border-t border-slate-200 flex items-center justify-between font-bold">
                 <span className={isBalanceEnough ? 'text-slate-700' : 'text-rose-600'}>
-                  {isBalanceEnough ? 'Số dư sau thanh toán:' : 'Số xu còn thiếu:'}
+                  {isBalanceEnough ? 'Số dư sau thanh toán:' : 'Số Sao IQ còn thiếu:'}
                 </span>
                 <span className={`font-mono font-black ${isBalanceEnough ? 'text-emerald-600' : 'text-rose-600'}`}>
                   {isBalanceEnough
-                    ? `${remainingBalance.toLocaleString('vi-VN')} xu`
-                    : `${Math.abs(remainingBalance).toLocaleString('vi-VN')} xu`}
+                    ? `${remainingBalance.toLocaleString('vi-VN')} Sao IQ`
+                    : `${Math.abs(remainingBalance).toLocaleString('vi-VN')} Sao IQ`}
                 </span>
               </div>
             </div>
@@ -144,12 +144,12 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                 className="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-98"
               >
                 <Coins className="w-4 h-4 text-amber-300" />
-                <span>{loading ? 'Đang mở khóa...' : `MỞ KHÓA BẰNG ${game.price.toLocaleString('vi-VN')} XU 🪙`}</span>
+                <span>{loading ? 'Đang mở khóa...' : `MỞ KHÓA BẰNG ${game.price.toLocaleString('vi-VN')} SAO IQ ⭐`}</span>
               </button>
             ) : (
               <div className="space-y-2">
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs font-medium text-center">
-                  ⚠️ Số dư trong ví của bạn không đủ để mua game này. Hãy nạp thêm xu để tiếp tục!
+                  ⚠️ Số dư trong ví của bạn không đủ để mua game này. Hãy nạp thêm Sao IQ để tiếp tục!
                 </div>
                 <button
                   type="button"
@@ -160,7 +160,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({
                   className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:opacity-95 text-white rounded-2xl font-black text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <CreditCard className="w-4 h-4" />
-                  <span>NẠP THÊM XU VÀO VÍ NGAY ⚡</span>
+                  <span>NẠP THÊM SAO IQ VÀO VÍ NGAY ⚡</span>
                 </button>
               </div>
             )}

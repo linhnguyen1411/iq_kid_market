@@ -153,7 +153,7 @@ export const ScratchPage: React.FC = () => {
     const price = purchasingCourse.price || 0;
     const userBalance = Number(wallet?.balance || 0);
     if (userBalance < price) {
-      setPurchaseError(`Số dư ví (${userBalance.toLocaleString()} xu) không đủ để mua khóa học này (${price.toLocaleString()} xu). Bé hãy nhờ phụ huynh nạp thêm xu nhé!`);
+      setPurchaseError(`Số dư ví (${userBalance.toLocaleString()} Sao IQ) không đủ để mua khóa học này (${price.toLocaleString()} Sao IQ). Bé hãy nhờ phụ huynh nạp thêm Sao IQ nhé!`);
       return;
     }
 

@@ -1,6 +1,7 @@
 import os
 import time
 import re
+import uuid
 from copy import deepcopy
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
@@ -8,7 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 from .. import models, schemas
 from ..database import get_db
-from ..auth_utils import require_roles, get_current_user_optional
+from ..auth_utils import require_roles, get_current_user_optional, hash_password
 from ..default_templates import build_default_level, default_thumbnail
 from ..ai_content import (
     generate_fallback_game,
@@ -761,6 +762,170 @@ def list_users(
         payload["wallet_balance"] = u.wallet.balance if u.wallet else 0
         result.append(payload)
     return result
+
+
+@router.post("/users")
+def admin_create_user(
+    body: schemas.AdminCreateUserIn,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    """Tạo người dùng mới trực tiếp từ Admin CMS."""
+    username_clean = body.username.strip().lower()
+    if not username_clean or len(username_clean) < 3:
+        raise HTTPException(status_code=400, detail="Tên đăng nhập phải có ít nhất 3 ký tự!")
+    existing = db.query(models.User).filter(models.User.username == username_clean).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Tên đăng nhập @{username_clean} đã tồn tại!")
+    if not body.password or len(body.password) < 4:
+        raise HTTPException(status_code=400, detail="Mật khẩu phải có ít nhất 4 ký tự!")
+
+    user_id = f"u_{int(time.time() * 1000)}_{uuid.uuid4().hex[:4]}"
+    role = body.role if body.role in ["student", "teacher", "creator", "admin"] else "student"
+    initial_balance = max(0, int(body.initial_balance or 0))
+
+    new_user = models.User(
+        id=user_id,
+        username=username_clean,
+        password_hash=hash_password(body.password),
+        name=body.name.strip() or f"Thành viên {username_clean}",
+        role=role,
+        grade=body.grade if role == "student" else None,
+        avatar=body.avatar or "smile_tiger",
+        xp=100 if role == "student" else 0,
+        level=1,
+        streak=1 if role == "student" else 0,
+    )
+    db.add(new_user)
+    db.flush()
+
+    new_wallet = models.Wallet(user_id=user_id, balance=initial_balance)
+    db.add(new_wallet)
+    if initial_balance > 0:
+        db.add(models.WalletTransaction(
+            id=f"tx_admin_init_{int(time.time()*1000)}",
+            wallet_user_id=user_id,
+            amount=initial_balance,
+            type="nạp tiền",
+            detail=f"Quản trị viên cấp ban đầu (+{initial_balance} Sao IQ)",
+        ))
+
+    if role == "student":
+        db.add(models.Purchase(user_id=user_id, game_id="g1", purchased_price=0))
+
+    db.commit()
+    db.refresh(new_user)
+    return {
+        "success": True,
+        "message": f"Tạo người dùng @{username_clean} thành công!",
+        "user": {
+            **schemas.UserOut.model_validate(new_user).model_dump(),
+            "wallet_balance": initial_balance,
+            "created_at": new_user.created_at.isoformat() if new_user.created_at else None,
+        },
+    }
+
+
+@router.put("/users/{user_id}")
+def admin_update_user(
+    user_id: str,
+    body: schemas.AdminUpdateUserIn,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    """Cập nhật thông tin, đổi mật khẩu và điều chỉnh số dư Sao IQ của người dùng."""
+    target_user = db.get(models.User, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng!")
+
+    if body.name is not None:
+        name_clean = body.name.strip()
+        if not name_clean:
+            raise HTTPException(status_code=400, detail="Họ tên không được để trống!")
+        target_user.name = name_clean
+
+    if body.role is not None and body.role in ["student", "teacher", "creator", "admin"]:
+        if target_user.id == current_user.id and body.role != "admin":
+            raise HTTPException(status_code=400, detail="Không thể tự hạ quyền Admin của chính bạn!")
+        target_user.role = body.role
+
+    if body.grade is not None:
+        target_user.grade = body.grade
+    if body.avatar is not None:
+        target_user.avatar = body.avatar
+
+    # Đổi mật khẩu nếu cung cấp
+    if body.password:
+        if len(body.password) < 4:
+            raise HTTPException(status_code=400, detail="Mật khẩu mới phải có ít nhất 4 ký tự!")
+        target_user.password_hash = hash_password(body.password)
+
+    # Điều chỉnh số dư ví Sao IQ
+    if body.wallet_balance is not None:
+        new_bal = max(0, int(body.wallet_balance))
+        wallet = target_user.wallet
+        if not wallet:
+            wallet = models.Wallet(user_id=target_user.id, balance=new_bal)
+            db.add(wallet)
+        else:
+            diff = new_bal - wallet.balance
+            wallet.balance = new_bal
+            if diff != 0:
+                db.add(models.WalletTransaction(
+                    id=f"tx_admin_adj_{int(time.time()*1000)}",
+                    wallet_user_id=target_user.id,
+                    amount=diff,
+                    type="điều chỉnh",
+                    detail=f"Quản trị viên điều chỉnh số dư ({'+' if diff > 0 else ''}{diff} Sao IQ)",
+                ))
+
+    db.commit()
+    db.refresh(target_user)
+    return {
+        "success": True,
+        "message": f"Cập nhật thông tin @{target_user.username} thành công!",
+        "user": {
+            **schemas.UserOut.model_validate(target_user).model_dump(),
+            "wallet_balance": target_user.wallet.balance if target_user.wallet else 0,
+            "created_at": target_user.created_at.isoformat() if target_user.created_at else None,
+        },
+    }
+
+
+@router.delete("/users/{user_id}")
+def admin_delete_user(
+    user_id: str,
+    current_user: models.User = Depends(require_roles(["admin"])),
+    db: Session = Depends(get_db),
+):
+    """Xóa vĩnh viễn người dùng và dữ liệu liên quan."""
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Không thể xóa tài khoản Admin đang đăng nhập!")
+
+    target_user = db.get(models.User, user_id)
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Không tìm thấy người dùng để xóa!")
+
+    # Cascade xóa an toàn các bảng phụ thuộc
+    db.query(models.WalletTransaction).filter(models.WalletTransaction.wallet_user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Wallet).filter(models.Wallet.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Purchase).filter(models.Purchase.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.CoursePurchase).filter(models.CoursePurchase.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.UserScratchProgress).filter(models.UserScratchProgress.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.ScratchProject).filter(models.ScratchProject.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.UserDailyQuest).filter(models.UserDailyQuest.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.UserAchievement).filter(models.UserAchievement.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.UserDailySpin).filter(models.UserDailySpin.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.LoginRewardClaim).filter(models.LoginRewardClaim.user_id == user_id).delete(synchronize_session=False)
+    db.query(models.Attempt).filter(models.Attempt.user_id == user_id).delete(synchronize_session=False)
+
+    db.delete(target_user)
+    db.commit()
+
+    return {
+        "success": True,
+        "message": f"Đã xóa vĩnh viễn người dùng @{target_user.username} thành công!",
+    }
 
 
 @router.get("/games/inventory")

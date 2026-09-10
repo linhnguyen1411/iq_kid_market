@@ -26,6 +26,24 @@ const ROLE_LABEL: Record<string, string> = {
   member: 'Thành viên',
 };
 
+const AVATAR_OPTIONS = [
+  { id: 'smile_tiger', label: 'Hổ Trí Tuệ', emoji: '🐯' },
+  { id: 'logic_owl', label: 'Cú Logic', emoji: '🦉' },
+  { id: 'cool_fox', label: 'Cáo Nhanh Trí', emoji: '🦊' },
+  { id: 'smart_panda', label: 'Gấu Panda', emoji: '🐼' },
+  { id: 'quick_rabbit', label: 'Thỏ Siêu Phàm', emoji: '🐰' },
+  { id: 'brave_dragon', label: 'Rồng Dũng Cảm', emoji: '🐲' },
+];
+
+const AVATAR_EMOJI: Record<string, string> = {
+  smile_tiger: '🐯',
+  logic_owl: '🦉',
+  cool_fox: '🦊',
+  smart_panda: '🐼',
+  quick_rabbit: '🐰',
+  brave_dragon: '🐲',
+};
+
 const GAME_CATEGORIES: Array<{ value: string; label: string }> = [
   { value: 'iq', label: 'Tư Duy IQ Não Bộ' },
   { value: 'math', label: 'Toán Học Logic' },
@@ -62,11 +80,29 @@ export default function AdminCmsPage() {
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [userRoleFilter, setUserRoleFilter] = useState('all');
-  const [gameStatusFilter, setGameStatusFilter] = useState('pending_review');
+  const [gameStatusFilter, setGameStatusFilter] = useState('all');
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [previewLevelIdx, setPreviewLevelIdx] = useState(0);
   const [editCategory, setEditCategory] = useState('iq');
   const [savingCategory, setSavingCategory] = useState(false);
+
+  // User CRUD States
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [createUsername, setCreateUsername] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [createName, setCreateName] = useState('');
+  const [createRole, setCreateRole] = useState('student');
+  const [createGrade, setCreateGrade] = useState('1');
+  const [createInitialBalance, setCreateInitialBalance] = useState('0');
+  const [createAvatar, setCreateAvatar] = useState('smile_tiger');
+
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editRole, setEditRole] = useState('student');
+  const [editGrade, setEditGrade] = useState('1');
+  const [editAvatar, setEditAvatar] = useState('smile_tiger');
+  const [editNewPassword, setEditNewPassword] = useState('');
+  const [editWalletBalance, setEditWalletBalance] = useState('0');
 
   const [newCatCode, setNewCatCode] = useState('');
   const [newCatLabel, setNewCatLabel] = useState('');
@@ -352,118 +388,244 @@ export default function AdminCmsPage() {
     }
   };
 
+  const handleOpenCreateUser = () => {
+    setCreateUsername('');
+    setCreatePassword('');
+    setCreateName('');
+    setCreateRole('student');
+    setCreateGrade('1');
+    setCreateInitialBalance('0');
+    setCreateAvatar('smile_tiger');
+    setShowCreateUserModal(true);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createUsername.trim() || !createPassword.trim() || !createName.trim()) {
+      setMsg({ type: 'err', text: 'Vui lòng nhập đầy đủ tên đăng nhập, mật khẩu và họ tên.' });
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      await api.admin.createUser({
+        username: createUsername.trim(),
+        password: createPassword.trim(),
+        name: createName.trim(),
+        role: createRole,
+        grade: createRole === 'student' ? createGrade : undefined,
+        avatar: createAvatar,
+        initial_balance: Number(createInitialBalance) || 0,
+      });
+      setShowCreateUserModal(false);
+      setMsg({ type: 'ok', text: `Tạo tài khoản @${createUsername.trim()} thành công!` });
+      await loadUsers();
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message || 'Không thể tạo người dùng' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenEditUser = (u: any) => {
+    setEditingUser(u);
+    setEditName(u.name || '');
+    setEditRole(u.role || 'student');
+    setEditGrade(u.grade ? String(u.grade) : '1');
+    setEditAvatar(u.avatar || 'smile_tiger');
+    setEditNewPassword('');
+    setEditWalletBalance(String(u.wallet_balance ?? 0));
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    if (!editName.trim()) {
+      setMsg({ type: 'err', text: 'Họ tên không được để trống.' });
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      await api.admin.updateUser(editingUser.id, {
+        name: editName.trim(),
+        role: editRole,
+        grade: editRole === 'student' ? editGrade : undefined,
+        avatar: editAvatar,
+        password: editNewPassword.trim() ? editNewPassword.trim() : undefined,
+        wallet_balance: Number(editWalletBalance) || 0,
+      });
+      setEditingUser(null);
+      setMsg({ type: 'ok', text: `Đã cập nhật thông tin người dùng @${editingUser.username}!` });
+      await loadUsers();
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message || 'Không thể cập nhật người dùng' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (u: any) => {
+    if (u.id === user?.id) {
+      alert('Không thể xóa tài khoản Admin đang đăng nhập!');
+      return;
+    }
+    if (!window.confirm(`Bạn có chắc muốn xóa tài khoản @${u.username} (${u.name})? Toàn bộ ví, tiến độ học, game đã mua sẽ bị xoá vĩnh viễn.`)) {
+      return;
+    }
+    setLoading(true);
+    setMsg(null);
+    try {
+      await api.admin.deleteUser(u.id);
+      setMsg({ type: 'ok', text: `Đã xóa tài khoản @${u.username} thành công!` });
+      await loadUsers();
+    } catch (err: any) {
+      setMsg({ type: 'err', text: err.message || 'Không thể xoá người dùng' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6 text-left">
-      {/* Hero */}
-      <div className="rounded-3xl border border-indigo-100 bg-gradient-to-tr from-slate-900 via-indigo-950 to-purple-900 text-white p-6 md:p-8 shadow-xl relative overflow-hidden">
-        <div className="absolute -right-8 -top-8 w-40 h-40 rounded-full bg-pink-500/20 blur-2xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-300 mb-1">IQ Kids · Admin CMS</p>
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight">Quản trị hệ thống</h1>
-            <p className="text-sm text-indigo-200/90 mt-1">
-              Xin chào <strong className="text-white">@{user?.username}</strong> — dashboard, người dùng & kho game / kiểm duyệt.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              to={paths.home}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Về app
-            </Link>
+    <div className="min-h-[calc(100vh-4.5rem)] flex flex-col md:flex-row w-full bg-slate-50 text-left">
+      {/* Left Sidebar Menu */}
+      <aside className="w-full md:w-64 shrink-0 bg-white border-r border-slate-200/80 flex flex-col justify-between md:sticky md:top-18 md:h-[calc(100vh-4.5rem)] z-20">
+        <div className="p-4 flex flex-col gap-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100/80">
+                ADMIN CMS v2.0
+              </span>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                @{user?.username}
+              </p>
+            </div>
             <button
               type="button"
               onClick={refresh}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-black disabled:opacity-50"
+              title="Làm mới dữ liệu"
+              className="p-1.5 rounded-xl border border-slate-200 text-slate-500 hover:text-indigo-600 hover:bg-slate-50 transition-colors cursor-pointer disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
-        </div>
-      </div>
 
-      {/* Sub nav pills */}
-      <nav className="flex items-center gap-1.5 overflow-x-auto no-scrollbar" aria-label="CMS">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.id}
-            to={item.to}
-            end={item.id === 'dashboard'}
-            className={({ isActive }) =>
-              `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
-                isActive
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
-              }`
-            }
+          {/* Navigation Links */}
+          <nav className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-x-visible no-scrollbar" aria-label="CMS Navigation">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.id}
+                to={item.to}
+                end={item.id === 'dashboard'}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm shadow-indigo-200 scale-[1.01]'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <div className="flex items-center gap-2.5">
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </div>
+                    {item.id === 'games' && pendingCount > 0 && (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {pendingCount}
+                      </span>
+                    )}
+                  </>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+
+        {/* Sidebar Footer shortcut */}
+        <div className="p-4 border-t border-slate-100 hidden md:block">
+          <Link
+            to={paths.home}
+            className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-500 hover:text-indigo-600 hover:bg-slate-50 rounded-xl transition-colors"
           >
-            {item.icon}
-            <span>{item.label}</span>
-            {item.id === 'games' && pendingCount > 0 && (
-              <span className="ml-1 text-[10px] bg-amber-400 text-slate-900 px-1.5 py-0.5 rounded-full">{pendingCount}</span>
-            )}
-          </NavLink>
-        ))}
-      </nav>
-
-      {msg && (
-        <div
-          className={`rounded-2xl px-4 py-3 text-sm font-bold border ${
-            msg.type === 'ok'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50 border-rose-200 text-rose-800'
-          }`}
-        >
-          {msg.text}
+            <ArrowLeft className="w-4 h-4" />
+            <span>Về sàn game</span>
+          </Link>
         </div>
-      )}
+      </aside>
 
-      {tab === 'dashboard' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {[
-            { label: 'Người dùng', value: stats?.totalUsers ?? '—', tone: 'text-indigo-700' },
-            { label: 'Tổng game', value: stats?.totalGames ?? '—', tone: 'text-slate-800' },
-            { label: 'Game custom', value: stats?.customGamesCount ?? '—', tone: 'text-purple-700' },
-            { label: 'Doanh thu (xu)', value: (stats?.totalRevenue ?? 0).toLocaleString('vi-VN'), tone: 'text-pink-600 font-mono' },
-          ].map((card) => (
-            <div key={card.label} className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{card.label}</p>
-              <p className={`text-3xl font-black mt-2 ${card.tone}`}>{card.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 space-y-6">
+        {msg && (
+          <div
+            className={`rounded-2xl px-4 py-3 text-sm font-bold border ${
+              msg.type === 'ok'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-rose-50 border-rose-200 text-rose-800'
+            }`}
+          >
+            {msg.text}
+          </div>
+        )}
+
+        {tab === 'dashboard' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {[
+              { label: 'Người dùng', value: stats?.totalUsers ?? '—', tone: 'text-indigo-700' },
+              { label: 'Tổng game', value: stats?.totalGames ?? '—', tone: 'text-slate-800' },
+              { label: 'Game custom', value: stats?.customGamesCount ?? '—', tone: 'text-purple-700' },
+              { label: 'Doanh thu (Sao IQ)', value: (stats?.totalRevenue ?? 0).toLocaleString('vi-VN'), tone: 'text-pink-600 font-mono' },
+            ].map((card) => (
+              <div key={card.label} className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-xs">
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide">{card.label}</p>
+                <p className={`text-3xl font-black mt-2 ${card.tone}`}>{card.value}</p>
+              </div>
+            ))}
+          </div>
+        )}
 
       {tab === 'users' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-3 bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="Tìm username / tên / id..."
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:bg-white"
-              />
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white rounded-3xl border border-slate-200/80 p-4 shadow-xs">
+            <div className="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Tìm username / tên / id..."
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none focus:border-indigo-400 focus:bg-white"
+                />
+              </div>
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                className="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold"
+              >
+                <option value="all">Tất cả role</option>
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={loadUsers}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold cursor-pointer"
+              >
+                Lọc
+              </button>
             </div>
-            <select
-              value={userRoleFilter}
-              onChange={(e) => setUserRoleFilter(e.target.value)}
-              className="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold"
-            >
-              <option value="all">Tất cả role</option>
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>
-              ))}
-            </select>
             <button
               type="button"
-              onClick={loadUsers}
-              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-bold"
+              onClick={handleOpenCreateUser}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm transition-colors cursor-pointer"
             >
-              Lọc
+              <Plus className="w-4 h-4" />
+              <span>Thêm người dùng</span>
             </button>
           </div>
 
@@ -473,36 +635,357 @@ export default function AdminCmsPage() {
                 <tr>
                   <th className="px-4 py-3 font-bold">Người dùng</th>
                   <th className="px-4 py-3 font-bold">Role</th>
+                  <th className="px-4 py-3 font-bold">Lớp</th>
                   <th className="px-4 py-3 font-bold">XP / Level</th>
-                  <th className="px-4 py-3 font-bold">Ví (xu)</th>
+                  <th className="px-4 py-3 font-bold">Ví (Sao IQ)</th>
+                  <th className="px-4 py-3 font-bold text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/80">
                     <td className="px-4 py-3">
-                      <p className="font-bold text-slate-800">{u.name}</p>
-                      <p className="text-xs text-slate-400">@{u.username} · {u.id}</p>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl shrink-0 p-1 rounded-xl bg-slate-100 border border-slate-200/60">
+                          {AVATAR_EMOJI[u.avatar] || '🐯'}
+                        </span>
+                        <div>
+                          <p className="font-bold text-slate-800">{u.name}</p>
+                          <p className="text-xs text-slate-400">@{u.username} · {u.id}</p>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <span className="px-2 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-bold border border-indigo-100">
                         {ROLE_LABEL[u.role] || u.role}
                       </span>
                     </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {u.role === 'student' && u.grade ? `Lớp ${u.grade}` : '—'}
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{u.xp} XP · Lv.{u.level}</td>
                     <td className="px-4 py-3 font-mono text-pink-600 font-bold">
                       {(u.wallet_balance || 0).toLocaleString('vi-VN')}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditUser(u)}
+                          className="p-2 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                          title="Chỉnh sửa người dùng"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUser(u)}
+                          disabled={u.id === user?.id}
+                          className={`p-2 rounded-xl transition-colors ${
+                            u.id === user?.id
+                              ? 'text-slate-300 cursor-not-allowed'
+                              : 'text-rose-600 hover:bg-rose-50 cursor-pointer'
+                          }`}
+                          title={u.id === user?.id ? 'Không thể xoá chính mình' : 'Xoá người dùng'}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-10 text-center text-slate-400">Không có người dùng</td>
+                    <td colSpan={6} className="px-4 py-10 text-center text-slate-400">Không có người dùng</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Create User Modal */}
+          {showCreateUserModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+              <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-emerald-600" />
+                    <span>Thêm người dùng mới</span>
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateUserModal(false)}
+                    className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Tên đăng nhập (Username) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={createUsername}
+                      onChange={(e) => setCreateUsername(e.target.value)}
+                      placeholder="vd: kid_minhanh"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Mật khẩu *</label>
+                    <input
+                      type="text"
+                      required
+                      value={createPassword}
+                      onChange={(e) => setCreatePassword(e.target.value)}
+                      placeholder="Mật khẩu tài khoản"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Họ và tên *</label>
+                    <input
+                      type="text"
+                      required
+                      value={createName}
+                      onChange={(e) => setCreateName(e.target.value)}
+                      placeholder="vd: Nguyễn Minh Anh"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Vai trò (Role)</label>
+                      <select
+                        value={createRole}
+                        onChange={(e) => setCreateRole(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold outline-none"
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {createRole === 'student' ? (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Khối lớp</label>
+                        <select
+                          value={createGrade}
+                          onChange={(e) => setCreateGrade(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold outline-none"
+                        >
+                          <option value="1">Lớp 1</option>
+                          <option value="2">Lớp 2</option>
+                          <option value="3">Lớp 3</option>
+                          <option value="4">Lớp 4</option>
+                          <option value="5">Lớp 5</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Linh vật hiển thị</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {AVATAR_OPTIONS.map((av) => (
+                        <button
+                          key={av.id}
+                          type="button"
+                          onClick={() => setCreateAvatar(av.id)}
+                          className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all ${
+                            createAvatar === av.id
+                              ? 'border-indigo-500 bg-indigo-50/80 scale-105 shadow-sm'
+                              : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-2xl">{av.emoji}</span>
+                          <span className="text-[9px] font-bold text-slate-600 mt-1 truncate w-full text-center">
+                            {av.label.split(' ')[0]}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Số dư Sao IQ khởi tạo</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={createInitialBalance}
+                      onChange={(e) => setCreateInitialBalance(e.target.value)}
+                      placeholder="0"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-bold focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Đơn vị: Sao IQ. Ví dụ: 50 Sao IQ.</p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowCreateUserModal(false)}
+                      className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-bold"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold shadow-sm disabled:opacity-50"
+                    >
+                      {loading ? 'Đang tạo...' : 'Tạo tài khoản'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Edit User Modal */}
+          {editingUser && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+              <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 space-y-4 max-h-[90vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
+                      <Pencil className="w-5 h-5 text-indigo-600" />
+                      <span>Chỉnh sửa tài khoản</span>
+                    </h3>
+                    <p className="text-xs text-slate-400">@{editingUser.username} · ID: {editingUser.id}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditingUser(null)}
+                    className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleUpdateUser} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Họ và tên *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-600 mb-1">Vai trò (Role)</label>
+                      <select
+                        value={editRole}
+                        disabled={editingUser.id === user?.id}
+                        onChange={(e) => setEditRole(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold outline-none disabled:opacity-50"
+                      >
+                        {ROLE_OPTIONS.map((r) => (
+                          <option key={r} value={r}>{ROLE_LABEL[r] || r}</option>
+                        ))}
+                      </select>
+                      {editingUser.id === user?.id && (
+                        <p className="text-[10px] text-amber-600 mt-0.5">Không thể tự hạ quyền admin</p>
+                      )}
+                    </div>
+
+                    {editRole === 'student' ? (
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1">Khối lớp</label>
+                        <select
+                          value={editGrade}
+                          onChange={(e) => setEditGrade(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold outline-none"
+                        >
+                          <option value="1">Lớp 1</option>
+                          <option value="2">Lớp 2</option>
+                          <option value="3">Lớp 3</option>
+                          <option value="4">Lớp 4</option>
+                          <option value="5">Lớp 5</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Linh vật hiển thị</label>
+                    <div className="grid grid-cols-6 gap-2">
+                      {AVATAR_OPTIONS.map((av) => (
+                        <button
+                          key={av.id}
+                          type="button"
+                          onClick={() => setEditAvatar(av.id)}
+                          className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all ${
+                            editAvatar === av.id
+                              ? 'border-indigo-500 bg-indigo-50/80 scale-105 shadow-sm'
+                              : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="text-2xl">{av.emoji}</span>
+                          <span className="text-[9px] font-bold text-slate-600 mt-1 truncate w-full text-center">
+                            {av.label.split(' ')[0]}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Mật khẩu mới (Reset mật khẩu)</label>
+                    <input
+                      type="text"
+                      value={editNewPassword}
+                      onChange={(e) => setEditNewPassword(e.target.value)}
+                      placeholder="Để trống nếu không muốn đổi mật khẩu"
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-600 mb-1">Số dư Ví Sao IQ</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editWalletBalance}
+                      onChange={(e) => setEditWalletBalance(e.target.value)}
+                      className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm font-mono font-bold focus:bg-white focus:border-indigo-500 outline-none text-pink-600"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Đơn vị: Sao IQ. Khi thay đổi số dư, hệ thống tự động ghi nhật ký giao dịch điều chỉnh.</p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setEditingUser(null)}
+                      className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 text-sm font-bold"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm disabled:opacity-50"
+                    >
+                      {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -751,10 +1234,14 @@ export default function AdminCmsPage() {
                 <div className="flex flex-wrap items-center gap-2 p-4 border-t border-slate-100 bg-slate-50/60">
                   <button
                     type="button"
-                    onClick={() => navigate(`${paths.admin.builder}?gameId=${selectedGame.id}`)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-xs"
+                    onClick={() => {
+                      const currentLvl = selectedGame.levels?.[previewLevelIdx];
+                      const currentLvlNum = currentLvl ? (currentLvl.level_num || previewLevelIdx + 1) : 1;
+                      navigate(`${paths.admin.builder}?gameId=${selectedGame.id}&levelNum=${currentLvlNum}`);
+                    }}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shadow-xs cursor-pointer"
                   >
-                    <BookOpen className="w-3.5 h-3.5" /> Soạn thảo màn chơi này
+                    <BookOpen className="w-3.5 h-3.5" /> Soạn thảo màn chơi này (Màn {selectedGame.levels?.[previewLevelIdx]?.level_num || previewLevelIdx + 1})
                   </button>
 
                   {(selectedGame.id === 'g_scratch_studio' || selectedGame.category === 'scratch') && (
@@ -810,6 +1297,7 @@ export default function AdminCmsPage() {
             await refreshGames();
           }}
           initialGameId={searchParams.get('gameId')}
+          initialLevelNum={searchParams.get('levelNum') ? parseInt(searchParams.get('levelNum')!, 10) : null}
         />
       )}
 
@@ -990,6 +1478,7 @@ export default function AdminCmsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

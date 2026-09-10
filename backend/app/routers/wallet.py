@@ -55,7 +55,7 @@ def topup_wallet(
         wallet_user_id=wallet.user_id,
         amount=body.amount,
         type="nạp tiền",
-        detail=f'Nạp tiền qua hình thức {body.method or "Mô phỏng"} (+{body.amount:,} xu)',
+        detail=f'Nạp tiền qua hình thức {body.method or "Mô phỏng"} (+{body.amount:,} Sao IQ)',
     )
     db.add(tx)
     db.commit()
@@ -75,7 +75,7 @@ def topup_wallet(
         "success": True,
         "balance": wallet.balance,
         "transactions": transactions,
-        "message": f"Nạp thành công +{body.amount:,} xu vào ví IQ Kid! ✨",
+        "message": f"Nạp thành công +{body.amount:,} Sao IQ vào ví IQ Kid! ✨",
     }
 
 
@@ -160,7 +160,9 @@ def confirm_topup(
     if existing_tx:
         raise HTTPException(status_code=400, detail="Giao dịch nạp tiền này đã được xác nhận trước đó!")
 
-    amount = body.amount if (body.amount and body.amount > 0) else 50000
+    raw_amount = body.amount if (body.amount and body.amount > 0) else 50000
+    # Nếu nạp theo VND (ví dụ 10.000, 20.000, 50.000 >= 1000), quy đổi về Sao IQ (10, 20, 50)
+    amount = raw_amount // 1000 if raw_amount >= 1000 else raw_amount
     wallet.balance += amount
 
     tx = models.WalletTransaction(
@@ -168,7 +170,7 @@ def confirm_topup(
         wallet_user_id=wallet.user_id,
         amount=amount,
         type="nạp tiền",
-        detail=f"Xác nhận thanh toán VietQR thành công (+{amount:,} xu)",
+        detail=f"Xác nhận thanh toán VietQR thành công (+{amount:,} Sao IQ)",
     )
     db.add(tx)
     db.commit()
@@ -177,7 +179,7 @@ def confirm_topup(
     return {
         "success": True,
         "balance": wallet.balance,
-        "message": f"Đã xác nhận nạp thành công +{amount:,} xu vào ví!",
+        "message": f"Đã xác nhận nạp thành công +{amount:,} Sao IQ vào ví!",
     }
 
 

@@ -28,8 +28,7 @@ if db_url:
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     config.set_main_option("sqlalchemy.url", db_url)
 elif not config.get_main_option("sqlalchemy.url"):
-    # Mặc định dev SQLite cục bộ
-    config.set_main_option("sqlalchemy.url", "sqlite:///./iqkids_dev.db")
+    config.set_main_option("sqlalchemy.url", "postgresql+psycopg2://iqkids_user:iqkids_password@localhost:5432/iqkids_db")
 
 
 def run_migrations_offline() -> None:

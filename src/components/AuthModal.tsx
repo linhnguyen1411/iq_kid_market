@@ -47,8 +47,8 @@ const ROLES = [
     id: 'student',
     title: 'Bé Học Sinh',
     icon: GraduationCap,
-    desc: 'Giải Game IQ, học Scratch, ví xu & leo Bảng Vàng',
-    badge: 'Tặng 90.000 xu + 100 XP 🎁',
+    desc: 'Giải Game IQ, học Scratch, ví Sao IQ & leo Bảng Vàng',
+    badge: 'Tặng 100 XP khởi đầu 🎁',
     activeBorder: 'border-blue-500 bg-blue-50/70 text-blue-700',
   },
   {
@@ -56,7 +56,7 @@ const ROLES = [
     title: 'Thầy Cô / Creator',
     icon: BookOpen,
     desc: 'Sáng tạo Game IQ, khóa học Scratch & kiếm doanh thu',
-    badge: 'Tặng ví 500.000 xu 🎨',
+    badge: 'Đăng tải game & khóa học 🎨',
     activeBorder: 'border-purple-500 bg-purple-50/70 text-purple-700',
   },
 ];

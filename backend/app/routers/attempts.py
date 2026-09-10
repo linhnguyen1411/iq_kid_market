@@ -208,7 +208,7 @@ def submit_attempt(
         raise HTTPException(
             status_code=403,
             detail=(
-                f"Màn {body.levelNum} cần mở khóa bằng ví xu. "
+                f"Màn {body.levelNum} cần mở khóa bằng ví Sao IQ. "
                 f"Chỉ {FREE_LEVEL_COUNT} màn đầu miễn phí."
             ),
         )
@@ -367,7 +367,7 @@ def submit_attempt(
             wallet_user_id=wallet.user_id,
             amount=coin_reward,
             type="thưởng chơi game",
-            detail=f"Thưởng hoàn thành toàn bộ game {body.gameId} (+{coin_reward} xu)",
+            detail=f"Thưởng hoàn thành toàn bộ game {body.gameId} (+{coin_reward} Sao IQ)",
             created_at=now_dt,
         )
         db.add(tx)
@@ -382,7 +382,7 @@ def submit_attempt(
     db.refresh(user)
 
     if first_full_clear:
-        message = f"Hoàn thành toàn bộ game! Nhận +{xp_reward} XP và +{coin_reward} xu 🎉"
+        message = f"Hoàn thành toàn bộ game! Nhận +{xp_reward} XP và +{coin_reward} Sao IQ 🎉"
     elif had_full_clear:
         message = "Bạn đã nhận thưởng game này rồi. Chơi lại không tính thêm điểm."
     else:

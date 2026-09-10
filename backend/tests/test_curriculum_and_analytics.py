@@ -239,7 +239,7 @@ def test_achievement_progression_and_analytics_endpoint(client, student_auth, db
     assert ua_first is not None, "Phải mở khóa scratch_first_code khi làm bài 1"
 
     # Mua khóa học và hoàn thành các bài 2, 3 để đủ điều kiện làm bài 4
-    db_session.add(models.CoursePurchase(user_id=user_id, course_id="sc4", purchased_price=50000))
+    db_session.add(models.CoursePurchase(user_id=user_id, course_id="sc4", purchased_price=50))
     db_session.add(models.UserScratchProgress(
         id=f"usp_{user_id}_sc4_2", user_id=user_id, course_id="sc4", lesson_id=1, lesson_num=2, completed=True
     ))

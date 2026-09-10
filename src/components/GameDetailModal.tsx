@@ -94,7 +94,7 @@ export const GameDetailModal: React.FC<GameDetailModalProps> = ({
           <div>
             <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Mở khóa</span>
             <span className={`text-sm font-black ${needsUnlock ? 'text-pink-600 font-mono' : 'text-emerald-600'}`}>
-              {isPurchased ? 'Đã mở' : needsUnlock ? `${game.price.toLocaleString('vi-VN')} xu` : 'Miễn phí'}
+              {isPurchased ? 'Đã mở' : needsUnlock ? `${game.price.toLocaleString('vi-VN')} Sao IQ` : 'Miễn phí'}
             </span>
           </div>
         </div>
