@@ -234,9 +234,9 @@ def test_scratch_studio_semantic_submission(client, student_auth, db_session):
     }, headers=headers)
     assert res_unbought.status_code == 403
 
-    # Cấp xu và Mua khóa học sc4
+    # Cấp Token và Mua khóa học sc4
     wallet = db_session.query(models.Wallet).filter_by(user_id=student_auth["user_id"]).first()
-    wallet.balance = 100000
+    wallet.balance = 100
     db_session.commit()
 
     res_buy = client.post("/api/scratch/courses/sc4/purchase", headers=headers)

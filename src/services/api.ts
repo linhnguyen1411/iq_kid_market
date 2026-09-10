@@ -607,6 +607,42 @@ export const api = {
       return apiRequest<Array<any>>(`/admin/users${qs ? `?${qs}` : ''}`);
     },
 
+    createUser: (data: {
+      username: string;
+      password: string;
+      name: string;
+      role?: string;
+      grade?: number;
+      avatar?: string;
+      initial_balance?: number;
+    }) =>
+      apiRequest<{ success: boolean; message: string; user: any }>('/admin/users', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    updateUser: (
+      userId: string,
+      data: {
+        name?: string;
+        role?: string;
+        grade?: number;
+        avatar?: string;
+        password?: string;
+        wallet_balance?: number;
+      },
+    ) =>
+      apiRequest<{ success: boolean; message: string; user: any }>(
+        `/admin/users/${encodeURIComponent(userId)}`,
+        { method: 'PUT', body: JSON.stringify(data) },
+      ),
+
+    deleteUser: (userId: string) =>
+      apiRequest<{ success: boolean; message: string }>(
+        `/admin/users/${encodeURIComponent(userId)}`,
+        { method: 'DELETE' },
+      ),
+
     getGameInventory: (status?: string) => {
       const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
       return apiRequest<Game[]>(`/admin/games/inventory${qs}`);

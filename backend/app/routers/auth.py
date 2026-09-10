@@ -76,7 +76,7 @@ def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
             detail="Vai trò phụ huynh đã ngừng hỗ trợ. Vui lòng đăng ký tài khoản học sinh (có ví xu).",
         )
     role = body.role if body.role in ["student", "teacher", "creator", "admin"] else "student"
-    initial_balance = 90000 if role == "student" else (500000 if role in ["teacher", "creator"] else 1000000)
+    initial_balance = 0
     initial_xp = 100 if role == "student" else 0
 
     new_user = models.User(
@@ -94,19 +94,10 @@ def register(body: schemas.RegisterIn, db: Session = Depends(get_db)):
     db.add(new_user)
     db.flush()
 
-    # 4. Khởi tạo Ví tiền + Giao dịch quà tặng
+    # 4. Khởi tạo Ví tiền với số dư 0 Token
     new_wallet = models.Wallet(user_id=user_id, balance=initial_balance)
     db.add(new_wallet)
     db.flush()
-
-    initial_tx = models.WalletTransaction(
-        id=f"tx_{int(time.time() * 1000)}",
-        wallet_user_id=user_id,
-        amount=initial_balance,
-        type="nạp tiền",
-        detail="Quà tặng khởi tạo tài khoản IQ Kid Market ✨",
-    )
-    db.add(initial_tx)
 
     # 5. Mặc định mở khóa game nhập môn g1 cho học sinh
     if role == "student":

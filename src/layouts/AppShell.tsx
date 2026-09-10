@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import Header from '../layouts/Header';
 import NavigationTabs from '../layouts/NavigationTabs';
 import MobileBottomNav from '../layouts/MobileBottomNav';
@@ -37,6 +37,8 @@ export function useAppData() {
 export function AppShell() {
   const { isAuthModalOpen, authModalMode, closeAuthModal, login, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
   useDocumentTitle();
 
   const [games, setGames] = useState<Game[]>([]);
@@ -121,14 +123,14 @@ export function AppShell() {
     <AppDataContext.Provider value={value}>
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
         {!hideChrome && <Header />}
-        {!hideChrome && <NavigationTabs />}
+        {!hideChrome && !isAdminRoute && <NavigationTabs />}
 
-        <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 md:pb-8">
+        <main className={isAdminRoute ? "flex-1 w-full mx-auto p-0" : "flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 lg:p-8 pb-24 sm:pb-24 md:pb-8"}>
           <Outlet context={outletContext} />
         </main>
 
-        {!hideChrome && <MobileBottomNav />}
-        {!hideChrome && <Footer />}
+        {!hideChrome && !isAdminRoute && <MobileBottomNav />}
+        {!hideChrome && !isAdminRoute && <Footer />}
 
         {isAuthModalOpen && (
           <AuthModal

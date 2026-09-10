@@ -51,6 +51,25 @@ class RegisterIn(BaseModel):
     avatar: Optional[str] = "smile_tiger"
 
 
+class AdminCreateUserIn(BaseModel):
+    username: str
+    password: str
+    name: str
+    role: Optional[str] = "student"
+    grade: Optional[int] = 1
+    avatar: Optional[str] = "smile_tiger"
+    initial_balance: Optional[int] = 0
+
+
+class AdminUpdateUserIn(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    grade: Optional[int] = None
+    avatar: Optional[str] = None
+    password: Optional[str] = None
+    wallet_balance: Optional[int] = None
+
+
 class LoginIn(BaseModel):
     username: str
     password: str

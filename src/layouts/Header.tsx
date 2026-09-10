@@ -4,7 +4,7 @@ import {
   Trophy, CreditCard, ChevronDown,
   LogIn, UserPlus, Volume2, VolumeX, ShieldCheck,
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSound } from '../context/SoundContext';
 import { paths } from '../routes/paths';
@@ -13,6 +13,8 @@ export const Header: React.FC = () => {
   const { user, wallet, authToken, logout, openAuthModal } = useAuth();
   const { isSoundEnabled, toggleSound } = useSound();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -62,32 +64,36 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-4">
           {isLoggedIn && (
             <>
-              <div
-                title="Chuỗi ngày học liên tục"
-                className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-[11px] sm:text-xs font-bold shadow-xs hover:bg-orange-100 transition-colors"
-              >
-                <span className="text-xs sm:text-sm">🔥</span>
-                <span>{user!.streak || 0}<span className="hidden xs:inline"> ngày</span></span>
-              </div>
+              {!isAdminRoute && (
+                <>
+                  <div
+                    title="Chuỗi ngày học liên tục"
+                    className="flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-orange-50 border border-orange-200/80 text-orange-700 text-[11px] sm:text-xs font-bold shadow-xs hover:bg-orange-100 transition-colors"
+                  >
+                    <span className="text-xs sm:text-sm">🔥</span>
+                    <span>{user!.streak || 0}<span className="hidden xs:inline"> ngày</span></span>
+                  </div>
 
-              <Link
-                to={paths.leaderboard}
-                title={`Kinh nghiệm: ${user!.xp || 0} XP`}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold shadow-xs hover:bg-indigo-100 transition-colors cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Cấp {user!.level || 1}</span>
-                <span className="text-[10px] text-indigo-400 font-normal">({user!.xp || 0} XP)</span>
-              </Link>
+                  <Link
+                    to={paths.leaderboard}
+                    title={`Kinh nghiệm: ${user!.xp || 0} XP`}
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-200/80 text-indigo-700 text-xs font-bold shadow-xs hover:bg-indigo-100 transition-colors cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Cấp {user!.level || 1}</span>
+                    <span className="text-[10px] text-indigo-400 font-normal">({user!.xp || 0} XP)</span>
+                  </Link>
+                </>
+              )}
 
               {isStudent && (
                 <Link
                   to={paths.wallet}
-                  title="Ví xu của bạn - Bấm để nạp thêm"
+                  title="Ví Sao IQ của bạn - Bấm để nạp thêm"
                   className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-[11px] sm:text-xs font-extrabold shadow-xs hover:bg-amber-100 transition-colors cursor-pointer"
                 >
                   <Coins className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600 animate-bounce" />
-                  <span>{(wallet?.balance || 0).toLocaleString('vi-VN')}<span className="hidden xs:inline"> xu</span></span>
+                  <span>{(wallet?.balance || 0).toLocaleString('vi-VN')}<span className="hidden xs:inline"> Sao IQ</span></span>
                   <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] sm:text-[11px] font-black">
                     +
                   </span>
@@ -152,7 +158,7 @@ export const Header: React.FC = () => {
                         className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
                       >
                         <CreditCard className="w-4 h-4 text-slate-400" />
-                        <span>Ví xu & Lịch sử giao dịch</span>
+                        <span>Ví Sao IQ & Lịch sử giao dịch</span>
                       </Link>
                     )}
 

@@ -162,7 +162,7 @@ export const SEED_GAMES: Game[] = [
     description: "Điền số tiếp theo vào chuỗi quy luật logic. Rèn tư duy toán học toàn diện.",
     detailed_description: "Tìm kiếm mối quan hệ ẩn giấu đằng sau những con số đầy mê hoặc! Trò chơi giúp con rèn luyện tư duy logic, nhận diện chuỗi quy luật và dự đoán xu hướng. Từ đó tăng cường kỹ năng phân tích và rèn luyện vượt trội bán cầu não trái.",
     thumbnail: "🧩",
-    price: 15000, // 15k VND
+    price: 15, // 15 Sao IQ
     grade_from: 1,
     grade_to: 3,
     template_code: "sequence",
@@ -266,7 +266,7 @@ export const SEED_GAMES: Game[] = [
     description: "Nhớ vị trí lật thẻ hình lộng lẫy để rèn siêu trí tuệ quang học.",
     detailed_description: "Phát triển khả năng tập trung cao độ và rèn lưu giữ trí nhớ ngắn hạn! Trẻ lật các quân bài ngộ nghĩnh, tìm kiếm những cặp hình ảnh giống hệt nhau về chủ đề loài vật, khoa học và trường học. Thử thách tính giờ sinh động thúc đẩy não bộ hoạt động linh hoạt.",
     thumbnail: "🧠",
-    price: 25000, // 25k VND
+    price: 25, // 25 Sao IQ
     grade_from: 1,
     grade_to: 3,
     template_code: "memory",

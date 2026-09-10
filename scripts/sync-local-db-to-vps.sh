@@ -77,22 +77,9 @@ SQL
   '"
 
 else
-  echo "   ⚡ Không kết nối được Postgres Local, sử dụng fallback SQLite..."
-  echo ""
-  echo "--- BƯỚC 3: TRÍCH XUẤT CSDL LOCAL (SQLITE) ---"
-  "$ROOT_DIR/backend/venv/bin/python" "$ROOT_DIR/scripts/export_sqlite.py"
-
-  echo ""
-  echo "--- BƯỚC 4: NẠP DỮ LIỆU VÀO POSTGRESQL TRÊN VPS ---"
-  scp "$ROOT_DIR/data/local_db_dump.json" "${VPS_HOST}:/opt/iqkids/local_db_dump.json"
-  scp "$ROOT_DIR/scripts/import_pg_worker.py" "${VPS_HOST}:/opt/iqkids/import_pg_worker.py"
-
-  ssh "$VPS_HOST" "bash -c '
-    set -a
-    source /opt/iqkids/backend.env
-    set +a
-    /opt/iqkids/app/backend/venv/bin/python /opt/iqkids/import_pg_worker.py /opt/iqkids/local_db_dump.json
-  '"
+  echo "   ❌ Không thể kết nối PostgreSQL Local (Port 5432) hoặc database trống!"
+  echo "   Vui lòng khởi động PostgreSQL (`brew services start postgresql@15`) để tiếp tục."
+  exit 1
 fi
 
 # Bước 5: Đối soát số lượng record trên Production

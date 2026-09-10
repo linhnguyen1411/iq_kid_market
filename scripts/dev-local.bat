@@ -19,7 +19,7 @@ if %errorlevel% equ 0 (
     echo [Docker] Đang khởi động PostgreSQL database container...
     docker compose up -d db >nul 2>nul
 ) else (
-    echo [Local] Đang sử dụng CSDL máy cục bộ (Tự động chuyển PostgreSQL hoặc SQLite fallback).
+    echo [Local] Đang sử dụng CSDL PostgreSQL cục bộ (port 5432).
 )
 
 :: 2. Kiem tra moi truong Backend Python

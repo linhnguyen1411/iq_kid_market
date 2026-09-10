@@ -259,7 +259,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             </div>
             <div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Số Dư Khả Dụng</span>
-              <span className="text-lg font-black text-amber-600 font-mono">{(wallet?.balance || 0).toLocaleString('vi-VN')} xu</span>
+              <span className="text-lg font-black text-amber-600 font-mono">{(wallet?.balance || 0).toLocaleString('vi-VN')} Sao IQ</span>
             </div>
           </div>
           <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
@@ -353,7 +353,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             <KeyRound className="w-5 h-5 text-indigo-600" />
             <span>ĐỔI MẬT KHẨU AN TOÀN</span>
           </h3>
-          <p className="text-xs text-slate-400 mb-5">Bảo vệ an toàn cho tài khoản học tập và ví xu</p>
+          <p className="text-xs text-slate-400 mb-5">Bảo vệ an toàn cho tài khoản học tập và ví Sao IQ</p>
 
           {pwMsg && (
             <div

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Brain, Heart } from 'lucide-react';
+import { Brain, Heart, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { paths } from '../routes/paths';
 
 export const Footer: React.FC = () => {
@@ -18,7 +18,7 @@ export const Footer: React.FC = () => {
             </span>
           </Link>
           <p className="text-slate-400 max-w-sm leading-relaxed">
-            Hệ sinh thái EdTech giáo dục thông minh: Vừa chơi game rèn tư duy logic, vừa học lập trình khối Scratch sáng tạo với động lực ví xu Napas và AI đồng hành.
+            Hệ sinh thái EdTech giáo dục thông minh: Vừa chơi game rèn tư duy logic, vừa học lập trình khối Scratch sáng tạo với động lực ví Sao IQ Napas và AI đồng hành.
           </p>
         </div>
 
@@ -33,13 +33,24 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-          <h4 className="font-bold text-slate-200 text-sm">Công Nghệ & Bảo Mật</h4>
-          <ul className="space-y-1.5 text-slate-400">
-            <li>🛡️ FastAPI + SQLAlchemy 2.0</li>
-            <li>🐘 PostgreSQL B-Tree Indexing</li>
-            <li>⚛️ React 19 + TypeScript + Vite</li>
-            <li>🎨 Tailwind CSS v4</li>
-            <li>🔒 Row-Level Locking & JWT RBAC</li>
+          <h4 className="font-bold text-slate-200 text-sm">Địa chỉ & Liên hệ</h4>
+          <ul className="space-y-2 text-slate-400">
+            <li className="flex items-start gap-2">
+              <MapPin className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+              <span>Số 123 Đường Sáng Tạo, Phường Dịch Vọng Hậu, Quận Cầu Giấy, Hà Nội</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Hotline: 1900 6868 · 0988 123 456</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Email: hotro@iqkidsmarket.vn</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-purple-400 shrink-0" />
+              <span>Giờ mở cửa: 8:00 - 21:00 (Thứ 2 – Chủ Nhật)</span>
+            </li>
           </ul>
         </div>
       </div>

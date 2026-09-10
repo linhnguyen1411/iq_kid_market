@@ -427,7 +427,7 @@ def purchase_scratch_course(
     if wallet.balance < course_price:
         raise HTTPException(
             status_code=400,
-            detail=f"Số dư xu trong ví ({wallet.balance:,} xu) không đủ để mua khóa học này ({course_price:,} xu). Vui lòng nạp thêm!",
+            detail=f"Số dư trong ví ({wallet.balance:,} Sao IQ) không đủ để mua khóa học này ({course_price:,} Sao IQ). Vui lòng nạp thêm!",
         )
 
     wallet.balance -= course_price
@@ -574,7 +574,7 @@ def submit_scratch_lesson(
                 wallet_user_id=wallet.user_id,
                 amount=coin_gain,
                 type="thưởng chơi game",
-                detail=f'Thưởng hoàn thành bài học Scratch: "{lesson.title}" (+{coin_gain} xu)',
+                detail=f'Thưởng hoàn thành bài học Scratch: "{lesson.title}" (+{coin_gain} Sao IQ)',
                 created_at=now_dt,
             )
             db.add(tx)

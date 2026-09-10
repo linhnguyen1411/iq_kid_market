@@ -17,7 +17,7 @@ def test_scratch_course_purchase_and_admin_bypass(client, student_auth, teacher_
     assert res.status_code == 200
     courses = res.json()
     sc4 = [c for c in courses if c["id"] == "sc4"][0]
-    assert sc4["price"] == 50000
+    assert sc4["price"] == 50
     assert sc4["isPurchased"] is False
 
     # Bài 1 mở cho học thử
@@ -30,9 +30,9 @@ def test_scratch_course_purchase_and_admin_bypass(client, student_auth, teacher_
     res_l2_detail = client.get("/api/scratch/courses/sc4/lessons/2", headers=student_headers)
     assert res_l2_detail.status_code == 403
 
-    # 2. Học sinh nạp xu và mua khóa học sc4
+    # 2. Học sinh nạp Token và mua khóa học sc4 (giá 50 Token)
     wallet = db_session.query(models.Wallet).filter_by(user_id=student_id).first()
-    wallet.balance = 60000
+    wallet.balance = 60
     db_session.commit()
 
     res_buy = client.post("/api/scratch/courses/sc4/purchase", headers=student_headers)
@@ -40,7 +40,7 @@ def test_scratch_course_purchase_and_admin_bypass(client, student_auth, teacher_
     buy_data = res_buy.json()
     assert buy_data["success"] is True
     assert buy_data["isPurchased"] is True
-    assert buy_data["balance"] == 10000
+    assert buy_data["balance"] == 10  # 60 - 50 = 10 Token
 
     # Sau khi mua nhưng chưa làm bài 1: Bài 2 bị khóa vì cần làm bài 1 trước
     res_after_buy = client.get("/api/scratch/courses", headers=student_headers)

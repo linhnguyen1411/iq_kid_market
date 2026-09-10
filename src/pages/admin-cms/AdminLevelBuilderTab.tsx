@@ -14,19 +14,21 @@ interface AdminLevelBuilderTabProps {
   games: Game[];
   onRefreshGames: () => Promise<void>;
   initialGameId?: string | null;
+  initialLevelNum?: number | null;
 }
 
 export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
   games,
   onRefreshGames,
   initialGameId,
+  initialLevelNum,
 }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
   const [mode, setMode] = useState<'levels' | 'create_game' | 'ai_gen' | 'import_pack'>('levels');
   const [selectedGameId, setSelectedGameId] = useState<string>(initialGameId || games[0]?.id || 'g1');
-  const [editingLevelNum, setEditingLevelNum] = useState<number | null>(null);
+  const [editingLevelNum, setEditingLevelNum] = useState<number | null>(initialLevelNum ?? null);
   const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -93,8 +95,23 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
   useEffect(() => {
     if (initialGameId && games.some((g) => g.id === initialGameId)) {
       setSelectedGameId(initialGameId);
+      setMode('levels');
+      const targetGame = games.find((g) => g.id === initialGameId);
+      if (targetGame && targetGame.levels && targetGame.levels.length > 0) {
+        let lvlToEdit = null;
+        if (initialLevelNum != null) {
+          lvlToEdit = targetGame.levels.find((l) => l.level_num === initialLevelNum);
+        }
+        if (!lvlToEdit && targetGame.levels.length > 0) {
+          lvlToEdit = targetGame.levels[0];
+        }
+        if (lvlToEdit) {
+          setEditingLevelNum(lvlToEdit.level_num);
+          loadLevelIntoForm(lvlToEdit, targetGame.template_code);
+        }
+      }
     }
-  }, [initialGameId, games]);
+  }, [initialGameId, initialLevelNum, games]);
 
   const clearLevelEdit = () => {
     setEditingLevelNum(null);
@@ -111,11 +128,16 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
     setLevelCoinReward(level.coin_reward || 20);
 
     const q = level.questions?.[0];
-    if (!q) return;
+    if (!q) {
+      setLevelPrompt('Hoàn thành thử thách sau:');
+      setLevelPoints(25);
+      return;
+    }
 
     setLevelPrompt(q.prompt || '');
     setLevelPoints(q.points || 25);
-    const qType = q.question_type || template || 'matching';
+    const rawType = q.question_type || template || 'matching';
+    const qType = rawType === 'multiple_choice' ? 'quiz' : rawType;
     setLevelQuestionType(qType);
 
     const d = q.data || {};
@@ -135,6 +157,17 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
     } else if (qType === 'memory') {
       setMemoryItems(Array.isArray(d.items) ? d.items.join(', ') : '');
       setMemoryTheme(d.theme || 'con_vat');
+    } else if (qType === 'language') {
+      if (d.type === 'unscramble') {
+        setSeqItems(Array.isArray(d.scrambled_words) ? d.scrambled_words.join(', ') : '');
+        setSeqAnswer(Array.isArray(d.correct_order) ? d.correct_order.join(' ') : '');
+      } else {
+        setQuizQuestion(d.sentence || q.prompt || '');
+        setQuizOptions(Array.isArray(d.options) && d.options.length >= 2 ? d.options : ['A', 'B', 'C', 'D']);
+        setMathAnswer(d.answer != null ? String(d.answer) : '');
+        const foundIdx = (d.options || []).findIndex((opt: string) => opt === d.answer);
+        setQuizCorrectIndex(foundIdx >= 0 ? foundIdx : 0);
+      }
     }
   };
 
@@ -175,6 +208,13 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
       levelData = {
         items: memoryItems.split(',').map((s) => s.trim()),
         theme: memoryTheme,
+      };
+    } else if (levelQuestionType === 'language') {
+      levelData = {
+        type: 'fill_in_the_blank',
+        sentence: quizQuestion,
+        options: quizOptions,
+        answer: mathAnswer || quizOptions[quizCorrectIndex] || '',
       };
     }
 
@@ -396,8 +436,15 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
                 <select
                   value={selectedGameId}
                   onChange={(e) => {
-                    setSelectedGameId(e.target.value);
-                    clearLevelEdit();
+                    const nextId = e.target.value;
+                    setSelectedGameId(nextId);
+                    const nextGame = games.find((g) => g.id === nextId);
+                    if (nextGame?.levels && nextGame.levels.length > 0) {
+                      setEditingLevelNum(nextGame.levels[0].level_num);
+                      loadLevelIntoForm(nextGame.levels[0], nextGame.template_code);
+                    } else {
+                      clearLevelEdit();
+                    }
                   }}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-bold text-slate-800 outline-none focus:border-indigo-400"
                 >
@@ -463,6 +510,7 @@ export const AdminLevelBuilderTab: React.FC<AdminLevelBuilderTabProps> = ({
                     <option value="math">Toán Học (Math)</option>
                     <option value="sequence">Dãy Quy Luật (Sequence)</option>
                     <option value="memory">Lật Thẻ Trí Nhớ (Memory)</option>
+                    <option value="language">Ngôn Ngữ & Tiếng Việt (Language)</option>
                   </select>
                 </div>
               </div>

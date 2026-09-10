@@ -181,7 +181,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
         <div className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs font-bold text-indigo-800 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 shrink-0" />
           <span>
-            Chế độ chơi thử Admin — mở toàn bộ màn, không trừ xu, không ghi XP / bảng xếp hạng.
+            Chế độ chơi thử Admin — mở toàn bộ màn, không trừ Sao IQ, không ghi XP / bảng xếp hạng.
           </span>
         </div>
       )}
@@ -198,7 +198,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
               onClick={() => onRequestUnlock(game)}
               className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-black"
             >
-              Mở khóa {game.price.toLocaleString('vi-VN')} xu
+              Mở khóa {game.price.toLocaleString('vi-VN')} Sao IQ
             </button>
           )}
         </div>
@@ -216,7 +216,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
 
           <h3 className="text-2xl font-black text-slate-800 mt-2 mb-1">Hoàn thành toàn bộ game!</h3>
           <p className="text-xs text-slate-500 max-w-sm mx-auto mb-6">
-            {gameClearResult.message || 'Bạn vừa nhận thưởng XP / xu (chỉ 1 lần / game).'}
+            {gameClearResult.message || 'Bạn vừa nhận thưởng XP / Sao IQ (chỉ 1 lần / game).'}
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-md mx-auto mb-8">
@@ -228,7 +228,7 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
             <div className="p-3 bg-amber-50 rounded-2xl border border-amber-100">
               <Coins className="w-5 h-5 text-amber-600 mx-auto mb-1" />
               <span className="text-[10px] font-bold text-slate-400 uppercase block">Thưởng ví</span>
-              <span className="text-sm font-black text-amber-700">+{gameClearResult.coinReward} xu</span>
+              <span className="text-sm font-black text-amber-700">+{gameClearResult.coinReward} Sao IQ</span>
             </div>
             <div className="p-3 bg-rose-50 rounded-2xl border border-rose-100 col-span-2 sm:col-span-1">
               <span className="text-lg block mb-0.5">🔥</span>

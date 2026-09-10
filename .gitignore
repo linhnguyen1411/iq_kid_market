@@ -19,4 +19,6 @@ __pycache__/
 .DS_Store
 *.log
 *.db
+*.sql.gz
+data/backups/
 
