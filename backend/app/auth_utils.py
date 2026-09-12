@@ -178,3 +178,6 @@ def require_roles(allowed_roles: list[str]) -> Callable:
         return current_user
 
     return role_checker
+
+
+require_admin = require_roles(["admin"])

@@ -1,6 +1,10 @@
 import copy
+import hashlib
+import random
+import uuid
+from datetime import datetime
 from typing import Any, Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # ---------- User / Session ----------
@@ -153,6 +157,27 @@ class CreatorEarningsOut(BaseModel):
 
 
 # ---------- Games / Marketplace ----------
+class GameVersionOut(BaseModel):
+    id: str
+    game_id: str
+    version_num: int
+    status: str
+    levels: Any
+    title: str
+    description: Optional[str] = None
+    detailed_description: Optional[str] = None
+    price: int
+    template_code: str
+    category: str
+    changelog: Optional[str] = None
+    quality_score: Optional[int] = None
+    created_at: Optional[Any] = None
+    published_at: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
+
+
 class GameOut(BaseModel):
     id: str
     title: str
@@ -171,7 +196,11 @@ class GameOut(BaseModel):
     is_published: bool
     rating_avg: float
     plays_count: int
+    current_version_num: Optional[int] = 1
+    quality_score: Optional[int] = None
+    quality_grade: Optional[str] = None
     levels: Any
+    versions: Optional[list[GameVersionOut]] = None
 
     class Config:
         from_attributes = True
@@ -478,7 +507,7 @@ def sanitize_question_data_for_learner(question_type: str, data: Any) -> Any:
     for sensitive_field in ("solution", "correct_answer", "target_solution"):
         clean.pop(sensitive_field, None)
 
-    if q_type == "quiz":
+    if q_type in ("quiz", "true_false", "fill_blank"):
         clean.pop("answer", None)
         clean.pop("explanation", None)
     elif q_type == "math":
@@ -486,20 +515,53 @@ def sanitize_question_data_for_learner(question_type: str, data: Any) -> Any:
         clean.pop("result", None)
         clean.pop("explanation", None)
     elif q_type == "sequence":
+        # Đảm bảo options tồn tại trước khi xóa answer để tránh màn chơi bị trống lựa chọn
+        if "options" not in clean or not isinstance(clean.get("options"), list) or not clean.get("options"):
+            ans = str(clean.get("answer") or "").strip()
+            if ans:
+                opts = [ans]
+                try:
+                    num = int(ans)
+                    opts.extend([str(num + 2), str(num - 2), str(num * 2)])
+                except ValueError:
+                    opts.extend(["99", "0", "15"])
+                random.shuffle(opts)
+                clean["options"] = list(dict.fromkeys(opts))
         clean.pop("answer", None)
         clean.pop("explanation", None)
     elif q_type == "sorting":
+        # Xáo trộn thứ tự các thẻ để tránh rò rỉ thứ tự ban đầu
+        if isinstance(clean.get("items"), list):
+            items_shuffled = copy.deepcopy(clean.get("items"))
+            random.shuffle(items_shuffled)
+            clean["items"] = items_shuffled
         clean.pop("correct_order", None)
+        clean.pop("target_order", None)
         clean.pop("correct_sequence_ids", None)
         clean.pop("explanation", None)
-    elif q_type == "language":
+    elif q_type in ("language", "unscramble"):
+        # Nếu là dạng unscramble: chuẩn bị scrambled_words / tokens nếu chỉ có correct_order / answer
+        if "correct_order" in clean and ("scrambled_words" not in clean or not clean.get("scrambled_words")):
+            words = list(clean.get("correct_order") or [])
+            random.shuffle(words)
+            clean["scrambled_words"] = words
+        if "tokens" not in clean and "scrambled" in clean:
+            clean["tokens"] = clean.get("scrambled", "").split()
         clean.pop("answer", None)
+        clean.pop("word", None)
         clean.pop("target_word", None)
         clean.pop("target_sentence", None)
         clean.pop("correct_order", None)
         clean.pop("explanation", None)
     elif q_type in ("logic", "logic_grid"):
         clean.pop("answer", None)
+        clean.pop("explanation", None)
+        clean.pop("hint", None)
+    elif q_type == "memory":
+        clean.pop("solution", None)
+        clean.pop("explanation", None)
+    elif q_type == "flashcard":
+        clean.pop("solution", None)
         clean.pop("explanation", None)
     elif q_type == "coding":
         clean.pop("answer", None)
@@ -512,10 +574,37 @@ def sanitize_question_data_for_learner(question_type: str, data: Any) -> Any:
         clean.pop("explanation", None)
     elif q_type == "observation":
         clean.pop("answer", None)
+        clean.pop("hint", None)
+        clean.pop("solution", None)
         clean.pop("target_row", None)
         clean.pop("target_col", None)
         clean.pop("target_coordinates", None)
         clean.pop("explanation", None)
+    elif q_type == "matching":
+        clean.pop("explanation", None)
+        raw_pairs = clean.pop("pairs", None) or clean.pop("matching_pairs", None) or []
+        if isinstance(raw_pairs, list) and raw_pairs:
+            salt = uuid.uuid4().hex[:12]
+            left_items = []
+            right_items = []
+            match_hashes = []
+            for p in raw_pairs:
+                if isinstance(p, dict):
+                    l = str(p.get("left") or p.get("term") or p.get("question") or "").strip()
+                    r = str(p.get("right") or p.get("match") or p.get("answer") or "").strip()
+                    if l and r:
+                        left_items.append(l)
+                        right_items.append(r)
+                        token = f"{l.lower()}::{r.lower()}::{salt}"
+                        h = hashlib.sha256(token.encode("utf-8")).hexdigest()[:16]
+                        match_hashes.append(h)
+            random.shuffle(left_items)
+            random.shuffle(right_items)
+            random.shuffle(match_hashes)
+            clean["left_items"] = left_items
+            clean["right_items"] = right_items
+            clean["match_hashes"] = match_hashes
+            clean["match_salt"] = salt
 
     return clean
 
@@ -557,6 +646,49 @@ def sanitize_game_levels_for_learner(levels: Any) -> Any:
         sanitized_levels.append(clean_lv)
 
     return sanitized_levels
+
+
+def resolve_game_version_content(
+    game: Any,
+    db: Any,
+    version_num: Optional[int] = None,
+    is_creator_or_admin: bool = False,
+) -> tuple[list, Optional[Any]]:
+    """
+    Xác định phiên bản nội dung chuẩn xác (levels) và bản ghi GameVersion tương ứng:
+    - Nếu có chỉ định version_num: Tải đúng version_num đó.
+    - Nếu là Tác giả hoặc Admin: Tải phiên bản nháp/chờ duyệt mới nhất nếu có, ngược lại lấy bản xuất bản.
+    - Nếu là Học sinh/khách vãng lai: Luôn tải phiên bản PUBLISHED mới nhất.
+    - Tương thích ngược: Nếu game chưa có bản ghi GameVersion nào (game legacy), fallback về game.levels.
+    """
+    from . import models
+
+    q = db.query(models.GameVersion).filter(models.GameVersion.game_id == game.id)
+
+    if version_num is not None:
+        target_gv = q.filter(models.GameVersion.version_num == version_num).first()
+        if target_gv:
+            return (target_gv.levels or [], target_gv)
+
+    if is_creator_or_admin:
+        draft_gv = (
+            q.filter(models.GameVersion.status.in_(["draft", "pending_review"]))
+            .order_by(models.GameVersion.version_num.desc())
+            .first()
+        )
+        if draft_gv:
+            return (draft_gv.levels or [], draft_gv)
+
+    published_gv = (
+        q.filter(models.GameVersion.status == "published")
+        .order_by(models.GameVersion.version_num.desc())
+        .first()
+    )
+    if published_gv:
+        return (published_gv.levels or [], published_gv)
+
+    # Fallback cho game legacy chưa có bản ghi GameVersion
+    return (game.levels or [], None)
 
 
 class LeaderboardItemOut(BaseModel):
@@ -741,3 +873,247 @@ class ScratchAnalyticsOut(BaseModel):
     badges: List[ScratchBadgeItem]
 
 
+# ---------- Question Bank (Phase 2) ----------
+class QuestionCreateIn(BaseModel):
+    engine_code: str
+    grade: Optional[int] = None
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    skill: Optional[str] = None
+    difficulty: Optional[int] = 1
+    prompt: str
+    data: dict[str, Any]
+    visibility: Optional[str] = "private"  # private | system
+    status: Optional[str] = "draft"  # draft | ready | archived
+    source_game_id: Optional[str] = None
+    source_game_version: Optional[int] = None
+
+
+class QuestionUpdateIn(BaseModel):
+    engine_code: Optional[str] = None
+    grade: Optional[int] = None
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    skill: Optional[str] = None
+    difficulty: Optional[int] = None
+    prompt: Optional[str] = None
+    data: Optional[dict[str, Any]] = None
+    visibility: Optional[str] = None
+    status: Optional[str] = None
+
+
+class QuestionOut(BaseModel):
+    id: str
+    engine_code: str
+    grade: Optional[int] = None
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    skill: Optional[str] = None
+    difficulty: int = 1
+    prompt: str
+    data: dict[str, Any]
+    content_hash: str
+    normalized_hash: str
+    creator_id: Optional[str] = None
+    source_game_id: Optional[str] = None
+    source_game_version: Optional[int] = None
+    visibility: str = "private"
+    status: str = "draft"
+    usage_count: int = 0
+    created_at: Optional[Any] = None
+    updated_at: Optional[Any] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedQuestionsOut(BaseModel):
+    items: list[QuestionOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+# ---------- JSON Import Staging & Preview (Phase 3) ----------
+class ImportPreviewIn(BaseModel):
+    gameObject: Any
+
+
+class ImportPreviewStats(BaseModel):
+    total_levels: int
+    total_questions: int
+    unique_questions: int
+    safe_for_kids: bool
+
+
+class ImportPreviewOut(BaseModel):
+    valid: bool
+    errors: list[str]
+    warnings: list[str]
+    game: Optional[dict[str, Any]] = None
+    stats: Optional[ImportPreviewStats] = None
+
+
+# ---------- Game Builder & Question Reuse (Phase 4) ----------
+class BuildGameFromBankIn(BaseModel):
+    title: str
+    description: Optional[str] = None
+    detailed_description: Optional[str] = None
+    template_code: str
+    category: Optional[str] = "iq"
+    grade_from: Optional[int] = 1
+    grade_to: Optional[int] = 9
+    price: Optional[int] = 0
+    question_ids: list[str]
+
+
+class AddQuestionsFromBankIn(BaseModel):
+    question_ids: list[str]
+
+
+class ExtractQuestionsToBankOut(BaseModel):
+    extracted_count: int
+    skipped_duplicate_count: int
+    question_ids: list[str]
+
+
+# ---------- Game Blueprint Layer (Phase 5) ----------
+class GameBlueprintCreateIn(BaseModel):
+    id: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    grade: int
+    subject: str
+    topic: str
+    target_engine: str
+    total_questions: Optional[int] = 10
+    rule_config: Optional[dict[str, Any]] = Field(default_factory=dict)
+    is_active: Optional[bool] = True
+
+
+class GameBlueprintUpdateIn(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    grade: Optional[int] = None
+    subject: Optional[str] = None
+    topic: Optional[str] = None
+    target_engine: Optional[str] = None
+    total_questions: Optional[int] = None
+    rule_config: Optional[dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+
+class GameBlueprintOut(BaseModel):
+    id: str
+    title: str
+    description: Optional[str] = None
+    grade: int
+    subject: str
+    topic: str
+    target_engine: str
+    total_questions: int
+    rule_config: dict[str, Any]
+    is_active: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedBlueprintsOut(BaseModel):
+    items: list[GameBlueprintOut]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+
+class BuildGameFromBlueprintIn(BaseModel):
+    custom_title: Optional[str] = None
+    description: Optional[str] = None
+    category: Optional[str] = None
+    price: Optional[int] = None
+    grade_from: Optional[int] = None
+    grade_to: Optional[int] = None
+
+
+# ---------- Content Quality Gate (Phase 6) ----------
+class QualityDimension(BaseModel):
+    name: str
+    dimension_key: str
+    score: int
+    max_score: int
+    status: str  # pass | warning | fail
+    issues: list[str] = []
+
+
+class QualityReportOut(BaseModel):
+    game_id: Optional[str] = None
+    title: Optional[str] = None
+    total_score: int
+    max_score: int = 100
+    grade: str  # EXCELLENT | GOOD | FAIR | POOR
+    is_publishable: bool
+    summary: str
+    dimensions: list[QualityDimension]
+    recommendations: list[str] = []
+    stats: Optional[dict[str, Any]] = None
+
+
+# ---------- Duplicate Detection Engine (Phase 7) ----------
+class DuplicateCandidateOut(BaseModel):
+    game_id: str
+    title: str
+    creator_id: Optional[str] = None
+    creator_name: Optional[str] = None
+    similarity: float
+    similarity_percent: int
+    common_count: int
+    total_target_questions: int
+    total_candidate_questions: int
+    risk_level: str  # LOW | MEDIUM | HIGH
+
+
+class DuplicateCheckOut(BaseModel):
+    game_id: Optional[str] = None
+    title: Optional[str] = None
+    has_duplicate_risk: bool
+    max_similarity: float
+    max_similarity_percent: int
+    overall_risk_level: str  # LOW | MEDIUM | HIGH
+    candidates: list[DuplicateCandidateOut] = []
+
+
+# ---------- Admin AI Content Factory (Phase 8) ----------
+class AiBatchGenerateQuestionsIn(BaseModel):
+    topic: str
+    template_code: str
+    count: int = 5
+    grade: Optional[int] = 2
+    category: Optional[str] = "iq"
+    save_to_bank: Optional[bool] = False
+
+
+class VerifiedQuestionItem(BaseModel):
+    index: int
+    question_type: str
+    prompt: str
+    data: dict[str, Any]
+    is_verified: bool
+    error_message: Optional[str] = None
+    content_hash: Optional[str] = None
+    normalized_hash: Optional[str] = None
+    saved_question_id: Optional[str] = None
+
+
+class AiBatchGenerateQuestionsOut(BaseModel):
+    success: bool
+    topic: str
+    template_code: str
+    total_requested: int
+    total_generated: int
+    total_verified: int
+    saved_to_bank_count: int
+    items: list[VerifiedQuestionItem]

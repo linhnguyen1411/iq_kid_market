@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine, SessionLocal
-from .routers import session, games, wallet, attempts, admin, misc, auth, scratch, quests, projects
+from .routers import session, games, wallet, attempts, admin, misc, auth, scratch, quests, projects, questions, blueprints
 from . import seed as seed_module
 from .migrate_currency import run_currency_migration
 
@@ -39,6 +39,9 @@ app.include_router(scratch.router)
 app.include_router(projects.router)
 app.include_router(misc.router)
 app.include_router(quests.router)
+app.include_router(questions.router)
+app.include_router(blueprints.router)
+
 
 
 from sqlalchemy import inspect, text
@@ -75,6 +78,7 @@ def on_startup():
         seed_module.run_seed(db)
         seed_module.ensure_admin_user(db)
         seed_module.ensure_game_categories(db)
+        seed_module.ensure_game_blueprints(db)
         seed_module.ensure_scratch_catalog(db)
         run_currency_migration(db)
 

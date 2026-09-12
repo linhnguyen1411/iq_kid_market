@@ -413,14 +413,18 @@ export const MarketplacePage: React.FC<MarketplacePageProps> = ({
       {detailGame && (
         <GameDetailModal
           game={detailGame}
-          isPurchased={user?.role === 'admin' || purchases.includes(detailGame.id)}
+          isPurchased={
+            user?.role === 'admin' ||
+            Boolean(detailGame.creator_id && user?.id === detailGame.creator_id) ||
+            purchases.includes(detailGame.id)
+          }
           onClose={() => setDetailGame(null)}
           onPlayGame={(g, lvl) => {
             setDetailGame(null);
             onPlayGame(g, lvl);
           }}
           onInitiatePurchase={(g) => {
-            if (user?.role === 'admin') return;
+            if (user?.role === 'admin' || (g.creator_id && user?.id === g.creator_id)) return;
             setDetailGame(null);
             setPurchaseGame(g);
           }}

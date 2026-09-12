@@ -13,12 +13,13 @@ from ..game_config import can_access_level, FREE_LEVEL_COUNT
 router = APIRouter(tags=["attempts"])
 
 
-def _game_level_nums(game: models.Game | None) -> set[int]:
+def _game_level_nums(game: models.Game | None, levels: list | None = None) -> set[int]:
     """Tập số màn trong game (level_num)."""
-    if not game or not isinstance(game.levels, list) or not game.levels:
+    target_levels = levels if levels is not None else (game.levels if game else [])
+    if not target_levels or not isinstance(target_levels, list):
         return set()
     nums: set[int] = set()
-    for i, lv in enumerate(game.levels):
+    for i, lv in enumerate(target_levels):
         if not isinstance(lv, dict):
             continue
         raw = lv.get("level_num")
@@ -26,11 +27,12 @@ def _game_level_nums(game: models.Game | None) -> set[int]:
     return nums
 
 
-def _game_completion_rewards(game: models.Game) -> tuple[int, int]:
+def _game_completion_rewards(game: models.Game, levels: list | None = None) -> tuple[int, int]:
     """Tổng XP / xu thưởng khi hoàn thành toàn bộ game (chỉ cộng 1 lần)."""
+    target_levels = levels if levels is not None else (game.levels or [])
     xp_total = 0
     coin_total = 0
-    for lv in game.levels or []:
+    for lv in target_levels or []:
         if not isinstance(lv, dict):
             continue
         xp_total += int(lv.get("xp_reward") or 80)
@@ -204,7 +206,14 @@ def submit_attempt(
         .first()
         is not None
     )
-    if not can_access_level(body.levelNum, owned):
+    is_creator = bool(game.creator_id and user.id == game.creator_id)
+    is_admin = (user.role == "admin")
+    if not can_access_level(
+        body.levelNum,
+        owned,
+        is_admin_preview=is_admin,
+        is_creator=is_creator,
+    ):
         raise HTTPException(
             status_code=403,
             detail=(
@@ -213,14 +222,20 @@ def submit_attempt(
             ),
         )
 
-    # 1. Định vị màn chơi trong Roadmap game
+    # 1. Xác định snapshot nội dung chuẩn để định vị màn chơi & chấm điểm
+    resolved_levels, effective_gv = schemas.resolve_game_version_content(
+        game,
+        db,
+        is_creator_or_admin=(is_creator or is_admin),
+    )
+
     level_data = None
-    for lv in (game.levels or []):
+    for lv in (resolved_levels or []):
         if isinstance(lv, dict) and lv.get("level_num") == body.levelNum:
             level_data = lv
             break
-    if not level_data and isinstance(game.levels, list) and 0 <= body.levelNum - 1 < len(game.levels):
-        candidate = game.levels[body.levelNum - 1]
+    if not level_data and isinstance(resolved_levels, list) and 0 <= body.levelNum - 1 < len(resolved_levels):
+        candidate = resolved_levels[body.levelNum - 1]
         if isinstance(candidate, dict):
             level_data = candidate
 
@@ -292,15 +307,16 @@ def submit_attempt(
         attempt_id = f"att_client_{body.clientAttemptId}"
 
     # 3. Tính toán trạng thái hoàn thành game trước lượt này
-    required_levels = _game_level_nums(game)
+    required_levels = _game_level_nums(game, levels=resolved_levels)
     prior_completed = _completed_level_nums(db, user.id, body.gameId)
     had_full_clear = bool(required_levels) and required_levels.issubset(prior_completed)
 
-    # 4. Ghi nhận lượt làm bài vào Database
+    # 4. Ghi nhận lượt làm bài vào Database (gắn game_version_id của snapshot)
     attempt = models.Attempt(
         id=attempt_id,
         user_id=user.id,
         game_id=body.gameId,
+        game_version_id=effective_gv.id if effective_gv else None,
         level_num=body.levelNum,
         score=score,
         completed=is_correct,
@@ -351,7 +367,7 @@ def submit_attempt(
     xp_reward = 0
     coin_reward = 0
     if first_full_clear:
-        xp_reward, coin_reward = _game_completion_rewards(game)
+        xp_reward, coin_reward = _game_completion_rewards(game, levels=resolved_levels)
 
     old_level = user.level or 1
     if xp_reward:

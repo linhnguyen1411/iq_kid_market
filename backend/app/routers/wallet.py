@@ -140,10 +140,10 @@ def confirm_topup(
             status_code=401,
             detail="Bạn cần đăng nhập để xác nhận giao dịch!",
         )
-    if current_user.role != "admin" and current_user.id != body.userId:
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=403,
-            detail="Bạn không có quyền xác nhận nạp tiền cho tài khoản khác!",
+            detail="Chức năng xác nhận nạp tiền chỉ dành riêng cho Quản Trị Viên!",
         )
 
     wallet = (

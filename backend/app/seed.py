@@ -168,6 +168,10 @@ def run_seed(db: Session, force: bool = False) -> None:
                 duration_secs=60, created_at=_parse_dt(att["date"]),
             ))
 
+    # ---- Game Blueprints & Categories ----
+    ensure_game_categories(db)
+    ensure_game_blueprints(db)
+
     # ---- Daily Quests mặc định ----
     from .daily_quests import QUEST_DEFINITIONS
     for q in QUEST_DEFINITIONS:
@@ -257,6 +261,112 @@ def ensure_game_categories(db: Session) -> None:
                     description=row.get("description"),
                     sort_order=row.get("sort_order", 0),
                     is_active=True,
+                )
+            )
+    db.commit()
+
+
+DEFAULT_GAME_BLUEPRINTS = [
+    {
+        "id": "bp_math_g1_count",
+        "title": "Toán 1: Đếm số và So sánh lượng (1-20)",
+        "description": "Công thức rèn luyện kỹ năng đếm, nhận biết mặt số và so sánh số lượng đồ vật trong phạm vi 20.",
+        "grade": 1,
+        "subject": "math",
+        "topic": "Đếm số và So sánh",
+        "target_engine": "quiz",
+        "total_questions": 10,
+        "rule_config": {
+            "difficulty_distribution": {"1": 6, "2": 4, "3": 0},
+            "time_limit_sec": 30,
+            "rewards": {"xp": 80, "coins": 20},
+        },
+        "is_active": True,
+    },
+    {
+        "id": "bp_math_g2_addition",
+        "title": "Toán 2: Bảng cộng trừ có nhớ trong phạm vi 100",
+        "description": "Công thức thực hành phép cộng và phép trừ có nhớ với các số tự nhiên có 2 chữ số.",
+        "grade": 2,
+        "subject": "math",
+        "topic": "Phép cộng trừ có nhớ",
+        "target_engine": "math",
+        "total_questions": 10,
+        "rule_config": {
+            "difficulty_distribution": {"1": 4, "2": 4, "3": 2},
+            "time_limit_sec": 45,
+            "rewards": {"xp": 100, "coins": 25},
+        },
+        "is_active": True,
+    },
+    {
+        "id": "bp_viet_g3_vocab",
+        "title": "Tiếng Việt 3: Mở rộng vốn từ & Luyện từ và câu",
+        "description": "Công thức củng cố vốn từ ngữ chỉ sự vật, hoạt động, đặc điểm và ghép câu hoàn chỉnh.",
+        "grade": 3,
+        "subject": "vietnamese",
+        "topic": "Mở rộng vốn từ",
+        "target_engine": "matching",
+        "total_questions": 10,
+        "rule_config": {
+            "difficulty_distribution": {"1": 4, "2": 4, "3": 2},
+            "time_limit_sec": 40,
+            "rewards": {"xp": 100, "coins": 25},
+        },
+        "is_active": True,
+    },
+    {
+        "id": "bp_sci_g4_nature",
+        "title": "Khoa học 4: Động thực vật & Môi trường sống",
+        "description": "Công thức khám phá thế giới tự nhiên, phân loại động thực vật và chuỗi thức ăn sinh thái.",
+        "grade": 4,
+        "subject": "science",
+        "topic": "Tự nhiên và Môi trường sống",
+        "target_engine": "quiz",
+        "total_questions": 10,
+        "rule_config": {
+            "difficulty_distribution": {"1": 3, "2": 4, "3": 3},
+            "time_limit_sec": 30,
+            "rewards": {"xp": 120, "coins": 30},
+        },
+        "is_active": True,
+    },
+    {
+        "id": "bp_logic_g5_sequence",
+        "title": "Logic 5: Quy luật dãy số & Tư duy trừu tượng",
+        "description": "Công thức thử thách tư duy phân tích dãy số quy luật, hình học trực quan và suy luận logic.",
+        "grade": 5,
+        "subject": "logic",
+        "topic": "Quy luật dãy số",
+        "target_engine": "sequence",
+        "total_questions": 10,
+        "rule_config": {
+            "difficulty_distribution": {"1": 2, "2": 5, "3": 3},
+            "time_limit_sec": 60,
+            "rewards": {"xp": 150, "coins": 35},
+        },
+        "is_active": True,
+    },
+]
+
+
+def ensure_game_blueprints(db: Session) -> None:
+    """Đảm bảo các Blueprint Presets tiêu chuẩn (GDPT K-5) luôn có sẵn."""
+    for row in DEFAULT_GAME_BLUEPRINTS:
+        existing = db.get(models.GameBlueprint, row["id"])
+        if not existing:
+            db.add(
+                models.GameBlueprint(
+                    id=row["id"],
+                    title=row["title"],
+                    description=row.get("description"),
+                    grade=row["grade"],
+                    subject=row["subject"],
+                    topic=row["topic"],
+                    target_engine=row["target_engine"],
+                    total_questions=row.get("total_questions", 10),
+                    rule_config=row.get("rule_config", {}),
+                    is_active=row.get("is_active", True),
                 )
             )
     db.commit()

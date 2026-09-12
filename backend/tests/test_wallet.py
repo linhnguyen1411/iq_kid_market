@@ -81,7 +81,7 @@ def test_prevent_duplicate_purchase(client, student_auth, db_session):
     assert res2.status_code == 400
 
 
-def test_create_and_confirm_topup(client, student_auth, db_session):
+def test_create_and_confirm_topup(client, student_auth, admin_auth, db_session):
     # Sinh mã nạp tiền VietQR 50.000 VND
     res_intent = client.post("/api/wallet/create-topup-intent", json={
         "userId": student_auth["user_id"],
@@ -91,21 +91,29 @@ def test_create_and_confirm_topup(client, student_auth, db_session):
     tx_id = res_intent.json()["tx_id"]
     assert "vietqr.io" in res_intent.json()["qr_url"]
 
-    # Xác nhận nạp tiền: 50.000 VND -> 50 Token
-    res_confirm = client.post("/api/wallet/confirm-topup", json={
+    # 1. Học sinh / User tự xác nhận nạp tiền -> Bị chặn 403 Forbidden (P0 Fix)
+    res_student_confirm = client.post("/api/wallet/confirm-topup", json={
         "userId": student_auth["user_id"],
         "amount": 50000,
         "tx_id": tx_id,
     }, headers=student_auth["headers"])
-    assert res_confirm.status_code == 200
-    assert res_confirm.json()["balance"] == 50  # 0 + 50 Token
+    assert res_student_confirm.status_code == 403
 
-    # Xác nhận trùng lặp -> Chặn 400
+    # 2. Quản trị viên (Admin) xác nhận nạp tiền hợp lệ -> 200 OK
+    res_admin_confirm = client.post("/api/wallet/confirm-topup", json={
+        "userId": student_auth["user_id"],
+        "amount": 50000,
+        "tx_id": tx_id,
+    }, headers=admin_auth["headers"])
+    assert res_admin_confirm.status_code == 200
+    assert res_admin_confirm.json()["balance"] == 50  # 0 + 50 Token
+
+    # 3. Xác nhận trùng lặp -> Chặn 400
     res_duplicate = client.post("/api/wallet/confirm-topup", json={
         "userId": student_auth["user_id"],
         "amount": 50000,
         "tx_id": tx_id,
-    }, headers=student_auth["headers"])
+    }, headers=admin_auth["headers"])
     assert res_duplicate.status_code == 400
 
 

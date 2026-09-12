@@ -1,7 +1,9 @@
 import { 
   Game, UserSession, LeaderboardItem, Achievement, 
   ScratchCourse, ScratchLesson, ScratchProject, ScratchProjectSummary,
-  ScratchAnalytics, AdminStats, GameCategory 
+  ScratchAnalytics, AdminStats, GameCategory, QualityReportOut,
+  DuplicateCandidateOut, DuplicateCheckOut,
+  AiBatchGenerateQuestionsIn, AiBatchGenerateQuestionsOut
 } from '../types';
 
 const BASE_URL = '/api';
@@ -457,6 +459,112 @@ export const api = {
       }),
   },
 
+  // ---------- QUESTION BANK (PHASE 2 & 4) ----------
+  questions: {
+    list: (params?: {
+      page?: number;
+      page_size?: number;
+      grade?: number;
+      subject?: string;
+      topic?: string;
+      difficulty?: number;
+      engine_code?: string;
+      status?: string;
+      visibility?: string;
+      search?: string;
+    }) => {
+      const q = new URLSearchParams();
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.page_size) q.set('page_size', String(params.page_size));
+      if (params?.grade != null) q.set('grade', String(params.grade));
+      if (params?.subject) q.set('subject', params.subject);
+      if (params?.topic) q.set('topic', params.topic);
+      if (params?.difficulty != null) q.set('difficulty', String(params.difficulty));
+      if (params?.engine_code) q.set('engine_code', params.engine_code);
+      if (params?.status) q.set('status', params.status);
+      if (params?.visibility) q.set('visibility', params.visibility);
+      if (params?.search) q.set('search', params.search);
+      const qs = q.toString();
+      return apiRequest<{
+        items: any[];
+        total: number;
+        page: number;
+        page_size: number;
+        total_pages: number;
+      }>(`/questions${qs ? `?${qs}` : ''}`);
+    },
+
+    get: (id: string) => apiRequest<any>(`/questions/${encodeURIComponent(id)}`),
+
+    create: (data: any) =>
+      apiRequest<any>('/questions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/questions/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      apiRequest<{ success: boolean; message: string; soft_deleted?: boolean }>(
+        `/questions/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
+      ),
+  },
+
+  // ---------- GAME BLUEPRINTS (PHASE 5) ----------
+  blueprints: {
+    list: (params?: {
+      page?: number;
+      page_size?: number;
+      grade?: number;
+      subject?: string;
+      target_engine?: string;
+      search?: string;
+      is_active?: boolean;
+    }) => {
+      const q = new URLSearchParams();
+      if (params?.page) q.set('page', String(params.page));
+      if (params?.page_size) q.set('page_size', String(params.page_size));
+      if (params?.grade != null) q.set('grade', String(params.grade));
+      if (params?.subject) q.set('subject', params.subject);
+      if (params?.target_engine) q.set('target_engine', params.target_engine);
+      if (params?.search) q.set('search', params.search);
+      if (params?.is_active != null) q.set('is_active', String(params.is_active));
+      const qs = q.toString();
+      return apiRequest<{
+        items: any[];
+        total: number;
+        page: number;
+        page_size: number;
+        total_pages: number;
+      }>(`/blueprints${qs ? `?${qs}` : ''}`);
+    },
+
+    get: (id: string) => apiRequest<any>(`/blueprints/${encodeURIComponent(id)}`),
+
+    create: (data: any) =>
+      apiRequest<any>('/admin/blueprints', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    update: (id: string, data: any) =>
+      apiRequest<any>(`/admin/blueprints/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
+
+    delete: (id: string) =>
+      apiRequest<{ success: boolean; message: string }>(
+        `/admin/blueprints/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
+      ),
+  },
+
   // ---------- ADMIN & CREATOR STUDIO ----------
   admin: {
     getStats: () => apiRequest<AdminStats>('/admin/stats'),
@@ -555,6 +663,12 @@ export const api = {
       return apiRequest<Game[]>(`/admin/review/queue${qs}`);
     },
 
+    getGameQualityReport: (gameId: string) =>
+      apiRequest<QualityReportOut>(`/admin/games/${gameId}/quality-report`),
+
+    checkGameDuplicates: (gameId: string, threshold: number = 0.6) =>
+      apiRequest<DuplicateCheckOut>(`/admin/games/${gameId}/duplicate-check?threshold=${threshold}`),
+
     decideReview: (data: { gameId: string; action: 'approve' | 'reject'; feedback?: string }) =>
       apiRequest<{ success: boolean; game: Game; message: string }>('/admin/review/decide', {
         method: 'POST',
@@ -573,6 +687,13 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+
+    batchGenerateAiQuestions: (data: AiBatchGenerateQuestionsIn) =>
+      apiRequest<AiBatchGenerateQuestionsOut>('/admin/ai/batch-generate-questions', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
 
     exportSamplePack: (params: {
       template_code: string;
@@ -598,6 +719,97 @@ export const api = {
           body: JSON.stringify({ gameObject }),
         },
       ),
+
+    previewGamePack: (gameObject: any) =>
+      apiRequest<{
+        valid: boolean;
+        errors: string[];
+        warnings: string[];
+        game?: any;
+        stats?: {
+          total_levels: number;
+          total_questions: number;
+          unique_questions: number;
+          safe_for_kids: boolean;
+        };
+      }>('/admin/games/import-preview', {
+        method: 'POST',
+        body: JSON.stringify({ gameObject }),
+      }),
+
+    getImportTemplates: () =>
+      apiRequest<{
+        templates: Record<string, any>;
+        promptGuidelines: string;
+      }>('/admin/games/import-templates'),
+
+    buildGameFromBank: (payload: {
+      title: string;
+      description: string;
+      detailed_description?: string;
+      template_code: string;
+      category?: string;
+      grade_from?: number;
+      grade_to?: number;
+      price?: number;
+      question_ids: string[];
+    }) =>
+      apiRequest<{ success: boolean; game: Game; version: any; message: string }>(
+        '/admin/games/build-from-bank',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        },
+      ),
+
+    addQuestionsFromBank: (gameId: string, questionIds: string[]) =>
+      apiRequest<{
+        success: boolean;
+        added_count: number;
+        total_levels: number;
+        message: string;
+      }>(`/admin/games/${encodeURIComponent(gameId)}/add-from-bank`, {
+        method: 'POST',
+        body: JSON.stringify({ question_ids: questionIds }),
+      }),
+
+    extractQuestionsToBank: (gameId: string) =>
+      apiRequest<{
+        success: boolean;
+        game_id: string;
+        total_game_questions: number;
+        extracted_count: number;
+        skipped_duplicate_count: number;
+        question_ids: string[];
+        message: string;
+      }>(`/admin/games/${encodeURIComponent(gameId)}/extract-to-bank`, {
+        method: 'POST',
+      }),
+
+    buildGameFromBlueprint: (
+      blueprintId: string,
+      overrides?: {
+        custom_title?: string;
+        description?: string;
+        category?: string;
+        price?: number;
+        grade_from?: number;
+        grade_to?: number;
+      },
+    ) =>
+      apiRequest<{
+        success: boolean;
+        game_id: string;
+        title: string;
+        levels_count: number;
+        version_num: number;
+        blueprint_id: string;
+        target_engine: string;
+        message: string;
+      }>(`/admin/games/build-from-blueprint/${encodeURIComponent(blueprintId)}`, {
+        method: 'POST',
+        body: JSON.stringify(overrides || {}),
+      }),
 
     listUsers: (params?: { role?: string; search?: string }) => {
       const q = new URLSearchParams();

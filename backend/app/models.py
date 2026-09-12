@@ -28,6 +28,7 @@ class User(Base):
     purchases = relationship("Purchase", back_populates="user", cascade="all, delete-orphan")
     attempts = relationship("Attempt", back_populates="user", cascade="all, delete-orphan")
     games_created = relationship("Game", back_populates="creator")
+    questions = relationship("Question", back_populates="creator")
 
 
 class Wallet(Base):
@@ -80,12 +81,51 @@ class Game(Base):
     plays_count = Column(Integer, default=0)
     # Levels + questions lồng nhau, schema câu hỏi rất linh hoạt (10 loại game engine, mỗi loại field khác nhau)
     # -> lưu nguyên khối JSONB thay vì chuẩn hoá hết ra bảng con, tránh join phức tạp không cần thiết cho MVP.
+    current_version_num = Column(Integer, default=1)
     levels = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 
     creator = relationship("User", back_populates="games_created")
     purchases = relationship("Purchase", back_populates="game", cascade="all, delete-orphan")
     attempts = relationship("Attempt", back_populates="game", cascade="all, delete-orphan")
+    versions = relationship(
+        "GameVersion",
+        back_populates="game",
+        cascade="all, delete-orphan",
+        order_by="desc(GameVersion.version_num)",
+    )
+
+
+class GameVersion(Base):
+    """
+    Bản chụp snapshot phiên bản game bất biến (Immutable Published Snapshot)
+    hoặc bản thảo đang soạn thảo (Draft Version).
+    """
+    __tablename__ = "game_versions"
+
+    id = Column(String(80), primary_key=True)  # "gv_<game_id>_v<version_num>"
+    game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_num = Column(Integer, nullable=False)
+    status = Column(String(30), nullable=False, default="draft", index=True)  # draft|pending_review|published|rejected|archived
+    levels = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=list)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    detailed_description = Column(Text, nullable=True)
+    price = Column(Integer, default=0)
+    template_code = Column(String(50), nullable=False)
+    category = Column(String(50), default="iq")
+    quality_score = Column(Integer, nullable=True)
+    changelog = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    published_at = Column(DateTime, nullable=True)
+
+    game = relationship("Game", back_populates="versions")
+    attempts = relationship("Attempt", back_populates="game_version")
+    purchases = relationship("Purchase", back_populates="game_version")
+
+    __table_args__ = (
+        UniqueConstraint("game_id", "version_num", name="uq_game_version_num"),
+    )
 
 
 class GameCategory(Base):
@@ -107,11 +147,13 @@ class Purchase(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
+    game_version_id = Column(String(80), ForeignKey("game_versions.id", ondelete="SET NULL"), nullable=True)
     purchased_price = Column(Integer, default=0)
     purchased_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="purchases")
     game = relationship("Game", back_populates="purchases")
+    game_version = relationship("GameVersion", back_populates="purchases")
 
 
 class Attempt(Base):
@@ -120,6 +162,7 @@ class Attempt(Base):
     id = Column(String(50), primary_key=True)  # "att_<timestamp>"
     user_id = Column(String(50), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     game_id = Column(String(80), ForeignKey("games.id", ondelete="CASCADE"), nullable=False, index=True)
+    game_version_id = Column(String(80), ForeignKey("game_versions.id", ondelete="SET NULL"), nullable=True)
     level_num = Column(Integer, nullable=False)
     score = Column(Integer, default=0, index=True)
     completed = Column(Boolean, default=False)
@@ -128,6 +171,7 @@ class Attempt(Base):
 
     user = relationship("User", back_populates="attempts")
     game = relationship("Game", back_populates="attempts")
+    game_version = relationship("GameVersion", back_populates="attempts")
 
 
 class Achievement(Base):
@@ -302,3 +346,59 @@ class LoginRewardClaim(Base):
     coin_reward = Column(Integer, nullable=False)
 
     user = relationship("User")
+
+
+class Question(Base):
+    """
+    Ngân hàng câu hỏi dùng chung (Canonical Reusable Content Layer).
+    Lưu trữ câu hỏi độc lập với Game, có dual hash để chống trùng lặp,
+    phân quyền sở hữu (creator_id), trạng thái phê duyệt (status),
+    và phạm vi hiển thị (visibility: private / system).
+    """
+    __tablename__ = "questions"
+
+    id = Column(String(80), primary_key=True)
+    engine_code = Column(String(50), nullable=False, index=True)
+    grade = Column(Integer, nullable=True, index=True)
+    subject = Column(String(50), nullable=True, index=True)
+    topic = Column(String(100), nullable=True, index=True)
+    skill = Column(String(100), nullable=True)
+    difficulty = Column(Integer, nullable=False, default=1, index=True)
+    prompt = Column(Text, nullable=False)
+    data = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=dict)
+    content_hash = Column(String(64), nullable=False, index=True)
+    normalized_hash = Column(String(64), nullable=False, index=True)
+    creator_id = Column(String(50), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    source_game_id = Column(String(80), ForeignKey("games.id", ondelete="SET NULL"), nullable=True, index=True)
+    source_game_version = Column(Integer, nullable=True)
+    visibility = Column(String(20), nullable=False, default="private", index=True)
+    status = Column(String(20), nullable=False, default="draft", index=True)
+    usage_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    creator = relationship("User", back_populates="questions")
+    source_game = relationship("Game")
+
+
+class GameBlueprint(Base):
+    """
+    Game Blueprint (Công thức tạo game - Phase 5).
+    Định nghĩa công thức sư phạm chuẩn (khối lớp, môn học, chủ đề, engine đích,
+    số lượng câu hỏi mục tiêu, phân bổ độ khó) để tự động ghép Game từ Ngân hàng câu hỏi.
+    """
+    __tablename__ = "game_blueprints"
+
+    id = Column(String(50), primary_key=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    grade = Column(Integer, nullable=False, index=True)
+    subject = Column(String(50), nullable=False, index=True)
+    topic = Column(String(100), nullable=False, index=True)
+    target_engine = Column(String(30), nullable=False, index=True)
+    total_questions = Column(Integer, default=10, nullable=False)
+    rule_config = Column(JSON().with_variant(JSONB, "postgresql"), nullable=False, default=dict)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+

@@ -112,11 +112,13 @@ def list_games(
 @router.get("/api/games/{game_id}")
 def get_game_detail(
     game_id: str,
+    version: int | None = Query(None, description="Tùy chọn tải phiên bản cụ thể"),
     current_user: models.User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
     """
     Lấy thông tin chi tiết một trò chơi bao gồm danh sách màn chơi (Levels Roadmap).
+    Tự động xác định phiên bản phù hợp (Published snapshot cho người học, Draft cho tác giả/admin).
     Tự động làm sạch toàn bộ đáp án (Sanitization) nếu người dùng là học sinh hoặc khách vãng lai.
     Chỉ tác giả sở hữu game hoặc Quản trị viên mới xem được toàn bộ đáp án phục vụ biên tập.
     """
@@ -124,11 +126,25 @@ def get_game_detail(
     if not game:
         raise HTTPException(status_code=404, detail="Không tìm thấy trò chơi yêu cầu!")
 
-    data = schemas.GameOut.model_validate(game).model_dump()
-    is_editor_or_admin = current_user and (
-        current_user.role == "admin"
-        or (game.creator_id and current_user.id == game.creator_id)
+    is_editor_or_admin = bool(
+        current_user
+        and (
+            current_user.role == "admin"
+            or (game.creator_id and current_user.id == game.creator_id)
+        )
     )
+
+    levels, resolved_gv = schemas.resolve_game_version_content(
+        game,
+        db,
+        version_num=version,
+        is_creator_or_admin=is_editor_or_admin,
+    )
+
+    data = schemas.GameOut.model_validate(game).model_dump()
+    data["levels"] = levels
+    if resolved_gv:
+        data["current_version_num"] = resolved_gv.version_num
 
     if not is_editor_or_admin:
         data["levels"] = schemas.sanitize_game_levels_for_learner(data.get("levels"))
@@ -149,7 +165,7 @@ def purchase_game(
     3. Kiểm tra quyền sở hữu & số dư ví.
     4. Trừ tiền người mua + Ghi log giao dịch ví.
     5. Tự động chia sẻ 80% doanh thu cho Ví của Creator (nếu có).
-    6. Cấp bản quyền game (Purchase record) & Tăng lượt chơi.
+    6. Cấp bản quyền game (Purchase record gắn snapshot game_version_id) & Tăng lượt chơi.
     """
     buyer_id = current_user.id
     if body.userId and body.userId != current_user.id and current_user.role != "admin":
@@ -192,7 +208,19 @@ def purchase_game(
         detail=f'Mua bản quyền game "{game.title}"',
     )
     db.add(tx_buyer)
-    db.add(models.Purchase(user_id=buyer_id, game_id=body.gameId, purchased_price=game.price))
+
+    # Gắn bản quyền với GameVersion đang xuất bản tại thời điểm mua (nếu có)
+    _, published_gv = schemas.resolve_game_version_content(game, db, is_creator_or_admin=False)
+    game_version_id = published_gv.id if published_gv else None
+
+    db.add(
+        models.Purchase(
+            user_id=buyer_id,
+            game_id=body.gameId,
+            game_version_id=game_version_id,
+            purchased_price=game.price,
+        )
+    )
 
     # 5. Chia sẻ 80% doanh thu cho Creator nếu game do creator/teacher tạo
     if game.creator_id and game.creator_id != "system" and game.creator_id != buyer_id:

@@ -89,7 +89,7 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     assert body["success"] is True
     assert body["count"] == 1
 
-    # Import 1 câu → lưu DB đủ 20 màn; teacher không xem được hàng đợi duyệt
+    # Phase 3: Tắt padding spam — lưu đúng 1 màn tác giả đã nạp; teacher không xem được hàng đợi duyệt
     res_queue_teacher = client.get("/api/admin/review/queue?status=pending_review", headers=headers)
     assert res_queue_teacher.status_code == 403
 
@@ -97,7 +97,7 @@ def test_teacher_sample_export_and_import(client, teacher_auth):
     res_detail = client.get(f"/api/games/{sample['id']}", headers=headers)
     assert res_detail.status_code == 200
     detail = res_detail.json()
-    assert len(detail["levels"]) == 20
+    assert len(detail["levels"]) == 1
     assert detail["review_status"] == "pending_review"
 
     # Đáp án đã được xáo — answer vẫn khớp một option đối với tác giả

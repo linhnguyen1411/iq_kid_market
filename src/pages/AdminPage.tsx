@@ -3,10 +3,11 @@ import {
   Settings, PlusCircle, Sparkles, CheckCircle2, 
   XCircle, Trash2, Eye, BarChart2, ShieldCheck, 
   BookOpen, Brain, RefreshCw, RotateCcw, TrendingUp, 
-  Play, Plus, ArrowRight, HelpCircle, Layers, Download, Upload, Pencil
+  Play, Plus, ArrowRight, HelpCircle, Layers, Download, Upload, Pencil, Award, AlertTriangle, Copy,
+  Cpu, Database, Check
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Game, AdminStats } from '../types';
+import { Game, AdminStats, QualityReportOut, DuplicateCheckOut, AiBatchGenerateQuestionsOut } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import QuestionRenderer from '../components/QuestionRenderer';
@@ -32,6 +33,10 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   const [loading, setLoading] = useState(false);
   const [editingGameId, setEditingGameId] = useState<string | null>(null);
   const [editingLevelNum, setEditingLevelNum] = useState<number | null>(null);
+  const [selectedQualityReport, setSelectedQualityReport] = useState<QualityReportOut | null>(null);
+  const [loadingQualityReport, setLoadingQualityReport] = useState(false);
+  const [selectedDuplicateCheck, setSelectedDuplicateCheck] = useState<DuplicateCheckOut | null>(null);
+  const [loadingDuplicateCheck, setLoadingDuplicateCheck] = useState(false);
 
   // Manual Create Game state
   const [title, setTitle] = useState('');
@@ -49,6 +54,17 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   const [aiGradeMax, setAiGradeMax] = useState('4');
   const [aiGeneratedGame, setAiGeneratedGame] = useState<Game | null>(null);
   const [aiPreviewLevelIdx, setAiPreviewLevelIdx] = useState(0);
+
+  // Phase 8: Admin AI Content Factory state
+  const [factoryTopic, setFactoryTopic] = useState('Phép cộng có nhớ trong phạm vi 100');
+  const [factoryTemplate, setFactoryTemplate] = useState('math');
+  const [factoryGrade, setFactoryGrade] = useState(2);
+  const [factoryCategory, setFactoryCategory] = useState('math');
+  const [factoryCount, setFactoryCount] = useState(3);
+  const [factorySaveToBank, setFactorySaveToBank] = useState(true);
+  const [factoryLoading, setFactoryLoading] = useState(false);
+  const [factoryResult, setFactoryResult] = useState<AiBatchGenerateQuestionsOut | null>(null);
+
 
   // Import pack (teacher/creator)
   const [packTemplate, setPackTemplate] = useState('quiz');
@@ -382,6 +398,45 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
     }
   };
 
+  // Handler: Phase 8 Admin AI Content Factory (Batch Generation with Algorithmic Verification)
+  const handleBatchGenerateQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAdmin) {
+      setMsg({ type: 'error', text: 'Chỉ tài khoản admin được dùng Admin AI Content Factory.' });
+      return;
+    }
+    if (!factoryTopic.trim()) {
+      setMsg({ type: 'error', text: 'Vui lòng nhập chủ đề câu hỏi cho AI Factory!' });
+      return;
+    }
+    setFactoryLoading(true);
+    setMsg(null);
+    try {
+      const res = await api.admin.batchGenerateAiQuestions({
+        topic: factoryTopic.trim(),
+        template_code: factoryTemplate,
+        count: factoryCount,
+        grade: factoryGrade,
+        category: factoryCategory,
+        save_to_bank: factorySaveToBank,
+      });
+      setFactoryResult(res);
+      playSynthSound('victory');
+      setMsg({
+        type: 'success',
+        text: `Đã sinh thành công ${res.total_generated} câu hỏi (${res.total_verified} câu đạt chuẩn thẩm định thuật toán, ${res.saved_to_bank_count} lưu vào Ngân hàng câu hỏi)!`,
+      });
+      await onRefreshGames();
+      await fetchData();
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message || 'Lỗi khi sinh lô câu hỏi từ AI Factory' });
+      playSynthSound('incorrect');
+    } finally {
+      setFactoryLoading(false);
+    }
+  };
+
+
   const downloadJson = (data: any, filename: string) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -537,6 +592,30 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
   };
 
   // Handler: Review Decision
+  const handleViewQualityReport = async (gameId: string) => {
+    try {
+      setLoadingQualityReport(true);
+      const report = await api.admin.getGameQualityReport(gameId);
+      setSelectedQualityReport(report);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message || 'Không thể tải báo cáo chất lượng sư phạm' });
+    } finally {
+      setLoadingQualityReport(false);
+    }
+  };
+
+  const handleCheckDuplicates = async (gameId: string) => {
+    try {
+      setLoadingDuplicateCheck(true);
+      const result = await api.admin.checkGameDuplicates(gameId);
+      setSelectedDuplicateCheck(result);
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err?.message || 'Không thể kiểm tra đối soát trùng lặp' });
+    } finally {
+      setLoadingDuplicateCheck(false);
+    }
+  };
+
   const handleDecideReview = async (gameId: string, action: 'approve' | 'reject') => {
     setLoading(true);
     try {
@@ -790,6 +869,214 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
       {/* Tab 2: AI Game Studio — admin only */}
       {activeSubTab === 'ai_gen' && isAdmin && (
         <div className="space-y-6">
+          {/* Phase 8: Admin AI Content Factory (Batch Generation & Deterministic Verification) */}
+          <div className="bg-white p-6 rounded-3xl border border-indigo-200/80 shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-6 h-6 text-indigo-600" />
+                <div>
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    AI CONTENT FACTORY & THẨM ĐỊNH XÁC ĐỊNH
+                    <span className="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">
+                      PHASE 8
+                    </span>
+                  </h3>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Sinh lô câu hỏi có kiểm soát (1-5 câu) • Thẩm định thuật toán xác định qua Safe AST parser • Không để AI tự ý quyết định
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full flex items-center gap-1.5">
+                <Database className="w-3.5 h-3.5 text-indigo-500" />
+                Question Bank Integration
+              </span>
+            </div>
+
+            <form onSubmit={handleBatchGenerateQuestions} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  Chủ đề / Yêu cầu sư phạm:
+                </label>
+                <input
+                  type="text"
+                  value={factoryTopic}
+                  onChange={(e) => setFactoryTopic(e.target.value)}
+                  placeholder="Ví dụ: Phép nhân trong bảng cửu chương 6, Nhận diện danh từ..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold text-slate-800 outline-hidden focus:border-indigo-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Game Engine (Loại câu):</label>
+                <select
+                  value={factoryTemplate}
+                  onChange={(e) => setFactoryTemplate(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                >
+                  <option value="math">Giải Toán (Math - AST verified)</option>
+                  <option value="quiz">Trắc Nghiệm (Quiz - Option containment)</option>
+                  <option value="matching">Ghép Cặp (Matching - Pair balance)</option>
+                  <option value="sequence">Dãy Số Quy Luật (Sequence)</option>
+                  <option value="sorting">Sắp Xếp Quy Trình (Sorting)</option>
+                  <option value="memory">Thẻ Nhớ (Memory)</option>
+                  <option value="language">Ngôn Ngữ & Tiếng Việt (Language)</option>
+                  <option value="observation">Quan Sát Nhanh (Observation)</option>
+                  <option value="flashcard">Thẻ Học Thông Minh (Flashcard)</option>
+                  <option value="coding">Tư Duy Lập Trình (Coding)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Cấp độ Lớp:</label>
+                <select
+                  value={factoryGrade}
+                  onChange={(e) => setFactoryGrade(Number(e.target.value))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5].map((g) => (
+                    <option key={g} value={g}>
+                      Lớp {g}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">Thể loại:</label>
+                <select
+                  value={factoryCategory}
+                  onChange={(e) => setFactoryCategory(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden cursor-pointer"
+                >
+                  <option value="math">Toán Học (Math)</option>
+                  <option value="iq">Tư Duy IQ (Logic)</option>
+                  <option value="science">Khoa Học (Science)</option>
+                  <option value="language">Ngôn Ngữ (Language)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 block mb-1">
+                  Số lượng (Strict Batch Limit: 1 - 5):
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={factoryCount}
+                  onChange={(e) => setFactoryCount(Math.min(5, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 outline-hidden focus:border-indigo-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="md:col-span-3 flex flex-wrap items-center justify-between gap-3 pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={factorySaveToBank}
+                    onChange={(e) => setFactorySaveToBank(e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded-sm border-slate-300 focus:ring-indigo-500 cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-slate-700">
+                    Tự động lưu câu hỏi đạt chuẩn thẩm định vào Question Bank hệ thống (<code className="text-indigo-600 font-mono">visibility: system</code>)
+                  </span>
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={factoryLoading}
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-black text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-all active:scale-98"
+                >
+                  <Cpu className="w-4 h-4" />
+                  <span>{factoryLoading ? '🤖 Đang Sinh & Thẩm Định...' : '🏭 CHẠY AI FACTORY & THẨM ĐỊNH'}</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Results Panel */}
+            {factoryResult && (
+              <div className="mt-6 pt-5 border-t border-slate-100 space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/70 text-center">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Yêu Cầu</span>
+                    <span className="text-lg font-black text-slate-700">{factoryResult.total_requested} câu</span>
+                  </div>
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/70 text-center">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">Đã Sinh</span>
+                    <span className="text-lg font-black text-slate-700">{factoryResult.total_generated} câu</span>
+                  </div>
+                  <div className="bg-emerald-50 p-3 rounded-2xl border border-emerald-200/70 text-center">
+                    <span className="text-[10px] uppercase font-bold text-emerald-600 block">Đạt Thẩm Định</span>
+                    <span className="text-lg font-black text-emerald-700">{factoryResult.total_verified} câu</span>
+                  </div>
+                  <div className="bg-indigo-50 p-3 rounded-2xl border border-indigo-200/70 text-center">
+                    <span className="text-[10px] uppercase font-bold text-indigo-600 block">Lưu Question Bank</span>
+                    <span className="text-lg font-black text-indigo-700">{factoryResult.saved_to_bank_count} câu</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">
+                    DANH SÁCH CÂU HỎI THẨM ĐỊNH THUẬT TOÁN:
+                  </h4>
+                  {factoryResult.items.map((it) => (
+                    <div
+                      key={it.index}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        it.is_verified
+                          ? 'bg-emerald-50/40 border-emerald-200'
+                          : 'bg-rose-50/40 border-rose-200'
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-200 text-slate-700">
+                            #{it.index}
+                          </span>
+                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 uppercase">
+                            {it.question_type}
+                          </span>
+                          {it.is_verified ? (
+                            <span className="text-xs font-bold text-emerald-700 flex items-center gap-1 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              ĐẠT THẨM ĐỊNH XÁC ĐỊNH
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-rose-700 flex items-center gap-1 bg-rose-100 px-2.5 py-0.5 rounded-full">
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" />
+                              TỪ CHỐI THẨM ĐỊNH: {it.error_message}
+                            </span>
+                          )}
+                        </div>
+
+                        {it.saved_question_id && (
+                          <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-2.5 py-0.5 rounded-md border border-indigo-200 flex items-center gap-1">
+                            <Database className="w-3 h-3" />
+                            ID: {it.saved_question_id}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-xs font-bold text-slate-800 mb-2">
+                        {it.prompt}
+                      </p>
+
+                      <div className="bg-white/80 p-2.5 rounded-xl border border-slate-200/80 text-[11px] font-mono text-slate-700 overflow-x-auto">
+                        <pre>{JSON.stringify(it.data, null, 2)}</pre>
+                      </div>
+
+                      {it.normalized_hash && (
+                        <div className="flex flex-wrap items-center gap-2 mt-2 text-[10px] text-slate-400 font-mono">
+                          <span>Normalized Hash: {it.normalized_hash}</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b border-slate-100">
               <Sparkles className="w-5 h-5 text-amber-500" />
@@ -924,14 +1211,12 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
             <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
               <Download className="w-5 h-5 text-teal-600" />
               <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">
-                Tạo nhanh: Export 1 câu mẫu → Import (tự nhân {DEFAULT_LEVEL_COUNT} màn)
+                Nhập Gói Bài Tập Từ JSON (Import Pack)
               </h3>
             </div>
             <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-              Export chỉ 1 câu hỏi mẫu (text/emoji). Khi import, hệ thống nhân bản đủ{' '}
-              {DEFAULT_LEVEL_COUNT} màn cùng cấu trúc ({FREE_LEVEL_COUNT} free +{' '}
-              {DEFAULT_LEVEL_COUNT - FREE_LEVEL_COUNT} mở khóa ví) và đưa vào hàng đợi kiểm duyệt.
-              Bạn có thể sửa riêng từng màn trong JSON nếu muốn nội dung khác nhau.
+              Nhập nội dung bài tập từ file JSON do bạn soạn thảo hoặc tạo từ AI bên ngoài (ChatGPT, Claude, Gemini).
+              Hệ thống sẽ giữ đúng số màn bạn đã soạn (không tự động nhân bản) và thẩm định chất lượng trước khi nạp vào hàng đợi kiểm duyệt.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -1016,7 +1301,7 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
               <p className="mt-2 text-[11px] text-slate-500 font-bold">
                 Preview: {packPreview.title || '(chưa có title)'} · mẫu{' '}
                 {packPreview.levels?.length || (packPreview.level_template ? 1 : 0)} câu · template{' '}
-                {packPreview.template_code} → import ra {packPreview.target_level_count || DEFAULT_LEVEL_COUNT} màn
+                {packPreview.template_code} → import ra {packPreview.levels?.length || 1} màn
               </p>
             )}
 
@@ -1478,7 +1763,22 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
                       {item.thumbnail || '🎮'}
                     </div>
                     <div>
-                      <h4 className="text-sm font-black text-slate-800">{item.title}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-black text-slate-800">{item.title}</h4>
+                        {item.quality_score !== undefined && item.quality_score !== null && (
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            item.quality_score >= 80 
+                              ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                              : item.quality_score >= 60
+                              ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                              : item.quality_score >= 40
+                              ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                              : 'bg-rose-100 text-rose-700 border border-rose-300'
+                          }`}>
+                            ★ {item.quality_score}/100 • {item.quality_grade || (item.quality_score >= 80 ? 'EXCELLENT' : item.quality_score >= 60 ? 'GOOD' : item.quality_score >= 40 ? 'FAIR' : 'POOR')}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 line-clamp-1">{item.description}</p>
                       <span className="text-[10px] font-mono text-slate-400 mt-1 block">
                         Tác giả: {item.creator_name || 'Giáo viên'} • Lớp {item.grade_from}-{item.grade_to} • {item.levels?.length || 1} màn
@@ -1486,7 +1786,25 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => handleViewQualityReport(item.id)}
+                      disabled={loadingQualityReport}
+                      className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer border border-indigo-200 shadow-2xs"
+                      title="Xem Báo Cáo Thẩm Định Sư Phạm"
+                    >
+                      <Award className="w-4 h-4 text-indigo-600" />
+                      <span>Báo Cáo Sư Phạm</span>
+                    </button>
+                    <button
+                      onClick={() => handleCheckDuplicates(item.id)}
+                      disabled={loadingDuplicateCheck}
+                      className="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer border border-purple-200 shadow-2xs"
+                      title="Kiểm Tra Đối Soát Trùng Lặp Chéo (Jaccard)"
+                    >
+                      <Copy className="w-4 h-4 text-purple-600" />
+                      <span>So Khớp Trùng Lặp</span>
+                    </button>
                     {item.review_status === 'pending_review' ? (
                       <>
                         <button
@@ -1512,6 +1830,226 @@ export const AdminPage: React.FC<AdminPageProps> = ({ games, onRefreshGames }) =
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Quality Report Modal */}
+          {selectedQualityReport && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+                <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base font-black text-slate-800">
+                        BÁO CÁO THẨM ĐỊNH CHẤT LƯỢNG SƯ PHẠM
+                      </h3>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black tracking-wider uppercase ${
+                        selectedQualityReport.total_score >= 80
+                          ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                          : selectedQualityReport.total_score >= 60
+                          ? 'bg-blue-100 text-blue-700 border border-blue-300'
+                          : selectedQualityReport.total_score >= 40
+                          ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                          : 'bg-rose-100 text-rose-700 border border-rose-300'
+                      }`}>
+                        {selectedQualityReport.grade} ({selectedQualityReport.total_score}/100)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">
+                      Trò chơi: <span className="font-bold text-slate-700">{selectedQualityReport.title || selectedQualityReport.game_id}</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedQualityReport(null)}
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="overflow-y-auto space-y-4 my-4 pr-1 flex-1">
+                  <div className={`p-3 rounded-2xl text-xs font-medium border ${
+                    selectedQualityReport.is_publishable
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                      : 'bg-amber-50 border-amber-200 text-amber-800'
+                  }`}>
+                    {selectedQualityReport.summary}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider">
+                      Đánh Giá Chi Tiết Theo 5 Chiều Sư Phạm:
+                    </h4>
+                    {selectedQualityReport.dimensions.map((dim) => (
+                      <div key={dim.dimension_key} className="p-3 rounded-2xl border border-slate-100 bg-slate-50/50">
+                        <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-1.5">
+                          <span>{dim.name}</span>
+                          <span className={`font-mono ${
+                            dim.status === 'pass' ? 'text-emerald-600' : dim.status === 'warning' ? 'text-amber-600' : 'text-rose-600'
+                          }`}>
+                            {dim.score}/{dim.max_score} điểm
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden mb-2">
+                          <div
+                            className={`h-full rounded-full ${
+                              dim.status === 'pass' ? 'bg-emerald-500' : dim.status === 'warning' ? 'bg-amber-500' : 'bg-rose-500'
+                            }`}
+                            style={{ width: `${(dim.score / dim.max_score) * 100}%` }}
+                          />
+                        </div>
+                        {dim.issues.length > 0 && (
+                          <div className="space-y-1 mt-1.5">
+                            {dim.issues.map((iss, i) => (
+                              <p key={i} className="text-[11px] text-slate-500 flex items-start gap-1.5">
+                                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                                <span>{iss}</span>
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {selectedQualityReport.recommendations.length > 0 && (
+                    <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
+                      <h4 className="text-xs font-black uppercase text-indigo-900 tracking-wider mb-2">
+                        Khuyến Nghị Cải Thiện:
+                      </h4>
+                      <ul className="space-y-1 list-disc list-inside text-xs text-indigo-800">
+                        {selectedQualityReport.recommendations.map((rec, i) => (
+                          <li key={i}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    onClick={() => setSelectedQualityReport(null)}
+                    className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Duplicate Check Modal (Phase 7) */}
+          {selectedDuplicateCheck && (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+                <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base font-black text-slate-800">
+                        ĐỐI SOÁT TRÙNG LẶP LIÊN TRÒ CHƠI (JACCARD)
+                      </h3>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black tracking-wider uppercase ${
+                        selectedDuplicateCheck.overall_risk_level === 'HIGH'
+                          ? 'bg-rose-100 text-rose-700 border border-rose-300'
+                          : selectedDuplicateCheck.overall_risk_level === 'MEDIUM'
+                          ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                          : 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                      }`}>
+                        Mức rủi ro: {selectedDuplicateCheck.overall_risk_level} ({selectedDuplicateCheck.max_similarity_percent}% MAX)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 font-medium">
+                      Trò chơi kiểm tra: <span className="font-bold text-slate-700">{selectedDuplicateCheck.title || selectedDuplicateCheck.game_id}</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedDuplicateCheck(null)}
+                    className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="overflow-y-auto space-y-4 my-4 pr-1 flex-1">
+                  <div className={`p-3.5 rounded-2xl text-xs font-medium border ${
+                    selectedDuplicateCheck.overall_risk_level === 'HIGH'
+                      ? 'bg-rose-50 border-rose-200 text-rose-800'
+                      : selectedDuplicateCheck.overall_risk_level === 'MEDIUM'
+                      ? 'bg-amber-50 border-amber-200 text-amber-800'
+                      : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  }`}>
+                    {selectedDuplicateCheck.overall_risk_level === 'HIGH' ? (
+                      <div>
+                        <strong>Cảnh báo nguy cơ sao chép cao (Clone Candidate):</strong> Trò chơi có độ tương đồng ngữ nghĩa ≥ 80% với nội dung đã có. Cần xem xét kỹ nội dung trước khi xuất bản.
+                      </div>
+                    ) : selectedDuplicateCheck.overall_risk_level === 'MEDIUM' ? (
+                      <div>
+                        <strong>Phát hiện trùng lặp một phần (Possible Duplicate):</strong> Trò chơi chia sẻ 60-79% nội dung câu hỏi với game khác.
+                      </div>
+                    ) : (
+                      <div>
+                        <strong>Nội dung độc nhất (Unique Content):</strong> Độ tương đồng dưới 60%, không phát hiện trùng lặp đáng kể với các game hiện có trên hệ thống.
+                      </div>
+                    )}
+                    <p className="mt-1 text-[11px] opacity-80">
+                      * Nguyên tắc bảo vệ nội dung: Hệ thống không tự động xóa bài của giáo viên. Kết quả này chỉ phục vụ công tác đối soát kiểm duyệt.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-black uppercase text-slate-600 tracking-wider">
+                      Danh Sách Trò Chơi Tương Đồng Đã Phát Hiện ({selectedDuplicateCheck.candidates.length}):
+                    </h4>
+                    {selectedDuplicateCheck.candidates.length === 0 ? (
+                      <div className="text-center py-6 text-xs text-slate-400 font-medium bg-slate-50 rounded-2xl border border-slate-100">
+                        🎉 Không có trò chơi nào trên hệ thống vượt ngưỡng tương đồng 60%. Nội dung hoàn toàn mới lạ!
+                      </div>
+                    ) : (
+                      selectedDuplicateCheck.candidates.map((cand) => (
+                        <div key={cand.game_id} className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50/60 flex flex-col gap-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h5 className="text-xs font-black text-slate-800">{cand.title}</h5>
+                              <span className="text-[10px] text-slate-400 block font-mono">
+                                ID: {cand.game_id} • Tác giả: {cand.creator_name || cand.creator_id || 'Chưa rõ'}
+                              </span>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase shrink-0 ${
+                              cand.risk_level === 'HIGH'
+                                ? 'bg-rose-100 text-rose-700 border border-rose-300'
+                                : 'bg-amber-100 text-amber-700 border border-amber-300'
+                            }`}>
+                              {cand.similarity_percent}% tương đồng
+                            </span>
+                          </div>
+
+                          <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                cand.risk_level === 'HIGH' ? 'bg-rose-500' : 'bg-amber-500'
+                              }`}
+                              style={{ width: `${cand.similarity_percent}%` }}
+                            />
+                          </div>
+
+                          <span className="text-[11px] text-slate-500">
+                            Trùng {cand.common_count} câu hỏi trên tổng số {cand.total_target_questions} câu của bài đang xét (Game đối sánh có {cand.total_candidate_questions} câu).
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    onClick={() => setSelectedDuplicateCheck(null)}
+                    className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl cursor-pointer"
+                  >
+                    Đóng
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

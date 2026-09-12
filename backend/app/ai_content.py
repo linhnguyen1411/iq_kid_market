@@ -712,3 +712,81 @@ Trả về DUY NHẤT một JSON Object như sau:
     except Exception as e:
         print(f"⚠️ [Gemini AI Warning] Lỗi khi sinh câu hỏi đơn lẻ: {e} -> Sử dụng Fallback.")
         return get_fallback_single_question(topic, template_code, grade)
+
+
+def generate_batch_questions_with_gemini(
+    topic: str,
+    template_code: str,
+    count: int = 5,
+    grade: int = 2,
+    category: str = "iq",
+) -> list[dict]:
+    """Sinh lô từ 1 đến 5 câu hỏi thông minh phục vụ Admin Content Factory."""
+    clamped_count = min(max(1, count), 5)
+
+    safe, msg = is_content_safe_for_kids(topic)
+    if not safe:
+        raise ValueError(msg)
+
+    def _fallback_batch() -> list[dict]:
+        items = []
+        base_ts = int(time.time() * 1000)
+        for i in range(1, clamped_count + 1):
+            data = get_fallback_template_data(template_code, topic, i)
+            items.append({
+                "id": f"ai_batch_q_{base_ts}_{i}",
+                "question_type": template_code,
+                "prompt": f'Thử thách {i}: Khám phá kiến thức "{topic}" (Lớp {grade}):',
+                "points": 20 + i * 5,
+                "data": data,
+            })
+        return items
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return _fallback_batch()
+
+    try:
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=api_key)
+        ts = int(time.time() * 1000)
+        prompt = f"""Hãy tạo đúng {clamped_count} câu hỏi/thử thách giáo dục độc đáo, chuẩn mực sư phạm cho học sinh Lớp {grade}.
+Chủ đề: "{topic}"
+Loại mẫu (template_code): "{template_code}"
+Thể loại: {category}
+
+Trả về DUY NHẤT một JSON Array chứa {clamped_count} JSON Objects như sau:
+[
+  {{
+    "id": "ai_q_{ts}_1",
+    "question_type": "{template_code}",
+    "prompt": "Lời yêu cầu/câu hỏi rõ ràng cho bé bằng Tiếng Việt",
+    "points": 25,
+    "data": {{ ... đối tượng data chuẩn theo thể loại {template_code} ... }}
+  }}
+]
+
+{GEMINI_DATA_SCHEMA_RULES}
+"""
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.7,
+            ),
+        )
+        output_text = clean_json_string(response.text or "[]")
+        parsed = json.loads(output_text)
+        if isinstance(parsed, dict) and "questions" in parsed and isinstance(parsed["questions"], list):
+            parsed = parsed["questions"]
+        if not isinstance(parsed, list):
+            parsed = [parsed]
+        
+        return parsed[:clamped_count]
+    except Exception as e:
+        print(f"⚠️ [Gemini AI Warning] Lỗi khi sinh lô câu hỏi: {e} -> Sử dụng Fallback Batch.")
+        return _fallback_batch()
+

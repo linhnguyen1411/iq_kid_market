@@ -15,8 +15,19 @@ interface MatchingCard {
   pairIndex: number;
 }
 
+async function computeMatchHash(left: string, right: string, salt: string): Promise<string> {
+  const text = `${left.trim().toLowerCase()}::${right.trim().toLowerCase()}::${salt}`;
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
+    const msgBuffer = new TextEncoder().encode(text);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+  }
+  return '';
+}
+
 export default function MatchingEngine({ question, onComplete }: GameEngineProps) {
-  // Trích xuất và chuẩn hóa danh sách cặp
+  // Trích xuất và chuẩn hóa danh sách cặp (nếu có định dạng thô đầy đủ)
   const rawPairs: PairItem[] = useMemo(() => {
     let raw = question?.data?.pairs || question?.data?.matching_pairs || (question as any)?.pairs || [];
     if (typeof raw === 'string') {
@@ -36,6 +47,22 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
       .filter((p: PairItem) => p.left && p.right);
   }, [question]);
 
+  const leftList: string[] = useMemo(() => {
+    if (Array.isArray(question?.data?.left_items) && question.data.left_items.length > 0) {
+      return question.data.left_items.map((x: any) => String(x || '').trim()).filter(Boolean);
+    }
+    return rawPairs.map((p) => p.left);
+  }, [question, rawPairs]);
+
+  const rightList: string[] = useMemo(() => {
+    if (Array.isArray(question?.data?.right_items) && question.data.right_items.length > 0) {
+      return question.data.right_items.map((x: any) => String(x || '').trim()).filter(Boolean);
+    }
+    return rawPairs.map((p) => p.right);
+  }, [question, rawPairs]);
+
+  const totalPairs = rawPairs.length > 0 ? rawPairs.length : leftList.length;
+
   const [shuffledLefts, setShuffledLefts] = useState<MatchingCard[]>([]);
   const [shuffledRights, setShuffledRights] = useState<MatchingCard[]>([]);
   const [selectedLeftCard, setSelectedLeftCard] = useState<MatchingCard | null>(null);
@@ -48,16 +75,16 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
 
   // Xáo trộn các thẻ với định danh duy nhất (UID) khi đổi câu hỏi
   useEffect(() => {
-    if (rawPairs.length > 0) {
-      const lefts: MatchingCard[] = rawPairs.map((p, idx) => ({
-        uid: `L-${idx}-${p.left}`,
-        text: p.left,
-        pairIndex: idx,
+    if (leftList.length > 0 && rightList.length > 0) {
+      const lefts: MatchingCard[] = leftList.map((text, idx) => ({
+        uid: `L-${idx}-${text}`,
+        text,
+        pairIndex: rawPairs.length > 0 ? idx : -1,
       }));
-      const rights: MatchingCard[] = rawPairs.map((p, idx) => ({
-        uid: `R-${idx}-${p.right}`,
-        text: p.right,
-        pairIndex: idx,
+      const rights: MatchingCard[] = rightList.map((text, idx) => ({
+        uid: `R-${idx}-${text}`,
+        text,
+        pairIndex: rawPairs.length > 0 ? idx : -1,
       }));
       setShuffledLefts(shuffleArray(lefts));
       setShuffledRights(shuffleArray(rights));
@@ -71,57 +98,89 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
     setMatchedRightUids(new Set());
     setUserMatchedPairs([]);
     setWrongMatch(null);
-  }, [rawPairs]);
+  }, [leftList, rightList, rawPairs.length]);
 
   // Kiểm tra ghép cặp khi đã chọn cả 2 bên
   useEffect(() => {
     if (!selectedLeftCard || !selectedRightCard) return;
 
-    // So khớp theo pairIndex hoặc theo giá trị hợp lệ trong rawPairs
-    const isCorrect =
-      selectedLeftCard.pairIndex === selectedRightCard.pairIndex ||
-      rawPairs.some(
-        (p) => p.left === selectedLeftCard.text && p.right === selectedRightCard.text
-      );
+    let isCancelled = false;
 
-    if (isCorrect) {
-      playSynthSound('correct');
-      const nextMatchedLefts = new Set(matchedLeftUids);
-      const nextMatchedRights = new Set(matchedRightUids);
-      nextMatchedLefts.add(selectedLeftCard.uid);
-      nextMatchedRights.add(selectedRightCard.uid);
+    const evaluateSelection = async () => {
+      let isCorrect = false;
+      const leftText = selectedLeftCard.text;
+      const rightText = selectedRightCard.text;
 
-      setMatchedLeftUids(nextMatchedLefts);
-      setMatchedRightUids(nextMatchedRights);
+      const hashes = question?.data?.match_hashes;
+      const salt = question?.data?.match_salt;
 
-      const newPair = { left: selectedLeftCard.text, right: selectedRightCard.text };
-      const updatedPairs = [...userMatchedPairs, newPair];
-      setUserMatchedPairs(updatedPairs);
-
-      setSelectedLeftCard(null);
-      setSelectedRightCard(null);
-
-      // Nếu đã hoàn thành tất cả các cặp
-      if (nextMatchedLefts.size === rawPairs.length) {
-        playSynthSound('victory');
-        setTimeout(() => {
-          onComplete(question.points || 25, { pairs: updatedPairs });
-        }, 600);
+      if (Array.isArray(hashes) && typeof salt === 'string' && hashes.length > 0) {
+        const h = await computeMatchHash(leftText, rightText, salt);
+        isCorrect = hashes.includes(h);
+      } else if (rawPairs.length > 0) {
+        isCorrect =
+          selectedLeftCard.pairIndex === selectedRightCard.pairIndex ||
+          rawPairs.some((p) => p.left === leftText && p.right === rightText);
       }
-    } else {
-      playSynthSound('incorrect');
-      setWrongMatch({
-        leftUid: selectedLeftCard.uid,
-        rightUid: selectedRightCard.uid,
-      });
-      const timer = setTimeout(() => {
-        setWrongMatch(null);
+
+      if (isCancelled) return;
+
+      if (isCorrect) {
+        playSynthSound('correct');
+        const nextMatchedLefts = new Set(matchedLeftUids);
+        const nextMatchedRights = new Set(matchedRightUids);
+        nextMatchedLefts.add(selectedLeftCard.uid);
+        nextMatchedRights.add(selectedRightCard.uid);
+
+        setMatchedLeftUids(nextMatchedLefts);
+        setMatchedRightUids(nextMatchedRights);
+
+        const newPair = { left: leftText, right: rightText };
+        const updatedPairs = [...userMatchedPairs, newPair];
+        setUserMatchedPairs(updatedPairs);
+
         setSelectedLeftCard(null);
         setSelectedRightCard(null);
-      }, 700);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedLeftCard, selectedRightCard, rawPairs, matchedLeftUids, matchedRightUids, question.points, onComplete]);
+
+        // Nếu đã hoàn thành tất cả các cặp
+        if (nextMatchedLefts.size === totalPairs && totalPairs > 0) {
+          playSynthSound('victory');
+          setTimeout(() => {
+            onComplete(question.points || 25, { pairs: updatedPairs });
+          }, 600);
+        }
+      } else {
+        playSynthSound('incorrect');
+        setWrongMatch({
+          leftUid: selectedLeftCard.uid,
+          rightUid: selectedRightCard.uid,
+        });
+        const timer = setTimeout(() => {
+          if (!isCancelled) {
+            setWrongMatch(null);
+            setSelectedLeftCard(null);
+            setSelectedRightCard(null);
+          }
+        }, 700);
+      }
+    };
+
+    evaluateSelection();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    selectedLeftCard,
+    selectedRightCard,
+    rawPairs,
+    totalPairs,
+    matchedLeftUids,
+    matchedRightUids,
+    userMatchedPairs,
+    question,
+    onComplete,
+  ]);
 
   const handleLeftClick = (card: MatchingCard) => {
     if (matchedLeftUids.has(card.uid)) return; // Đã ghép rồi
@@ -135,7 +194,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
     setSelectedRightCard(selectedRightCard?.uid === card.uid ? null : card);
   };
 
-  if (rawPairs.length === 0) {
+  if (totalPairs === 0) {
     return (
       <div className="text-center py-12 text-slate-400 text-xs font-medium">
         Đang tải dữ liệu các cặp ghép...
@@ -144,7 +203,7 @@ export default function MatchingEngine({ question, onComplete }: GameEngineProps
   }
 
   const completedCount = matchedLeftUids.size;
-  const totalCount = rawPairs.length;
+  const totalCount = totalPairs;
 
   return (
     <div id="matching_board" className="w-full flex flex-col gap-5 max-w-2xl mx-auto select-none">

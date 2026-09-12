@@ -28,9 +28,9 @@ export function isLevelFree(levelNum: number): boolean {
 export function canAccessLevel(
   levelNum: number,
   isPurchased: boolean,
-  options?: { isAdminPreview?: boolean },
+  options?: { isAdminPreview?: boolean; isCreator?: boolean },
 ): boolean {
-  if (options?.isAdminPreview) return levelNum >= 1;
+  if (options?.isAdminPreview || options?.isCreator) return levelNum >= 1;
   return isLevelFree(levelNum) || isPurchased;
 }
 

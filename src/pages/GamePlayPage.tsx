@@ -26,8 +26,9 @@ export const GamePlayPage: React.FC<GamePlayPageProps> = ({
 }) => {
   const { user, wallet, purchases, updateUserStats, updateUserWallet } = useAuth();
   const isAdminPreview = user?.role === 'admin';
-  const isPurchased = isAdminPreview || purchases.includes(game.id);
-  const accessOpts = { isAdminPreview };
+  const isCreator = Boolean(user && game.creator_id && user.id === game.creator_id);
+  const isPurchased = isAdminPreview || isCreator || purchases.includes(game.id);
+  const accessOpts = { isAdminPreview, isCreator };
 
   const safeInitial = canAccessLevel(initialLevelNum, isPurchased, accessOpts) ? initialLevelNum : 1;
   const [currentLevelNum, setCurrentLevelNum] = useState(safeInitial);

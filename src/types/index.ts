@@ -66,12 +66,92 @@ export interface Game {
   creator_name?: string | null;
   review_status: 'draft' | 'pending_review' | 'approved' | 'rejected';
   review_feedback?: string | null;
+  quality_score?: number | null;
+  quality_grade?: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR' | null;
   is_published: boolean;
   rating_avg: number;
   plays_count: number;
   is_seed?: boolean;
   levels: Level[];
 }
+
+export interface QualityDimension {
+  name: string;
+  dimension_key: string;
+  score: number;
+  max_score: number;
+  status: 'pass' | 'warning' | 'fail';
+  issues: string[];
+}
+
+export interface QualityReportOut {
+  game_id?: string;
+  title?: string;
+  total_score: number;
+  max_score: number;
+  grade: 'EXCELLENT' | 'GOOD' | 'FAIR' | 'POOR';
+  is_publishable: boolean;
+  summary: string;
+  dimensions: QualityDimension[];
+  recommendations: string[];
+  stats?: Record<string, any>;
+}
+
+export interface DuplicateCandidateOut {
+  game_id: string;
+  title: string;
+  creator_id?: string | null;
+  creator_name?: string | null;
+  similarity: number;
+  similarity_percent: number;
+  common_count: number;
+  total_target_questions: number;
+  total_candidate_questions: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface DuplicateCheckOut {
+  game_id?: string;
+  title?: string;
+  has_duplicate_risk: boolean;
+  max_similarity: number;
+  max_similarity_percent: number;
+  overall_risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  candidates: DuplicateCandidateOut[];
+}
+
+export interface AiBatchGenerateQuestionsIn {
+  topic: string;
+  template_code: string;
+  count?: number;
+  grade?: number;
+  category?: string;
+  save_to_bank?: boolean;
+}
+
+export interface VerifiedQuestionItem {
+  index: number;
+  question_type: string;
+  prompt: string;
+  data: Record<string, any>;
+  is_verified: boolean;
+  error_message?: string | null;
+  content_hash?: string | null;
+  normalized_hash?: string | null;
+  saved_question_id?: string | null;
+}
+
+export interface AiBatchGenerateQuestionsOut {
+  success: boolean;
+  topic: string;
+  template_code: string;
+  total_requested: number;
+  total_generated: number;
+  total_verified: number;
+  saved_to_bank_count: number;
+  items: VerifiedQuestionItem[];
+}
+
 
 export interface GameCategory {
   code: string;
